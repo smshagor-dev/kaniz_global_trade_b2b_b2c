@@ -76,7 +76,7 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
-    'asset_url_prefix' => env('ASSET_URL_PREFIX', 'public'),
+    'asset_url_prefix' => env('ASSET_URL_PREFIX', ''),
 
     /*
     |--------------------------------------------------------------------------
