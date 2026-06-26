@@ -1,8 +1,8 @@
 # Kaniz Global Trade B2B + B2C Marketplace
 
-Enterprise-grade global B2B and B2C marketplace platform built on top of Active eCommerce CMS.
+Enterprise-grade global B2B and B2C marketplace platform.
 
-This project extends the default eCommerce CMS into a global trade platform with supplier verification, RFQ, quotation, purchase order, proforma invoice, logistics, freight, container tracking, currency exchange, escrow, trade finance, and international commerce workflows.
+This project is going into a global trade platform with supplier verification, RFQ, quotation, purchase order, proforma invoice, logistics, freight, container tracking, currency exchange, escrow, trade finance, and international commerce workflows.
 
 ---
 
@@ -13,7 +13,7 @@ Kaniz Global Trade is designed as a hybrid marketplace:
 - B2C marketplace for normal retail customers
 - B2B marketplace for companies, suppliers, manufacturers, wholesalers, distributors, importers, and exporters
 
-The project keeps the original eCommerce CMS B2C system intact and adds enterprise B2B modules as extension layers.
+The project keeps the original an eCommerce CMS B2C system intact and adds enterprise B2B modules as extension layers.
 
 ---
 
@@ -1318,16 +1318,10 @@ The main rule is:
 
 **Md. Shahanur Islam Shagor**
 
-Global B2B Marketplace Architecture  
-Laravel Enterprise Commerce  
-International Trade Platform
+Enterprise B2B Marketplace Architecture
+
+Global Trade Platform
+
+Built with Laravel & Node.js ❤️
 
 ---
-
-## License
-
-This project extends eCommerce CMS.
-
-All original eCommerce CMS licensing terms remain applicable.
-
-Custom B2B modules are developed as an enterprise extension layer.
