@@ -11,6 +11,7 @@ use App\Http\Middleware\CheckoutMiddleware;
 use App\Http\Middleware\IsUnbanned;
 use App\Http\Middleware\AppLanguage;
 use App\Http\Middleware\IsAppUserUnbanned;
+use App\Http\Middleware\EnsureApprovedB2BCompany;
 use App\Http\Middleware\PreventDatabaseAction;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
@@ -94,6 +95,7 @@ class Kernel extends HttpKernel
         'prevent-back-history' => \App\Http\Middleware\PreventBackHistory::class,
         'handle-demo-login' => \App\Http\Middleware\HandleDemoLogin::class,
         'portfolio-view' => \App\Http\Middleware\PortfolioView::class,
+        'approved_b2b_company' => EnsureApprovedB2BCompany::class,
     ];
 
     /**

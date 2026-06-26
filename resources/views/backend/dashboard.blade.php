@@ -1,6 +1,18 @@
 @extends('backend.layouts.app')
 
 @section('content')
+    @php
+        $companyApprovalPercent = ($b2b_stats['total_companies'] ?? 0) > 0
+            ? round((($b2b_stats['verified_companies'] ?? 0) / $b2b_stats['total_companies']) * 100)
+            : 0;
+        $rfqConversionPercent = ($b2b_stats['rfqs'] ?? 0) > 0
+            ? round((($b2b_stats['purchase_orders'] ?? 0) / $b2b_stats['rfqs']) * 100)
+            : 0;
+        $shipmentTotal = ($b2b_stats['pending_shipments'] ?? 0) + ($b2b_stats['awaiting_pickup_shipments'] ?? 0) + ($b2b_stats['active_shipments'] ?? 0) + ($b2b_stats['completed_shipments'] ?? 0) + ($b2b_stats['delayed_shipments'] ?? 0) + ($b2b_stats['exception_shipments'] ?? 0);
+        $shipmentCompletionPercent = $shipmentTotal > 0
+            ? round((($b2b_stats['completed_shipments'] ?? 0) / $shipmentTotal) * 100)
+            : 0;
+    @endphp
     @if (auth()->user()->can('smtp_settings') &&
             env('MAIL_USERNAME') == null &&
             env('MAIL_PASSWORD') == null)
@@ -672,6 +684,139 @@
                     </div>
                 </div>
             @endif
+        </div>
+
+        <div class="row gutters-16 mb-3">
+            <div class="col-lg-3 col-md-6">
+                <div class="dashboard-box bg-white">
+                    <h1 class="fs-30 fw-600 text-dark mb-1">{{ $b2b_stats['total_companies'] ?? 0 }}</h1>
+                    <h3 class="fs-13 fw-600 text-secondary mb-0">{{ translate('Total Companies') }}</h3>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="dashboard-box bg-white">
+                    <h1 class="fs-30 fw-600 text-dark mb-1">{{ $b2b_stats['rfqs'] ?? 0 }}</h1>
+                    <h3 class="fs-13 fw-600 text-secondary mb-0">{{ translate('Total RFQs') }}</h3>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="dashboard-box bg-white">
+                    <h1 class="fs-30 fw-600 text-dark mb-1">{{ $b2b_stats['purchase_orders'] ?? 0 }}</h1>
+                    <h3 class="fs-13 fw-600 text-secondary mb-0">{{ translate('Purchase Orders') }}</h3>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="dashboard-box bg-white">
+                    <h1 class="fs-30 fw-600 text-dark mb-1">{{ single_price($b2b_stats['trade_volume'] ?? 0) }}</h1>
+                    <h3 class="fs-13 fw-600 text-secondary mb-0">{{ translate('Trade Volume') }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="row gutters-16 mb-3">
+            <div class="col-lg-3 col-md-6">
+                <div class="dashboard-box bg-white">
+                    <h1 class="fs-30 fw-600 text-dark mb-1">{{ $b2b_stats['total_buyers'] ?? 0 }}</h1>
+                    <h3 class="fs-13 fw-600 text-secondary mb-0">{{ translate('Total Buyers') }}</h3>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="dashboard-box bg-white">
+                    <h1 class="fs-30 fw-600 text-dark mb-1">{{ $b2b_stats['total_suppliers'] ?? 0 }}</h1>
+                    <h3 class="fs-13 fw-600 text-secondary mb-0">{{ translate('Total Suppliers') }}</h3>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="dashboard-box bg-white">
+                    <h1 class="fs-30 fw-600 text-dark mb-1">{{ $b2b_stats['b2b_products'] ?? 0 }}</h1>
+                    <h3 class="fs-13 fw-600 text-secondary mb-0">{{ translate('B2B Products') }}</h3>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="dashboard-box bg-white">
+                    <h1 class="fs-30 fw-600 text-dark mb-1">{{ single_price($b2b_stats['platform_profit'] ?? 0) }}</h1>
+                    <h3 class="fs-13 fw-600 text-secondary mb-0">{{ translate('B2B Profit') }}</h3>
+                    <div class="fs-11 text-muted mt-1">
+                        {{ translate('Order') }}: {{ single_price($b2b_stats['order_platform_profit'] ?? 0) }}
+                        /
+                        {{ translate('Escrow') }}: {{ single_price($b2b_stats['escrow_platform_profit'] ?? 0) }}
+                        /
+                        {{ translate('Shipping') }}: {{ single_price($b2b_stats['shipping_platform_profit'] ?? 0) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row gutters-16 mb-4">
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0">{{ translate('Company Approval Progress') }}</h5>
+                            <span class="badge badge-soft-success">{{ $companyApprovalPercent }}%</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 8px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ $companyApprovalPercent }}%;"></div>
+                        </div>
+                        <div class="d-flex justify-content-between fs-13 mb-2">
+                            <span class="text-muted">{{ translate('Verified') }}</span>
+                            <span class="fw-600">{{ $b2b_stats['verified_companies'] ?? 0 }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between fs-13">
+                            <span class="text-muted">{{ translate('Pending Review') }}</span>
+                            <span class="fw-600">{{ $b2b_stats['pending_companies'] ?? 0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0">{{ translate('RFQ To PO Progress') }}</h5>
+                            <span class="badge badge-soft-info">{{ $rfqConversionPercent }}%</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 8px;">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: {{ $rfqConversionPercent }}%;"></div>
+                        </div>
+                        <div class="d-flex justify-content-between fs-13 mb-2">
+                            <span class="text-muted">{{ translate('Open RFQs') }}</span>
+                            <span class="fw-600">{{ $b2b_stats['open_rfqs'] ?? 0 }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between fs-13 mb-2">
+                            <span class="text-muted">{{ translate('Quoted RFQs') }}</span>
+                            <span class="fw-600">{{ $b2b_stats['quoted_rfqs'] ?? 0 }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between fs-13">
+                            <span class="text-muted">{{ translate('Purchase Orders') }}</span>
+                            <span class="fw-600">{{ $b2b_stats['purchase_orders'] ?? 0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0">{{ translate('Shipment Completion') }}</h5>
+                            <span class="badge badge-soft-primary">{{ $shipmentCompletionPercent }}%</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 8px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $shipmentCompletionPercent }}%;"></div>
+                        </div>
+                        <div class="d-flex justify-content-between fs-13 mb-2">
+                            <span class="text-muted">{{ translate('Active') }}</span>
+                            <span class="fw-600">{{ $b2b_stats['active_shipments'] ?? 0 }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between fs-13 mb-2">
+                            <span class="text-muted">{{ translate('Completed') }}</span>
+                            <span class="fw-600">{{ $b2b_stats['completed_shipments'] ?? 0 }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between fs-13">
+                            <span class="text-muted">{{ translate('Delayed') }}</span>
+                            <span class="fw-600 text-danger">{{ $b2b_stats['delayed_shipments'] ?? 0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     @endcan
     

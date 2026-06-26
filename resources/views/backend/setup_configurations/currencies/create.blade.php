@@ -27,7 +27,24 @@
         <div class="form-group row">
             <label class="col-sm-2 col-from-label" for="exchange_rate">{{translate('Exchange Rate')}}</label>
             <div class="col-sm-10">
-                <input type="number" lang="en" step="0.01" min="0" placeholder="{{translate('Exchange Rate')}}" id="exchange_rate" name="exchange_rate" class="form-control" required>
+                <input type="number" lang="en" step="0.00000001" min="0" placeholder="{{translate('Exchange Rate')}}" id="exchange_rate" name="exchange_rate" class="form-control" required>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-sm-2 col-from-label" for="decimal_places">{{translate('Decimals')}}</label>
+            <div class="col-sm-10">
+                <input type="number" min="0" max="6" id="decimal_places" name="decimal_places" class="form-control" value="2" required>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-sm-2 col-from-label" for="symbol_position">{{translate('Symbol Position')}}</label>
+            <div class="col-sm-10">
+                <select class="form-control aiz-selectpicker" id="symbol_position" name="symbol_position">
+                    <option value="prefix">{{translate('Prefix')}}</option>
+                    <option value="prefix_spaced">{{translate('Prefix with space')}}</option>
+                    <option value="suffix">{{translate('Suffix')}}</option>
+                    <option value="suffix_spaced">{{translate('Suffix with space')}}</option>
+                </select>
             </div>
         </div>
     </div>

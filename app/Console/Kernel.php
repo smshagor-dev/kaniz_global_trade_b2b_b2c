@@ -13,7 +13,10 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        //
+        \App\Console\Commands\SyncB2BShipmentsCommand::class,
+        \App\Console\Commands\SyncB2BFreightShipmentsCommand::class,
+        \App\Console\Commands\CurrencySyncCommand::class,
+        \App\Console\Commands\ProcessTradeFinanceCommand::class,
     ];
 
     /**
@@ -24,8 +27,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')
-        //          ->hourly();
+        $schedule->command('b2b:shipments:sync')->everyFifteenMinutes();
+        $schedule->command('b2b:freight:sync')->everyThirtyMinutes();
+        $schedule->command('currency:sync')->hourly()->withoutOverlapping();
+        $schedule->command('b2b:trade-finance:process')->everyThirtyMinutes()->withoutOverlapping();
     }
 
     /**

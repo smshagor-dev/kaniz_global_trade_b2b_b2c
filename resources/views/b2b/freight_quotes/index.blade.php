@@ -1,0 +1,28 @@
+@extends('frontend.layouts.user_panel')
+
+@section('panel_content')
+    <div class="aiz-titlebar mb-4"><h1 class="fs-20 fw-700 text-dark">{{ translate('Freight Quotes') }}</h1></div>
+    @include('b2b.partials.freight_quote_filters')
+    <div class="card rounded-0 shadow-none border">
+        <div class="card-body">
+            <table class="table aiz-table mb-0">
+                <thead><tr><th>{{ translate('Quote') }}</th><th>{{ translate('Forwarder') }}</th><th>{{ translate('Route') }}</th><th>{{ translate('Cost') }}</th><th>{{ translate('Status') }}</th><th class="text-right">{{ translate('Options') }}</th></tr></thead>
+                <tbody>
+                    @forelse ($quotes as $quote)
+                        <tr>
+                            <td>{{ $quote->quote_number }}</td>
+                            <td>{{ $quote->forwarder?->name ?: translate('Manual / Rule Based') }}</td>
+                            <td>{{ $quote->origin_country }} to {{ $quote->destination_country }}</td>
+                            <td>{{ single_price($quote->total_cost_base_currency ?: $quote->total_cost) }} {{ $quote->base_currency ?: $quote->currency }}</td>
+                            <td>{{ ucwords(str_replace('_', ' ', $quote->status)) }}</td>
+                            <td class="text-right"><a href="{{ route('b2b.freight-quotes.show', $quote->id) }}" class="btn btn-soft-primary btn-icon btn-circle btn-sm"><i class="las la-eye"></i></a></td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="6" class="text-center">{{ translate('No freight quotes found') }}</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+            <div class="aiz-pagination mt-4">{{ $quotes->links() }}</div>
+        </div>
+    </div>
+@endsection

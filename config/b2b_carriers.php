@@ -1,0 +1,60 @@
+<?php
+
+return [
+    'drivers' => [
+        'manual' => \App\Services\Carriers\ManualCarrierDriver::class,
+        'dhl' => \App\Services\Carriers\DhlCarrierDriver::class,
+        'fedex' => \App\Services\Carriers\FedexCarrierDriver::class,
+        'ups' => \App\Services\Carriers\UpsCarrierDriver::class,
+        'aramex' => \App\Services\Carriers\AramexCarrierDriver::class,
+        'tnt' => \App\Services\Carriers\UnsupportedCarrierDriver::class,
+        'dpd' => \App\Services\Carriers\UnsupportedCarrierDriver::class,
+        'gls' => \App\Services\Carriers\UnsupportedCarrierDriver::class,
+        'pathao' => \App\Services\Carriers\UnsupportedCarrierDriver::class,
+        'redx' => \App\Services\Carriers\UnsupportedCarrierDriver::class,
+        'paperfly' => \App\Services\Carriers\UnsupportedCarrierDriver::class,
+        'maersk' => \App\Services\Carriers\CustomCarrierDriver::class,
+        'msc' => \App\Services\Carriers\CustomCarrierDriver::class,
+        'cma_cgm' => \App\Services\Carriers\CustomCarrierDriver::class,
+        'hapag_lloyd' => \App\Services\Carriers\CustomCarrierDriver::class,
+        'cosco' => \App\Services\Carriers\CustomCarrierDriver::class,
+        'evergreen' => \App\Services\Carriers\CustomCarrierDriver::class,
+        'one' => \App\Services\Carriers\CustomCarrierDriver::class,
+        'dp_world' => \App\Services\Carriers\CustomCarrierDriver::class,
+        'freightos' => \App\Services\Carriers\CustomCarrierDriver::class,
+        'flexport' => \App\Services\Carriers\CustomCarrierDriver::class,
+        'custom' => \App\Services\Carriers\CustomCarrierDriver::class,
+    ],
+    'carriers' => [
+        'dhl' => [
+            'name' => 'DHL',
+            'sandbox_url' => env('B2B_DHL_SANDBOX_URL', 'https://express.api.dhl.com/mydhlapi/test'),
+            'production_url' => env('B2B_DHL_PRODUCTION_URL', 'https://express.api.dhl.com/mydhlapi'),
+            'tracking_url' => env('B2B_DHL_TRACKING_URL', 'https://api-eu.dhl.com/track'),
+        ],
+        'fedex' => [
+            'name' => 'FedEx',
+            'sandbox_url' => env('B2B_FEDEX_SANDBOX_URL', 'https://apis-sandbox.fedex.com'),
+            'production_url' => env('B2B_FEDEX_PRODUCTION_URL', 'https://apis.fedex.com'),
+        ],
+        'ups' => [
+            'name' => 'UPS',
+            'sandbox_url' => env('B2B_UPS_SANDBOX_URL', 'https://wwwcie.ups.com'),
+            'production_url' => env('B2B_UPS_PRODUCTION_URL', 'https://onlinetools.ups.com'),
+            'api_version' => env('B2B_UPS_API_VERSION', 'v1'),
+        ],
+        'aramex' => [
+            'name' => 'Aramex',
+            'sandbox_url' => env('B2B_ARAMEX_SANDBOX_URL', 'https://ws.dev.aramex.net/json'),
+            'production_url' => env('B2B_ARAMEX_PRODUCTION_URL', 'https://ws.aramex.net/json'),
+        ],
+    ],
+    'http' => [
+        'timeout' => (int) env('B2B_CARRIER_TIMEOUT', 20),
+        'connect_timeout' => (int) env('B2B_CARRIER_CONNECT_TIMEOUT', 10),
+        'retry_times' => (int) env('B2B_CARRIER_RETRY_TIMES', 2),
+        'retry_sleep_ms' => (int) env('B2B_CARRIER_RETRY_SLEEP_MS', 500),
+        'circuit_threshold' => (int) env('B2B_CARRIER_CIRCUIT_THRESHOLD', 5),
+        'circuit_cooldown_seconds' => (int) env('B2B_CARRIER_CIRCUIT_COOLDOWN', 300),
+    ],
+];

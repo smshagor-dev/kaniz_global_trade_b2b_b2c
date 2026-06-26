@@ -239,6 +239,90 @@
                         </a>
                     </li>
                 @endif
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('b2b.company.show') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['b2b.company.show', 'b2b.company.create', 'b2b.company.edit']) }}">
+                        <i class="las la-building aiz-side-nav-icon"></i>
+                        <span class="aiz-side-nav-text">{{ translate('B2B Company') }}</span>
+                    </a>
+                </li>
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('seller.b2b.company.public-profile') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['seller.b2b.company.public-profile']) }}">
+                        <i class="las la-id-badge aiz-side-nav-icon"></i>
+                        <span class="aiz-side-nav-text">{{ translate('Supplier Public Profile') }}</span>
+                    </a>
+                </li>
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('seller.b2b.rfqs.index') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['seller.b2b.rfqs.index', 'seller.b2b.rfqs.quote']) }}">
+                        <i class="las la-file-signature aiz-side-nav-icon"></i>
+                        <span class="aiz-side-nav-text">{{ translate('B2B RFQs') }}</span>
+                    </a>
+                </li>
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('seller.b2b.quotations.index') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['seller.b2b.quotations.index', 'seller.b2b.quotations.show']) }}">
+                        <i class="las la-file-invoice-dollar aiz-side-nav-icon"></i>
+                        <span class="aiz-side-nav-text">{{ translate('Quotations') }}</span>
+                    </a>
+                </li>
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('seller.b2b.sample-orders.index') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['seller.b2b.sample-orders.index', 'seller.b2b.sample-orders.show']) }}">
+                        <i class="las la-vials aiz-side-nav-icon"></i>
+                        <span class="aiz-side-nav-text">{{ translate('Sample Orders') }}</span>
+                    </a>
+                </li>
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('seller.b2b.purchase-orders.index') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['seller.b2b.purchase-orders.index', 'seller.b2b.purchase-orders.show']) }}">
+                        <i class="las la-file-contract aiz-side-nav-icon"></i>
+                        <span class="aiz-side-nav-text">{{ translate('Purchase Orders') }}</span>
+                    </a>
+                </li>
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('seller.b2b.proforma-invoices.index') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['seller.b2b.proforma-invoices.index', 'seller.b2b.proforma-invoices.show', 'seller.b2b.proforma-invoices.create']) }}">
+                        <i class="las la-receipt aiz-side-nav-icon"></i>
+                        <span class="aiz-side-nav-text">{{ translate('Proforma Invoices') }}</span>
+                    </a>
+                </li>
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('seller.b2b.shipments.index') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['seller.b2b.shipments.index', 'seller.b2b.shipments.show', 'seller.b2b.shipments.create']) }}">
+                        <i class="las la-shipping-fast aiz-side-nav-icon"></i>
+                        <span class="aiz-side-nav-text">{{ translate('Shipments') }}</span>
+                    </a>
+                </li>
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('seller.b2b.negotiations.index') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['seller.b2b.negotiations.index', 'seller.b2b.negotiations.show']) }}">
+                        <i class="las la-comments aiz-side-nav-icon"></i>
+                        <span class="aiz-side-nav-text">{{ translate('Negotiations') }}</span>
+                    </a>
+                </li>
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('seller.b2b.product-promotions.index') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['seller.b2b.product-promotions.index']) }}">
+                        <i class="las la-bullhorn aiz-side-nav-icon"></i>
+                        <span class="aiz-side-nav-text">{{ translate('Sponsored Products') }}</span>
+                    </a>
+                </li>
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('b2b.premium-verifications.index') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['b2b.premium-verifications.index']) }}">
+                        <i class="las la-shield-alt aiz-side-nav-icon"></i>
+                        <span class="aiz-side-nav-text">{{ translate('Premium Verification') }}</span>
+                    </a>
+                </li>
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('b2b.company.members.index') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['b2b.company.members.index', 'b2b.company.members.invite']) }}">
+                        <i class="las la-users aiz-side-nav-icon"></i>
+                        <span class="aiz-side-nav-text">{{ translate('Company Team') }}</span>
+                    </a>
+                </li>
                 @if (addon_is_activated('wholesale') && get_setting('seller_wholesale_product') == 1)
                     <li class="aiz-side-nav-item">
                         <a href="{{ route('seller.wholesale_products_list') }}"

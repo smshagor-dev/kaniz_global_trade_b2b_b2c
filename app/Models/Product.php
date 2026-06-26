@@ -117,6 +117,36 @@ class Product extends Model
     {
         return $this->hasMany(Cart::class);
     }
+
+    public function b2bRfqs()
+    {
+        return $this->hasMany(B2BRfq::class);
+    }
+
+    public function b2bQuotations()
+    {
+        return $this->hasMany(B2BQuotation::class);
+    }
+
+    public function supplierB2bCompany()
+    {
+        return $this->hasOne(B2BCompany::class, 'user_id', 'user_id')
+            ->where('verification_status', 'approved')
+            ->whereIn('company_type', B2BCompany::SUPPLIER_TYPES);
+    }
+
+    public function publicSupplierCompany()
+    {
+        return $this->hasOne(B2BCompany::class, 'user_id', 'user_id')
+            ->where('verification_status', 'approved')
+            ->where('public_profile_enabled', true)
+            ->whereIn('company_type', B2BCompany::SUPPLIER_TYPES);
+    }
+
+    public function b2bProductPromotions()
+    {
+        return $this->hasMany(B2BProductPromotion::class);
+    }
     
     public function scopeIsApprovedPublished($query)
     {

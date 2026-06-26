@@ -71,6 +71,7 @@ use App\Models\PreorderProduct;
 use App\Models\State;
 use App\Utility\EmailUtility;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Intervention\Image\Facades\Image;
 use phpDocumentor\Reflection\PseudoTypes\LowercaseString;
@@ -118,16 +119,14 @@ if (!function_exists('default_language')) {
 if (!function_exists('convert_to_usd')) {
     function convert_to_usd($amount)
     {
-        $currency = Currency::find(get_setting('system_default_currency'));
-        return (floatval($amount) / floatval($currency->exchange_rate)) * Currency::where('code', 'USD')->first()->exchange_rate;
+        return app(\App\Services\Currency\CurrencyService::class)->convert((float) $amount, get_system_default_currency()->code, 'USD');
     }
 }
 
 if (!function_exists('convert_to_kes')) {
     function convert_to_kes($amount)
     {
-        $currency = Currency::find(get_setting('system_default_currency'));
-        return (floatval($amount) / floatval($currency->exchange_rate)) * Currency::where('code', 'KES')->first()->exchange_rate;
+        return app(\App\Services\Currency\CurrencyService::class)->convert((float) $amount, get_system_default_currency()->code, 'KES');
     }
 }
 
@@ -194,8 +193,24 @@ if (!function_exists('verified_sellers_id')) {
 if (!function_exists('get_system_default_currency')) {
     function get_system_default_currency()
     {
+        if (!Schema::hasTable('currencies')) {
+            return new Currency([
+                'name' => 'US Dollar',
+                'code' => 'USD',
+                'symbol' => '$',
+                'exchange_rate' => 1,
+                'decimal_places' => 2,
+                'symbol_position' => 'prefix',
+                'decimal_separator' => 'dot',
+                'thousands_separator' => 'comma',
+                'status' => true,
+                'is_base_currency' => true,
+                'is_default_display_currency' => true,
+            ]);
+        }
+
         return Cache::remember('system_default_currency', 86400, function () {
-            return Currency::findOrFail(get_setting('system_default_currency'));
+            return app(\App\Services\Currency\CurrencyService::class)->baseCurrency();
         });
     }
 }
@@ -204,19 +219,7 @@ if (!function_exists('get_system_default_currency')) {
 if (!function_exists('convert_price')) {
     function convert_price($price)
     {
-        if (Session::has('currency_code') && (Session::get('currency_code') != get_system_default_currency()->code)) {
-            $price = floatval($price) / floatval(get_system_default_currency()->exchange_rate);
-            $price = floatval($price) * floatval(Session::get('currency_exchange_rate'));
-        }
-
-        if (
-            request()->header('Currency-Code') &&
-            request()->header('Currency-Code') != get_system_default_currency()->code
-        ) {
-            $price = floatval($price) / floatval(get_system_default_currency()->exchange_rate);
-            $price = floatval($price) * floatval(request()->header('Currency-Exchange-Rate'));
-        }
-        return $price;
+        return app(\App\Services\Currency\CurrencyService::class)->convertForDisplay((float) $price, get_system_default_currency()->code, request());
     }
 }
 
@@ -224,13 +227,7 @@ if (!function_exists('convert_price')) {
 if (!function_exists('currency_symbol')) {
     function currency_symbol()
     {
-        if (Session::has('currency_symbol')) {
-            return Session::get('currency_symbol');
-        }
-        if (request()->header('Currency-Code')) {
-            return request()->header('Currency-Code');
-        }
-        return get_system_default_currency()->symbol;
+        return app(\App\Services\Currency\CurrencyService::class)->resolveDisplayCurrency(request())->symbol;
     }
 }
 
@@ -238,35 +235,7 @@ if (!function_exists('currency_symbol')) {
 if (!function_exists('format_price')) {
     function format_price($price, $isMinimize = false)
     {
-        if (get_setting('decimal_separator') == 1) {
-            $fomated_price = number_format($price, get_setting('no_of_decimals'));
-        } else {
-            $fomated_price = number_format($price, get_setting('no_of_decimals'), ',', '.');
-        }
-
-
-        // Minimize the price
-        if ($isMinimize) {
-            $temp = number_format($price / 1000000000, get_setting('no_of_decimals'), ".", "");
-
-            if ($temp >= 1) {
-                $fomated_price = $temp . "B";
-            } else {
-                $temp = number_format($price / 1000000, get_setting('no_of_decimals'), ".", "");
-                if ($temp >= 1) {
-                    $fomated_price = $temp . "M";
-                }
-            }
-        }
-
-        if (get_setting('symbol_format') == 1) {
-            return currency_symbol() . $fomated_price;
-        } else if (get_setting('symbol_format') == 3) {
-            return currency_symbol() . ' ' . $fomated_price;
-        } else if (get_setting('symbol_format') == 4) {
-            return $fomated_price . ' ' . currency_symbol();
-        }
-        return $fomated_price . currency_symbol();
+        return app(\App\Services\Currency\CurrencyService::class)->format((float) $price, null, true, $isMinimize);
     }
 }
 
@@ -930,6 +899,10 @@ function translate($key, $lang = null, $addslashes = false)
         $lang = App::getLocale();
     }
 
+    if (!Schema::hasTable('translations')) {
+        return $addslashes ? addslashes(trim($key)) : trim($key);
+    }
+
     $lang_key = preg_replace('/[^A-Za-z0-9\_]/', '', str_replace(' ', '_', strtolower($key)));
 
     $translations_en = Cache::rememberForever('translations-en', function () {
@@ -943,7 +916,7 @@ function translate($key, $lang = null, $addslashes = false)
         $translation_def->lang_value = str_replace(array("\r", "\n", "\r\n"), "", $key);
         $translation_def->save();
 
-        if (env('DEMO_MODE') != 'On') {
+        if (env('DEMO_MODE') != 'On' && Schema::hasTable('app_translations')) {
                 $app_translation = new AppTranslation();
                 $app_translation->lang = 'en';
                 $app_translation->lang_key = $lang_key . '_ucf';
@@ -1419,6 +1392,10 @@ if (!function_exists('isUnique')) {
 if (!function_exists('get_setting')) {
     function get_setting($key, $default = null, $lang = false)
     {
+        if (!Schema::hasTable('business_settings')) {
+            return $default;
+        }
+
         $settings = Cache::remember('business_settings', 86400, function () {
             return BusinessSetting::all();
         });
@@ -1694,12 +1671,16 @@ if (!function_exists('calculateCommissionAffilationClubPoint')) {
 if (!function_exists('addon_is_activated')) {
     function addon_is_activated($identifier, $default = null)
     {
+        if (!Schema::hasTable('addons')) {
+            return (bool) $default;
+        }
+
         $addons = Cache::remember('addons', 86400, function () {
             return Addon::all();
         });
 
         $activation = $addons->where('unique_identifier', $identifier)->where('activated', 1)->first();
-        return $activation == null ? false : true;
+        return $activation == null ? (bool) $default : true;
     }
 }
 
@@ -1790,6 +1771,10 @@ if (!function_exists('get_featured_flash_deal')) {
 if (!function_exists('get_flash_deal_products')) {
     function get_flash_deal_products($flash_deal_id)
     {
+        if (!Schema::hasTable('flash_deal_products')) {
+            return collect();
+        }
+
         $flash_deal_product_query = FlashDealProduct::query();
         $flash_deal_product_query->where('flash_deal_id', $flash_deal_id);
         $flash_deal_products = $flash_deal_product_query->with('product')->orderBy('id', 'desc')->get();
@@ -1801,6 +1786,10 @@ if (!function_exists('get_flash_deal_products')) {
 if (!function_exists('get_active_flash_deals')) {
     function get_active_flash_deals()
     {
+        if (!Schema::hasTable('flash_deals')) {
+            return collect();
+        }
+
         $activated_flash_deal_query = FlashDeal::query();
         $activated_flash_deal_query = $activated_flash_deal_query->where("status", 1);
 
@@ -1811,6 +1800,10 @@ if (!function_exists('get_active_flash_deals')) {
 if (!function_exists('get_product_active_flash_deal_end_date')) {
     function get_product_active_flash_deal_end_date($product_id, $discount_end_date)
     {
+        if (!Schema::hasTable('flash_deals') || !Schema::hasTable('flash_deal_products')) {
+            return $discount_end_date;
+        }
+
         $now = strtotime(now());
 
         return FlashDeal::where('status', 1)
@@ -1821,7 +1814,7 @@ if (!function_exists('get_product_active_flash_deal_end_date')) {
                 $q->where('product_id', $product_id);
             })
             ->orderBy('end_date', 'asc')
-            ->value('end_date');
+            ->value('end_date') ?: $discount_end_date;
     }
 }
 
@@ -1840,6 +1833,10 @@ if (!function_exists('get_active_taxes')) {
 if (!function_exists('get_system_language')) {
     function get_system_language()
     {
+        if (!Schema::hasTable('languages')) {
+            return null;
+        }
+
         $language_query = Language::query();
 
         $locale = 'en';
@@ -1875,6 +1872,10 @@ if (!function_exists('get_session_language')) {
 if (!function_exists('get_system_currency')) {
     function get_system_currency()
     {
+        if (!Schema::hasTable('currencies')) {
+            return get_system_default_currency();
+        }
+
         $currency_query = Currency::query();
         if (Session::has('currency_code')) {
             $currency_query->where('code', Session::get('currency_code'));
@@ -1889,6 +1890,10 @@ if (!function_exists('get_system_currency')) {
 if (!function_exists('get_all_active_currency')) {
     function get_all_active_currency()
     {
+        if (!Schema::hasTable('currencies')) {
+            return collect();
+        }
+
         $currency_query = Currency::query();
         $currency_query->where('status', 1);
 
@@ -2285,7 +2290,15 @@ if (!function_exists('get_best_sellers')) {
     function get_best_sellers($limit = '')
     {
         return Cache::remember('best_selers', 86400, function () use ($limit) {
-            return Shop::where('verification_status', 1)->orderBy('num_of_sale', 'desc')->take($limit)->get();
+            $query = Shop::where('verification_status', 1);
+
+            if (Schema::hasColumn('shops', 'num_of_sale')) {
+                $query->orderBy('num_of_sale', 'desc');
+            } else {
+                $query->latest('id');
+            }
+
+            return $query->take($limit)->get();
         });
     }
 }
@@ -2342,6 +2355,10 @@ if (!function_exists('get_user_total_expenditure')) {
 if (!function_exists('get_count_by_delivery_viewed')) {
     function get_count_by_delivery_viewed()
     {
+        if (!Schema::hasTable('orders') || !Schema::hasColumn('orders', 'delivery_viewed')) {
+            return 0;
+        }
+
         $order_query = Order::query();
         return  $order_query->where('user_id', Auth::user()->id)->where('delivery_viewed', 0)->get()->count();
     }
@@ -2422,6 +2439,10 @@ if (!function_exists('get_auction_product_bid_info')) {
 if (!function_exists('get_count_by_payment_status_viewed')) {
     function get_count_by_payment_status_viewed()
     {
+        if (!Schema::hasTable('orders') || !Schema::hasColumn('orders', 'payment_status_viewed')) {
+            return 0;
+        }
+
         $order_query = Order::query();
         return  $order_query->where('user_id', Auth::user()->id)->where('payment_status_viewed', 0)->get()->count();
     }
@@ -3241,14 +3262,41 @@ function filter_single_preorder_product($product)
 if (!function_exists('get_element_type_by_id')) {
     function get_element_type_by_id($id)
     {
+        $fallbackMap = [
+            1 => 'header1',
+            2 => 'header2',
+            3 => 'header3',
+            4 => 'header4',
+            5 => 'header5',
+            6 => 'header6',
+            7 => 'footer1',
+            8 => 'footer2',
+            9 => 'footer3',
+            10 => 'header7',
+            11 => 'megamenu1',
+            12 => 'megamenu2',
+        ];
+
+        if (!$id) {
+            return 'header1';
+        }
+
+        if (!Schema::hasTable('element_types')) {
+            return $fallbackMap[(int) $id] ?? 'header1';
+        }
+
         $elementType = ElementType::find($id);
-        return $elementType ? strtolower(str_replace(' ', '', $elementType->name)) : null;
+        return $elementType ? strtolower(str_replace(' ', '', $elementType->name)) : ($fallbackMap[(int) $id] ?? 'header1');
     }
 }
 
 if (!function_exists('get_element_style_value')) {
     function get_element_style_value($element_type_id, $name)
     {
+        if (!Schema::hasTable('element_styles')) {
+            return null;
+        }
+
         $style = ElementStyle::where('element_type_id', $element_type_id)
             ->where('name', $name)
             ->first();

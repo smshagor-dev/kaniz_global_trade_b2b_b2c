@@ -475,6 +475,185 @@
                 @endif
 
                 <li class="aiz-side-nav-item">
+                    <a href="javascript:void(0);" class="aiz-side-nav-link">
+                        <div class="aiz-side-nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                                <path d="M1 15V5l7-4 7 4v10h-4V9H5v6H1zm5-8h4V5H6v2zm-3 0h2V5H3v2zm8 0h2V5h-2v2z" fill="{{ get_setting('navbar_text_color') }}"/>
+                            </svg>
+                        </div>
+                        <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('B2B Management') }}</span>
+                        <span class="aiz-side-nav-arrow" style="color: {{ get_setting('navbar_text_color') }}"></span>
+                    </a>
+                    <ul class="aiz-side-nav-list level-2">
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('admin.b2b.dashboard') }}"
+                                class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.dashboard']) }}">
+                                <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('B2B Dashboard') }}</span>
+                            </a>
+                        </li>
+                        <li class="aiz-side-nav-item">
+                            <a href="javascript:void(0);"
+                                class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.companies.index', 'admin.b2b.companies.show', 'admin.b2b.companies.create', 'admin.b2b.companies.verification', 'admin.b2b.companies.verification.show', 'admin.b2b.verification-requirements.index', 'admin.b2b.packages.index', 'admin.b2b.packages.create', 'admin.b2b.packages.edit', 'admin.b2b.package-requests.index']) }}">
+                                <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Companies') }}</span>
+                                <span class="aiz-side-nav-arrow" style="color: {{ get_setting('navbar_text_color') }}"></span>
+                            </a>
+                            <ul class="aiz-side-nav-list level-3">
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('admin.b2b.companies.index') }}"
+                                        class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.companies.index', 'admin.b2b.companies.show']) }}">
+                                        <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Company List') }}</span>
+                                    </a>
+                                </li>
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('admin.b2b.companies.create') }}"
+                                        class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.companies.create']) }}">
+                                        <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Add Company') }}</span>
+                                    </a>
+                                </li>
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('admin.b2b.companies.verification') }}"
+                                        class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.companies.verification', 'admin.b2b.companies.verification.show']) }}">
+                                        <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Company Verification') }}</span>
+                                    </a>
+                                </li>
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('admin.b2b.verification-requirements.index') }}"
+                                        class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.verification-requirements.index']) }}">
+                                        <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Verification Requirements') }}</span>
+                                    </a>
+                                </li>
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('admin.b2b.packages.index') }}"
+                                        class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.packages.index', 'admin.b2b.packages.create', 'admin.b2b.packages.edit']) }}">
+                                        <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Company Membership Packages') }}</span>
+                                    </a>
+                                </li>
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('admin.b2b.package-requests.index') }}"
+                                        class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.package-requests.index']) }}">
+                                        <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Membership Package Requests') }}</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('admin.b2b.featured-packages.index') }}"
+                                class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.featured-packages.index', 'admin.b2b.featured-packages.create', 'admin.b2b.featured-packages.edit', 'admin.b2b.featured-package-requests.index']) }}">
+                                <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Supplier Featured Package System') }}</span>
+                            </a>
+                        </li>
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('admin.b2b.product-promotions.index') }}"
+                                class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.product-promotions.index', 'admin.b2b.product-promotions.create', 'admin.b2b.product-promotions.edit', 'admin.b2b.product-promotions.requests']) }}">
+                                <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Sponsored Product Package System') }}</span>
+                            </a>
+                        </li>
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('admin.b2b.premium-verifications.index') }}"
+                                class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.premium-verifications.index', 'admin.b2b.premium-verifications.create', 'admin.b2b.premium-verifications.edit', 'admin.b2b.premium-verifications.requests']) }}">
+                                <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Premium Verification Package System') }}</span>
+                            </a>
+                        </li>
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('admin.b2b.rfqs.index') }}"
+                                class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.rfqs.index', 'admin.b2b.rfqs.show']) }}">
+                                <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('RFQs') }}</span>
+                            </a>
+                        </li>
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('admin.b2b.purchase-orders.index') }}"
+                                class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.purchase-orders.index', 'admin.b2b.purchase-orders.show']) }}">
+                                <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Purchase Orders') }}</span>
+                            </a>
+                        </li>
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('admin.b2b.proforma-invoices.index') }}"
+                                class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.proforma-invoices.index', 'admin.b2b.proforma-invoices.show']) }}">
+                                <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Proforma Invoices') }}</span>
+                            </a>
+                        </li>
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('admin.b2b.freight-forwarders.index') }}"
+                                class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.freight-forwarders.index']) }}">
+                                <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Freight Forwarders') }}</span>
+                            </a>
+                        </li>
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('admin.b2b.shipping-providers.index') }}"
+                                class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.shipping-providers.index']) }}">
+                                <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Shipping Providers') }}</span>
+                            </a>
+                        </li>
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('admin.b2b.ports.index') }}"
+                                class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.ports.index']) }}">
+                                <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Ports') }}</span>
+                            </a>
+                        </li>
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('admin.b2b.freight-quotes.index') }}"
+                                class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.freight-quotes.index', 'admin.b2b.freight-quotes.show']) }}">
+                                <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Freight Quotes') }}</span>
+                            </a>
+                        </li>
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('admin.b2b.freight-pricing-rules.index') }}"
+                                class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.freight-pricing-rules.index']) }}">
+                                <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Freight Pricing Rules') }}</span>
+                            </a>
+                        </li>
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('admin.b2b.hs-codes.index') }}"
+                                class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.hs-codes.index']) }}">
+                                <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('HS Codes') }}</span>
+                            </a>
+                        </li>
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('admin.b2b.shipping-quotes.index') }}"
+                                class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.shipping-quotes.index']) }}">
+                                <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Shipping Quotes') }}</span>
+                            </a>
+                        </li>
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('admin.b2b.sample-orders.index') }}"
+                                class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.sample-orders.index', 'admin.b2b.sample-orders.show']) }}">
+                                <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Sample Orders') }}</span>
+                            </a>
+                        </li>
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('admin.b2b.shipments.index') }}"
+                                class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.shipments.index', 'admin.b2b.shipments.show']) }}">
+                                <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Shipments') }}</span>
+                            </a>
+                        </li>
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('admin.b2b.negotiations.index') }}"
+                                class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.negotiations.index', 'admin.b2b.negotiations.show']) }}">
+                                <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Negotiations') }}</span>
+                            </a>
+                        </li>
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('admin.b2b.audit-logs.index') }}"
+                                class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.audit-logs.index']) }}">
+                                <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Audit Logs') }}</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('admin.b2b.logistics-charge-settings.index') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.logistics-charge-settings.index']) }}">
+                        <div class="aiz-side-nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                                <path d="M8 1.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Zm-6 3a.75.75 0 0 1 .75-.75h1.02a4.47 4.47 0 0 1 .72-1.23l-.72-.72a.75.75 0 1 1 1.06-1.06l.72.72a4.47 4.47 0 0 1 1.23-.72V.75a.75.75 0 0 1 1.5 0v1.02c.43.12.84.3 1.23.52l.72-.72a.75.75 0 0 1 1.06 1.06l-.72.72c.22.39.4.8.52 1.23h1.02a.75.75 0 0 1 0 1.5h-1.02a4.47 4.47 0 0 1-.52 1.23l.72.72a.75.75 0 1 1-1.06 1.06l-.72-.72c-.39.22-.8.4-1.23.52v1.02a.75.75 0 0 1-1.5 0V9.23a4.47 4.47 0 0 1-1.23-.52l-.72.72a.75.75 0 1 1-1.06-1.06l.72-.72a4.47 4.47 0 0 1-.52-1.23H2.75A.75.75 0 0 1 2 4.5ZM3.5 11a2.5 2.5 0 0 0-2.5 2.5v1A1.5 1.5 0 0 0 2.5 16h11a1.5 1.5 0 0 0 1.5-1.5v-1a2.5 2.5 0 0 0-2.5-2.5h-9Zm0 1.5h9a1 1 0 0 1 1 1v1h-11v-1a1 1 0 0 1 1-1Z"
+                                    fill="{{ get_setting('navbar_text_color') }}" />
+                            </svg>
+                        </div>
+                        <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Global B2B Config') }}</span>
+                    </a>
+                </li>
+
+                <li class="aiz-side-nav-item">
                     <span class="px-25px pt-10px text-uppercase fs-12 fw-400  d-block my-1 opacity-50"
                         style="color: {{ get_setting('navbar_text_color') }}">
                         {{translate('Orders & Sales')}}

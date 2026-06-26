@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\BusinessSetting;
 use Session;
 
 # IF BROWSE FROM LOCAL HOST, KEEP true
@@ -25,7 +24,7 @@ class SSLCommerz
     {
         if (Session::has('payment_type')) {
             # IF SANDBOX TRUE, THEN IT WILL CONNECT WITH SSLCOMMERZ SANDBOX (TEST) SYSTEM
-            if (BusinessSetting::where('type', 'sslcommerz_sandbox')->first()->value == 1) {
+            if ((int) get_setting('sslcommerz_sandbox', 0) === 1) {
                 define("SSLCZ_IS_SANDBOX", true);
             } else {
                 define("SSLCZ_IS_SANDBOX", false);

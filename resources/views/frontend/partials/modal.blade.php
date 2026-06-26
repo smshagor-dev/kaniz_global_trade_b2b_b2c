@@ -42,25 +42,28 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form class="form-horizontal" action="{{ route('auction_product_bids.store') }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <input type="hidden" name="product_id" id="bid_product_id" value="">
-                    <div class="form-group">
-                        <label class="form-label">
-                            {{translate('Place Bid Price')}}
-                            <span class="text-danger">*</span>
-                        </label>
+                @if (Route::has('auction_product_bids.store'))
+                    <form class="form-horizontal" action="{{ route('auction_product_bids.store') }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <input type="hidden" name="product_id" id="bid_product_id" value="">
                         <div class="form-group">
-                            <input type="number" step="0.01" class="form-control form-control-sm" name="amount" id="bid_amount" min="" placeholder="{{ translate('Enter Amount') }}" required>
-                            <small class="text-danger" id="gst_applicable_alert"> </small>
+                            <label class="form-label">
+                                {{translate('Place Bid Price')}}
+                                <span class="text-danger">*</span>
+                            </label>
+                            <div class="form-group">
+                                <input type="number" step="0.01" class="form-control form-control-sm" name="amount" id="bid_amount" min="" placeholder="{{ translate('Enter Amount') }}" required>
+                                <small class="text-danger" id="gst_applicable_alert"> </small>
+                            </div>
                         </div>
-                        
-                    </div>
-                    
-                    <div class="form-group text-right">
-                        <button type="submit" class="btn btn-sm btn-primary transition-3d-hover mr-1">{{ translate('Submit') }}</button>
-                    </div>
-                </form>
+
+                        <div class="form-group text-right">
+                            <button type="submit" class="btn btn-sm btn-primary transition-3d-hover mr-1">{{ translate('Submit') }}</button>
+                        </div>
+                    </form>
+                @else
+                    <p class="mb-0 text-muted">{{ translate('Bidding is currently unavailable.') }}</p>
+                @endif
             </div>
         </div>
     </div>

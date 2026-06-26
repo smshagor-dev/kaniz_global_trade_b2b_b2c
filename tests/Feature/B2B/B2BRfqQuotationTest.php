@@ -1,0 +1,127 @@
+<?php
+
+namespace Tests\Feature\B2B;
+
+use App\Models\B2BPurchaseOrder;
+
+class B2BRfqQuotationTest extends B2BFeatureTestCase
+{
+    public function test_procurement_manager_can_create_rfq(): void
+    {
+        $buyerOwner = $this->createUser();
+        $buyerCompany = $this->createCompany($buyerOwner, ['company_type' => 'buyer']);
+
+        $procurementUser = $this->createUser();
+        $this->createCompanyMember($buyerCompany, $procurementUser, 'procurement_manager');
+
+        $supplierUser = $this->createSellerUser();
+        $supplierCompany = $this->createCompany($supplierUser, [
+            'company_type' => 'supplier',
+            'verification_status' => 'approved',
+        ]);
+
+        $this->setActiveCompany($buyerCompany);
+
+        $this->actingAs($procurementUser)->post(route('b2b.rfqs.store'), [
+            'supplier_company_id' => $supplierCompany->id,
+            'title' => 'Need stainless fasteners',
+            'description' => 'Bulk fastener RFQ',
+            'quantity' => 500,
+            'unit' => 'pcs',
+            'target_price' => 5.5,
+            'currency' => 'USD',
+            'incoterm' => 'FOB',
+            'destination_country' => 'Bangladesh',
+            'destination_city' => 'Dhaka',
+            'expires_at' => now()->addDays(5)->toDateTimeString(),
+        ])->assertRedirect(route('b2b.rfqs.index'));
+
+        $this->assertDatabaseHas('b2b_rfqs', [
+            'b2b_company_id' => $buyerCompany->id,
+            'user_id' => $procurementUser->id,
+            'supplier_company_id' => $supplierCompany->id,
+            'title' => 'Need stainless fasteners',
+            'incoterm' => 'FOB',
+            'status' => 'open',
+        ]);
+    }
+
+    public function test_supplier_can_submit_quotation_for_open_rfq(): void
+    {
+        $buyerUser = $this->createUser();
+        $buyerCompany = $this->createCompany($buyerUser, ['company_type' => 'buyer']);
+        $rfq = $this->createRfq($buyerCompany, $buyerUser);
+
+        $supplierUser = $this->createSellerUser();
+        $supplierCompany = $this->createCompany($supplierUser, [
+            'company_type' => 'supplier',
+        ]);
+        $this->createCompanyMember($supplierCompany, $supplierUser, 'sales_manager');
+
+        $this->setActiveCompany($supplierCompany);
+
+        $this->actingAs($supplierUser)->post(route('seller.b2b.rfqs.quote.store', $rfq->id), [
+            'price' => 18.75,
+            'currency' => 'USD',
+            'moq' => 25,
+            'lead_time_days' => 12,
+            'shipping_terms' => 'Sea',
+            'incoterm' => 'FOB',
+            'payment_terms' => '50% advance',
+            'message' => 'Quotation from supplier',
+        ])->assertRedirect(route('seller.b2b.quotations.index'));
+
+        $this->assertDatabaseHas('b2b_quotations', [
+            'rfq_id' => $rfq->id,
+            'supplier_user_id' => $supplierUser->id,
+            'supplier_company_id' => $supplierCompany->id,
+            'price' => 18.75,
+            'status' => 'pending',
+        ]);
+
+        $this->assertDatabaseHas('b2b_rfqs', [
+            'id' => $rfq->id,
+            'status' => 'quoted',
+        ]);
+    }
+
+    public function test_accepting_quotation_generates_purchase_order_and_rejects_others(): void
+    {
+        $buyerUser = $this->createUser();
+        $buyerCompany = $this->createCompany($buyerUser, ['company_type' => 'buyer']);
+        $rfq = $this->createRfq($buyerCompany, $buyerUser);
+
+        $supplierOneUser = $this->createSellerUser();
+        $supplierOneCompany = $this->createCompany($supplierOneUser, ['company_type' => 'supplier']);
+        $supplierTwoUser = $this->createSellerUser();
+        $supplierTwoCompany = $this->createCompany($supplierTwoUser, ['company_type' => 'supplier']);
+
+        $acceptedQuotation = $this->createQuotation($rfq, $supplierOneCompany, $supplierOneUser);
+        $rejectedQuotation = $this->createQuotation($rfq, $supplierTwoCompany, $supplierTwoUser, ['price' => 21]);
+
+        $this->setActiveCompany($buyerCompany);
+
+        $this->actingAs($buyerUser)->post(route('b2b.quotations.accept', $acceptedQuotation->id))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('b2b_quotations', [
+            'id' => $acceptedQuotation->id,
+            'status' => 'accepted',
+        ]);
+        $this->assertDatabaseHas('b2b_quotations', [
+            'id' => $rejectedQuotation->id,
+            'status' => 'rejected',
+        ]);
+        $this->assertDatabaseHas('b2b_rfqs', [
+            'id' => $rfq->id,
+            'status' => 'closed',
+        ]);
+
+        $purchaseOrder = B2BPurchaseOrder::where('quotation_id', $acceptedQuotation->id)->first();
+
+        $this->assertNotNull($purchaseOrder);
+        $this->assertSame($buyerCompany->id, $purchaseOrder->buyer_company_id);
+        $this->assertSame($supplierOneCompany->id, $purchaseOrder->supplier_company_id);
+        $this->assertSame('sent', $purchaseOrder->status);
+    }
+}

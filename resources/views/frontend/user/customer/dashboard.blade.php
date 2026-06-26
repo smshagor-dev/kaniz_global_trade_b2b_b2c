@@ -5,6 +5,33 @@
     @php
         $welcomeCoupon = ifUserHasWelcomeCouponAndNotUsed();
     @endphp
+    @if(!empty($activeB2bCompany))
+        <div class="aiz-titlebar mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-7">
+                    <h6 class="mb-1">{{ translate('Active B2B Company') }}</h6>
+                    <p class="mb-0 text-muted">
+                        {{ $activeB2bCompany->company_name }}
+                        <span class="ml-2 badge badge-inline badge-secondary">{{ ucfirst($activeB2bCompany->company_type) }}</span>
+                    </p>
+                </div>
+                <div class="col-md-5 text-md-right">
+                    @if(!empty($switchableB2bCompanies) && $switchableB2bCompanies->count() > 1)
+                        <form action="{{ route('b2b.company.switch') }}" method="POST" class="d-inline-block">
+                            @csrf
+                            <select name="company_id" class="form-control d-inline-block w-auto" onchange="this.form.submit()">
+                                @foreach ($switchableB2bCompanies as $switchableCompany)
+                                    <option value="{{ $switchableCompany->id }}" @selected((int) $activeB2bCompany->id === (int) $switchableCompany->id)>
+                                        {{ $switchableCompany->company_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </form>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
     @if($welcomeCoupon)
         <div class="alert alert-primary align-items-center border d-flex flex-wrap justify-content-between" style="border-color: #3490F3 !important;">
             @php
@@ -14,6 +41,81 @@
                 {{ translate('Welcome Coupon') }} <strong>{{ $discount }}</strong> {{ translate('Discount on your Purchase Within') }} <strong>{{ $welcomeCoupon->validation_days }}</strong> {{ translate('days of Registration') }}
             </div>
             <button class="btn btn-sm mt-3 mt-lg-0 rounded-4" onclick="copyCouponCode('{{ $welcomeCoupon->coupon_code }}')" style="background-color: #3490F3; color: white;" >{{ translate('Copy coupon Code') }}</button>
+        </div>
+    @endif
+
+    @if(!empty($b2bStats))
+        <div class="row gutters-16 mb-4">
+            <div class="col-md-3">
+                <div class="p-4 border h-100">
+                    <p class="mb-1 text-secondary">{{ translate('Requested RFQs') }}</p>
+                    <h3 class="mb-0">{{ $b2bStats['requested_rfqs'] }}</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-4 border h-100">
+                    <p class="mb-1 text-secondary">{{ translate('Received Quotes') }}</p>
+                    <h3 class="mb-0">{{ $b2bStats['received_quotes'] }}</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-4 border h-100">
+                    <p class="mb-1 text-secondary">{{ translate('Purchase Orders') }}</p>
+                    <h3 class="mb-0">{{ $b2bStats['purchase_orders'] }}</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-4 border h-100">
+                    <p class="mb-1 text-secondary">{{ translate('Favorite Suppliers') }}</p>
+                    <h3 class="mb-0">{{ $b2bStats['favorite_suppliers'] }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="row gutters-16 mb-4">
+            <div class="col-md-4">
+                <div class="p-4 border h-100">
+                    <p class="mb-1 text-secondary">{{ translate('Accepted Quotes') }}</p>
+                    <h3 class="mb-0">{{ $b2bStats['accepted_quotes'] }}</h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4 border h-100">
+                    <p class="mb-1 text-secondary">{{ translate('Invoices') }}</p>
+                    <h3 class="mb-0">{{ $b2bStats['invoices'] }}</h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4 border h-100">
+                    <p class="mb-1 text-secondary">{{ translate('Unread Negotiations') }}</p>
+                    <h3 class="mb-0">{{ $b2bStats['unread_negotiations'] }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="row gutters-16 mb-4">
+            <div class="col-md-3">
+                <div class="p-4 border h-100">
+                    <p class="mb-1 text-secondary">{{ translate('Pending Shipments') }}</p>
+                    <h3 class="mb-0">{{ $b2bStats['pending_shipments'] }}</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-4 border h-100">
+                    <p class="mb-1 text-secondary">{{ translate('Active Shipments') }}</p>
+                    <h3 class="mb-0">{{ $b2bStats['active_shipments'] }}</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-4 border h-100">
+                    <p class="mb-1 text-secondary">{{ translate('Completed Shipments') }}</p>
+                    <h3 class="mb-0">{{ $b2bStats['completed_shipments'] }}</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-4 border h-100">
+                    <p class="mb-1 text-secondary">{{ translate('Sample Orders') }}</p>
+                    <h3 class="mb-0">{{ $b2bStats['sample_orders'] }}</h3>
+                </div>
+            </div>
         </div>
     @endif
 

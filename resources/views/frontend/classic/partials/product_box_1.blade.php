@@ -176,6 +176,11 @@
             <a href="{{ $product_url }}" class="d-block text-reset hov-text-primary"
                 title="{{ $product->getTranslation('name') }}">{{ $product->getTranslation('name') }}</a>
         </h3>
+        @if ($product->wholesale_product && $product->publicSupplierCompany)
+            <div class="text-center mt-2">
+                @include('frontend.partials.supplier_badge', ['company' => $product->publicSupplierCompany])
+            </div>
+        @endif
         <div class="fs-14 d-flex justify-content-center mt-3">
             @if ($product->auction_product == 0)
                 <!-- Previous price -->

@@ -179,6 +179,26 @@
                     </a>
                 </li>
 
+                @if (Route::has('b2b.sample-orders.index'))
+                    <li class="aiz-side-nav-item">
+                        <a href="{{ route('b2b.sample-orders.index') }}"
+                            class="aiz-side-nav-link {{ areActiveRoutes(['b2b.sample-orders.index', 'b2b.sample-orders.create', 'b2b.sample-orders.show']) }}">
+                            <i class="las la-vial fs-16 text-soft-secondary"></i>
+                            <span class="aiz-side-nav-text ml-3">{{ translate('Sample Orders') }}</span>
+                        </a>
+                    </li>
+                @endif
+
+                @if (Route::has('b2b.shipments.index'))
+                    <li class="aiz-side-nav-item">
+                        <a href="{{ route('b2b.shipments.index') }}"
+                            class="aiz-side-nav-link {{ areActiveRoutes(['b2b.shipments.index', 'b2b.shipments.show']) }}">
+                            <i class="las la-shipping-fast fs-16 text-soft-secondary"></i>
+                            <span class="aiz-side-nav-text ml-3">{{ translate('Shipments') }}</span>
+                        </a>
+                    </li>
+                @endif
+
                 @if (get_setting('vendor_system_activation') == 1)
                 <!-- Followed Sellers -->
                 <li class="aiz-side-nav-item">
@@ -380,6 +400,56 @@
                 </li>
 
                 <!-- Manage Profile -->
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('b2b.company.show') }}" class="aiz-side-nav-link {{ areActiveRoutes(['b2b.company.show', 'b2b.company.create', 'b2b.company.edit']) }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                            <path d="M2.5 1A1.5 1.5 0 0 0 1 2.5v11A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-8L10.5 1H2.5zm0 1h7.293L14 6.207V13.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5zm7 0v4a1 1 0 0 0 1 1h4" fill="#b5b5bf"/>
+                            <path d="M4 9.5A1.5 1.5 0 0 1 5.5 8h5A1.5 1.5 0 0 1 12 9.5v2A1.5 1.5 0 0 1 10.5 13h-5A1.5 1.5 0 0 1 4 11.5v-2zm1 0v2a.5.5 0 0 0 .5.5h5a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0-.5.5z" fill="#b5b5bf"/>
+                        </svg>
+                        <span class="aiz-side-nav-text ml-3">{{ translate('B2B Company') }}</span>
+                    </a>
+                </li>
+
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('b2b.packages.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['b2b.packages.index']) }}">
+                        <i class="las la-crown fs-16 text-soft-secondary"></i>
+                        <span class="aiz-side-nav-text ml-3">{{ translate('B2B Packages') }}</span>
+                    </a>
+                </li>
+
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('b2b.rfqs.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['b2b.rfqs.index', 'b2b.rfqs.create', 'b2b.rfqs.show', 'b2b.rfqs.edit']) }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                            <path d="M2 1.5A1.5 1.5 0 0 1 3.5 0h6.879a1.5 1.5 0 0 1 1.06.44l3.121 3.12A1.5 1.5 0 0 1 15 4.621V14.5A1.5 1.5 0 0 1 13.5 16h-10A1.5 1.5 0 0 1 2 14.5v-13zm1.5-.5a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V5h-2.5A1.5 1.5 0 0 1 10 3.5V1H3.5zm7.5.707V3.5a.5.5 0 0 0 .5.5h1.793L11 1.707zM5 7.5A.5.5 0 0 1 5.5 7h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5A.5.5 0 0 1 5 10zm0 2.5a.5.5 0 0 1 .5-.5H9a.5.5 0 0 1 0 1H5.5a.5.5 0 0 1-.5-.5z" fill="#b5b5bf"/>
+                        </svg>
+                        <span class="aiz-side-nav-text ml-3">{{ translate('RFQs') }}</span>
+                    </a>
+                </li>
+
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('b2b.company.members.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['b2b.company.members.index', 'b2b.company.members.invite']) }}">
+                        <span class="aiz-side-nav-text ml-3">{{ translate('Company Team') }}</span>
+                    </a>
+                </li>
+
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('b2b.purchase-orders.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['b2b.purchase-orders.index', 'b2b.purchase-orders.show']) }}">
+                        <span class="aiz-side-nav-text ml-3">{{ translate('Purchase Orders') }}</span>
+                    </a>
+                </li>
+
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('b2b.proforma-invoices.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['b2b.proforma-invoices.index', 'b2b.proforma-invoices.show']) }}">
+                        <span class="aiz-side-nav-text ml-3">{{ translate('Proforma Invoices') }}</span>
+                    </a>
+                </li>
+
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('b2b.negotiations.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['b2b.negotiations.index', 'b2b.negotiations.show']) }}">
+                        <span class="aiz-side-nav-text ml-3">{{ translate('Negotiations') }}</span>
+                    </a>
+                </li>
+
                 <li class="aiz-side-nav-item">
                     <a href="{{ route('profile') }}" class="aiz-side-nav-link {{ areActiveRoutes(['profile']) }}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">

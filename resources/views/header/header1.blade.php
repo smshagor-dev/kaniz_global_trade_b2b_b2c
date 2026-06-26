@@ -237,9 +237,14 @@
                                             d="M8.333,16A3.34,3.34,0,0,0,11,14.667H5.666A3.34,3.34,0,0,0,8.333,16ZM15.06,9.78a2.457,2.457,0,0,1-.727-1.747V6a6,6,0,1,0-12,0V8.033A2.457,2.457,0,0,1,1.606,9.78,2.083,2.083,0,0,0,3.08,13.333H13.586A2.083,2.083,0,0,0,15.06,9.78Z"
                                             transform="translate(-0.999)" fill="#91919b" />
                                     </svg>
-                                    @if (Auth::check() && count($user->unreadNotifications) > 0)
+                                    @php
+                                        $unreadNotifications = Auth::check() && \Illuminate\Support\Facades\Schema::hasTable('notifications')
+                                            ? $user->unreadNotifications
+                                            : collect();
+                                    @endphp
+                                    @if ($unreadNotifications->count() > 0)
                                         <span
-                                            class="badge badge-primary badge-inline badge-pill absolute-top-right--10px unread-notification-count">{{ count($user->unreadNotifications) }}</span>
+                                            class="badge badge-primary badge-inline badge-pill absolute-top-right--10px unread-notification-count">{{ $unreadNotifications->count() }}</span>
                                     @endif
                                 </span>
                             </a>
@@ -250,7 +255,7 @@
                                     </div>
                                     <div class="c-scrollbar-light overflow-auto" style="max-height:300px;">
                                         <ul class="list-group list-group-flush">
-                                            @forelse($user->unreadNotifications as $notification)
+                                            @forelse($unreadNotifications as $notification)
                                                 @php
                                                     $showNotification = true;
                                                     if (

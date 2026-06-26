@@ -92,6 +92,104 @@
     </div>
 </div>
 
+<div class="row mt-3">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0 h6">{{ translate('Global Currency Sync') }}</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ route('currency.api_settings.update') }}" method="POST">
+                    @csrf
+                    <div class="form-group row">
+                        <label class="col-lg-3 col-form-label">{{ translate('Provider') }}</label>
+                        <div class="col-lg-9">
+                            <select class="form-control aiz-selectpicker" name="provider">
+                                <option value="exchange_rate_api" @selected(($currencySettings->provider ?? 'exchange_rate_api') === 'exchange_rate_api')>ExchangeRate-API</option>
+                                <option value="manual" @selected(($currencySettings->provider ?? null) === 'manual')>{{ translate('Manual Rates') }}</option>
+                                <option value="custom" @selected(($currencySettings->provider ?? null) === 'custom')>{{ translate('Custom Driver') }}</option>
+                            </select>
+                            <input type="hidden" name="driver" value="{{ $currencySettings->driver ?? 'exchange_rate_api' }}">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-lg-3 col-form-label">{{ translate('Base Currency') }}</label>
+                        <div class="col-lg-9">
+                            <select class="form-control aiz-selectpicker" name="base_currency_code" data-live-search="true">
+                                @foreach ($active_currencies as $currency)
+                                    <option value="{{ $currency->code }}" @selected(($currencySettings->base_currency_code ?? get_system_default_currency()->code) === $currency->code)>{{ $currency->name }} ({{ $currency->code }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-lg-3 col-form-label">{{ translate('Default Display Currency') }}</label>
+                        <div class="col-lg-9">
+                            <select class="form-control aiz-selectpicker" name="default_display_currency_code" data-live-search="true">
+                                @foreach ($active_currencies as $currency)
+                                    <option value="{{ $currency->code }}" @selected(($currencySettings->default_display_currency_code ?? get_system_default_currency()->code) === $currency->code)>{{ $currency->name }} ({{ $currency->code }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-lg-3 col-form-label">{{ translate('Sync Frequency') }}</label>
+                        <div class="col-lg-9">
+                            <select class="form-control aiz-selectpicker" name="sync_frequency">
+                                <option value="hourly" @selected(($currencySettings->sync_frequency ?? 'hourly') === 'hourly')>{{ translate('Hourly') }}</option>
+                                <option value="daily" @selected(($currencySettings->sync_frequency ?? null) === 'daily')>{{ translate('Daily') }}</option>
+                                <option value="weekly" @selected(($currencySettings->sync_frequency ?? null) === 'weekly')>{{ translate('Weekly') }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-lg-3 col-form-label">{{ translate('API Key') }}</label>
+                        <div class="col-lg-9">
+                            <input type="password" class="form-control" name="api_key" placeholder="{{ translate('ExchangeRate-API key') }}">
+                            <small class="text-muted">{{ translate('Stored encrypted in the database. If blank, the existing DB value or EXCHANGE_RATE_API_KEY fallback is used.') }}</small>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-lg-3 col-form-label">{{ translate('Automatic Sync') }}</label>
+                        <div class="col-lg-9">
+                            <label class="aiz-switch aiz-switch-success mb-0">
+                                <input type="checkbox" name="auto_sync_enabled" value="1" @checked(($currencySettings->auto_sync_enabled ?? true))>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group mb-0 text-right">
+                        <button type="submit" class="btn btn-sm btn-primary">{{ translate('Save Currency Sync Settings') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0 h6">{{ translate('Sync Status') }}</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>{{ translate('Last Sync') }}:</strong> {{ optional($currencySettings?->last_sync_at)->diffForHumans() ?? translate('Never') }}</p>
+                <p><strong>{{ translate('Status') }}:</strong> {{ $currencySettings?->last_sync_status ?? translate('Not started') }}</p>
+                <p><strong>{{ translate('Last Error') }}:</strong> {{ $currencySettings?->last_error ?? translate('None') }}</p>
+                <div class="d-flex flex-wrap" style="gap: 8px;">
+                    <form action="{{ route('currency.test_connection') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-outline-primary">{{ translate('Test Connection') }}</button>
+                    </form>
+                    <form action="{{ route('currency.sync') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-primary">{{ translate('Sync Now') }}</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="aiz-titlebar text-left mt-2 mb-3">
 	<div class="row align-items-center">
 		<div class="col-md-6">
@@ -126,6 +224,7 @@
                     <th>{{translate('Currency name')}}</th>
                     <th data-breakpoints="lg">{{translate('Currency symbol')}}</th>
                     <th data-breakpoints="lg">{{translate('Currency code')}}</th>
+                    <th data-breakpoints="xl">{{translate('Decimals')}}</th>
                     <th>{{translate('Exchange rate')}}(1 USD = ?)</th>
                     <th data-breakpoints="lg">{{translate('Status')}}</th>
                     <th class="text-right">{{translate('Options')}}</th>
@@ -138,6 +237,7 @@
                         <td>{{$currency->name}}</td>
                         <td>{{$currency->symbol}}</td>
                         <td>{{$currency->code}}</td>
+                        <td>{{ $currency->decimal_places ?? get_setting('no_of_decimals') }}</td>
                         <td>{{$currency->exchange_rate}}</td>
                         <td>
                             <label class="aiz-switch aiz-switch-success mb-0">

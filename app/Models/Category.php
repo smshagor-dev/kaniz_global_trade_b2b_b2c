@@ -99,4 +99,14 @@ class Category extends Model
         return $this->hasMany(ProductCategory::class);
     }
 
+    public function b2bRfqs()
+    {
+        return $this->hasMany(B2BRfq::class);
+    }
+
+    public function b2bCompanies()
+    {
+        return $this->belongsToMany(B2BCompany::class, 'b2b_company_categories', 'category_id', 'b2b_company_id')->withTimestamps();
+    }
+
 }

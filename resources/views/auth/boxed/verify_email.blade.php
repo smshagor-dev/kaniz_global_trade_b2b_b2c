@@ -1,55 +1,297 @@
 @extends('auth.layouts.authentication')
 
 @section('content')
-    <!-- aiz-main-wrapper -->
-    <div class="aiz-main-wrapper d-flex flex-column justify-content-md-center bg-white">
-        <section class="bg-white overflow-hidden">
-            <div class="row">
-                <div class="col-xxl-6 col-xl-9 col-lg-10 col-md-7 mx-auto py-lg-4">
-                    <div class="card shadow-none rounded-0 border-0">
-                        <div class="row no-gutters">
-                            <!-- Left Side Image-->
-                            <div class="col-lg-6">
-                                <img src="{{ uploaded_asset(get_setting('password_reset_page_image')) }}" alt="{{ translate('Password Reset Page Image') }}" class="img-fit h-100">
+<!-- aiz-main-wrapper -->
+<div class="aiz-main-wrapper d-flex flex-column justify-content-center align-items-center" style="min-height: 100vh; background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%), url('https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'); background-size: cover; background-position: center; background-attachment: fixed; padding: 20px;">
+    <div class="container">
+        <div style="display: -ms-flexbox; display: flex;-ms-flex-wrap: wrap; flex-wrap: wrap; justify-content: center; align-items: center; margin-right: -40px; margin-left: -40px;">
+            <!-- Right Side - Verification Form -->
+            <div class="col-lg-5">
+                <div class="water-color-card p-4 p-lg-5" style="
+                        background: rgba(255, 255, 255, 0.95);
+                        border-radius: 20px;
+                        box-shadow: 
+                            0 8px 32px rgba(31, 38, 135, 0.15),
+                            inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+                        backdrop-filter: blur(10px);
+                        border: 1px solid rgba(255, 255, 255, 0.5);
+                        position: relative;
+                        overflow: hidden;
+                    ">
+                    <!-- Water color effect background elements -->
+                    <div class="water-color-bg" style="
+                            position: absolute;
+                            top: -50px;
+                            right: -50px;
+                            width: 200px;
+                            height: 200px;
+                            background: linear-gradient(45deg, rgba(230, 46, 4, 0.15), rgba(230, 46, 4, 0.05));
+                            border-radius: 50%;
+                            z-index: 0;
+                        "></div>
+                    <div class="water-color-bg" style="
+                            position: absolute;
+                            bottom: -50px;
+                            left: -50px;
+                            width: 150px;
+                            height: 150px;
+                            background: linear-gradient(45deg, rgba(230, 46, 4, 0.1), rgba(255, 153, 0, 0.1));
+                            border-radius: 50%;
+                            z-index: 0;
+                        "></div>
+
+                    <div class="position-relative" style="z-index: 1;">
+                        <!-- Site Icon -->
+                        <div class="text-center mb-4">
+                            <div class="water-color-circle mb-3" style="
+                                    width: 48px;
+                                    height: 48px;
+                                    background: linear-gradient(135deg, rgba(230, 46, 4, 0.2), rgba(230, 46, 4, 0.1));
+                                    border-radius: 50%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    margin: 0 auto;
+                                    border: 2px solid rgba(255, 255, 255, 0.8);
+                                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+                                ">
+                                <img src="{{ uploaded_asset(get_setting('site_icon')) }}" alt="{{ translate('Site Icon')}}" class="img-fit" style="height: 50px;">
                             </div>
 
-                            <div class="col-lg-6 p-4 p-lg-5 d-flex flex-column justify-content-center border right-content" style="height: auto;">
-                                <!-- Site Icon -->
-                                <div class="size-48px mb-3 mx-auto mx-lg-0">
-                                    <img src="{{ uploaded_asset(get_setting('site_icon')) }}" alt="{{ translate('Site Icon')}}" class="img-fit h-100">
-                                </div>
-
-                                <!-- Titles -->
-                                <div class="text-center text-lg-left">
-                                    <h1 class="fs-20 fs-md-20 fw-700 text-primary" style="text-transform: uppercase;">{{ translate('Verify Your Email Address') }}</h1>
-                                    <h5 class="fs-14 fw-400 text-dark">
-                                        {{ translate('Before proceeding, please check your email for a verification link. If you did not receive the email.') }}
-                                    </h5>
-                                </div>
-
-                                <!-- Reset password form -->
-                                <div class="pt-3">
-                                    <div class="">
-                                        <a href="{{ route('verification.resend') }}" class="btn btn-primary btn-block">{{ translate('Click here to request another') }}</a>
-                                        @if (session('resent'))
-                                            <div class="alert alert-success mt-2 mb-0" role="alert">
-                                                {{ translate('A fresh verification link has been sent to your email address.') }}
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
+                            <!-- Titles -->
+                            <h1 class="fs-24 fw-800 mb-2" style="
+                                    background: linear-gradient(45deg, #e62e04, #ff9900);
+                                    -webkit-background-clip: text;
+                                    -webkit-text-fill-color: transparent;
+                                    text-transform: uppercase;
+                                    letter-spacing: 1px;
+                                ">{{ translate('Verify Your Email')}}</h1>
+                            <p class="text-muted mb-4">{{ translate('Please check your email for verification link')}}</p>
                         </div>
-                        <!-- Go Back -->
-                        <div class="mt-3 mr-4 mr-md-0">
-                            <a href="{{ url()->previous() }}" class="ml-auto fs-14 fw-700 d-flex align-items-center text-primary" style="max-width: fit-content;">
-                                <i class="las la-arrow-left fs-20 mr-1"></i>
-                                {{ translate('Back to Previous Page')}}
-                            </a>
+
+                        <!-- Verification content -->
+                        <div class="pt-2">
+                            <!-- Message -->
+                            <div class="mb-4">
+                                <p class="fs-14 text-dark mb-3">
+                                    {{ translate('Before proceeding, please check your email for a verification link. If you did not receive the email.') }}
+                                </p>
+                            </div>
+
+                            @if (session('resent'))
+                                <div class="alert alert-success mb-4" style="
+                                        background: rgba(46, 204, 113, 0.1);
+                                        border: 1px solid rgba(46, 204, 113, 0.3);
+                                        color: #27ae60;
+                                        border-radius: 12px;
+                                        padding: 12px;
+                                    ">
+                                    {{ translate('A fresh verification link has been sent to your email address.') }}
+                                </div>
+                            @endif
+
+                            <!-- Resend Button -->
+                            <div class="mb-4">
+                                <a href="{{ route('verification.resend') }}" class="btn btn-primary btn-block fw-700 fs-14" style="
+                                        background: linear-gradient(45deg, #e62e04, #ff9900);
+                                        border: none;
+                                        border-radius: 12px;
+                                        padding: 15px;
+                                        transition: all 0.3s ease;
+                                        box-shadow: 0 4px 15px rgba(230, 46, 4, 0.3);
+                                        position: relative;
+                                        overflow: hidden;
+                                        text-decoration: none;
+                                        display: block;
+                                    ">
+                                    <span style="position: relative; z-index: 2;">
+                                        {{ translate('Click here to request another') }}
+                                    </span>
+                                    <div class="water-effect" style="
+                                            position: absolute;
+                                            top: 50%;
+                                            left: 50%;
+                                            width: 0;
+                                            height: 0;
+                                            border-radius: 50%;
+                                            background: rgba(255, 255, 255, 0.3);
+                                            transform: translate(-50%, -50%);
+                                            transition: width 0.6s, height 0.6s;
+                                        "></div>
+                                </a>
+                            </div>
+
+                            <!-- Login Link -->
+                            <div class="text-center pt-3 border-top" style="border-color: rgba(0,0,0,0.1) !important;">
+                                <p class="fs-12 text-gray mb-0">
+                                    {{ translate('Already verified?')}}
+                                    <a href="{{ route('user.login') }}" class="ml-2 fs-14 fw-700" style="
+                                            background: linear-gradient(45deg, #e62e04, #ff9900);
+                                            -webkit-background-clip: text;
+                                            -webkit-text-fill-color: transparent;
+                                            text-decoration: none;
+                                            position: relative;
+                                        ">
+                                        {{ translate('Login Now')}}
+                                        <span class="water-underline" style="
+                                                position: absolute;
+                                                bottom: -2px;
+                                                left: 0;
+                                                width: 100%;
+                                                height: 2px;
+                                                background: linear-gradient(45deg, #e62e04, #ff9900);
+                                                border-radius: 2px;
+                                                transform: scaleX(0);
+                                                transition: transform 0.3s ease;
+                                            "></span>
+                                    </a>
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Go Back -->
+                <div class="text-center mt-4">
+                    <div class="d-flex justify-content-center align-items-center flex-wrap" style="gap: 15px;">
+                        <a href="/" class="text-dark fs-14 fw-600 d-inline-flex align-items-center" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            padding: 10px 20px;
+                            border-radius: 25px;
+                            text-decoration: none;
+                            border: 1px solid rgba(52, 152, 219, 0.3);
+                            transition: all 0.3s ease;
+                        ">
+                            <i class="las la-home fs-18 mr-2 text-primary"></i>
+                            {{ translate('Back to Home')}}
+                        </a>
+                        <a href="{{ url()->previous() }}" class="text-dark fs-14 fw-600 d-inline-flex align-items-center" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            padding: 10px 20px;
+                            border-radius: 25px;
+                            text-decoration: none;
+                            border: 1px solid rgba(52, 152, 219, 0.3);
+                            transition: all 0.3s ease;
+                        ">
+                            <i class="las la-arrow-left fs-18 mr-2 text-primary"></i>
+                            {{ translate('Back to Previous Page')}}
+                        </a>
+                    </div>
+                </div>
             </div>
-        </section>
+        </div>
     </div>
+</div>
 @endsection
+
+@section('script')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add water effect to resend button
+        const resendBtn = document.querySelector('a[href="{{ route("verification.resend") }}"]');
+        if (resendBtn) {
+            resendBtn.addEventListener('click', function(e) {
+                const waterEffect = this.querySelector('.water-effect');
+                if (waterEffect) {
+                    waterEffect.style.width = '300px';
+                    waterEffect.style.height = '300px';
+                    setTimeout(() => {
+                        waterEffect.style.width = '0';
+                        waterEffect.style.height = '0';
+                    }, 600);
+                }
+            });
+        }
+
+        // Add hover effect to login link
+        const loginLink = document.querySelector('a[href="{{ route("user.login") }}"]');
+        if (loginLink) {
+            const underline = loginLink.querySelector('.water-underline');
+            if (underline) {
+                loginLink.addEventListener('mouseenter', function() {
+                    underline.style.transform = 'scaleX(1)';
+                });
+                loginLink.addEventListener('mouseleave', function() {
+                    underline.style.transform = 'scaleX(0)';
+                });
+            }
+        }
+
+        // Add hover effect to back button
+        const backBtn = document.querySelector('a[href="{{ url()->previous() }}"]');
+        if (backBtn) {
+            backBtn.addEventListener('mouseenter', function() {
+                this.style.background = 'rgba(230, 46, 4, 0.1)';
+                this.style.borderColor = 'rgba(230, 46, 4, 0.5)';
+            });
+            backBtn.addEventListener('mouseleave', function() {
+                this.style.background = 'rgba(255, 255, 255, 0.9)';
+                this.style.borderColor = 'rgba(230, 46, 4, 0.3)';
+            });
+        }
+    });
+</script>
+@endsection
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
+    body {
+        font-family: 'Inter', sans-serif;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Inter', sans-serif;
+    }
+
+    .water-color-card {
+        animation: fadeInUp 0.8s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .water-color-bg {
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .water-color-bg:nth-child(2) {
+        animation-delay: 2s;
+    }
+
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0) rotate(0deg);
+        }
+        50% {
+            transform: translateY(-20px) rotate(10deg);
+        }
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(230, 46, 4, 0.4) !important;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 991.98px) {
+        .col-lg-5 {
+            max-width: 450px;
+            margin: 0 auto;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .water-color-card {
+            padding: 2rem !important;
+        }
+    }
+</style>

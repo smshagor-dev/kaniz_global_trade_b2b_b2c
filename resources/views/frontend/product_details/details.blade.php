@@ -402,6 +402,11 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="mb-4">
+                    <a href="{{ route('b2b.rfqs.create', ['product_id' => $detailedProduct->id]) }}" class="btn btn-primary rounded-0">
+                        {{ translate('Request Quote') }}
+                    </a>
+                </div>
                 <!-- Wholesale End-->
             @else
                 @if ($detailedProduct->variant_product)
@@ -645,6 +650,21 @@
                         @endif
                     </div>
                 </div>
+                @if ($detailedProduct->wholesale_product && $detailedProduct->publicSupplierCompany)
+                    <div class="d-flex align-items-center bg-light p-20px rounded-2 w-100 mt-2 mt-xl-0">
+                        <div>
+                            <p class="m-0 fs-14">
+                                <span class="fw-400 text-gray">{{ translate('Supplier Profile') }}</span>
+                                <a href="{{ route('b2b.suppliers.show', $detailedProduct->publicSupplierCompany->public_slug) }}" class="fw-bold text-blue pl-15px">{{ $detailedProduct->publicSupplierCompany->company_name }}</a>
+                            </p>
+                            @include('frontend.partials.supplier_badge', ['company' => $detailedProduct->publicSupplierCompany])
+                            <div class="mt-2 d-flex flex-wrap">
+                                <a href="{{ route('b2b.suppliers.show', $detailedProduct->publicSupplierCompany->public_slug) }}" class="fs-13 fw-600 text-blue mr-3">{{ translate('View Supplier Profile') }}</a>
+                                <a href="{{ route('b2b.sample-orders.create', ['product_id' => $detailedProduct->id, 'supplier_company_id' => $detailedProduct->publicSupplierCompany->id]) }}" class="fs-13 fw-600 text-blue">{{ translate('Request Sample') }}</a>
+                            </div>
+                        </div>
+                    </div>
+                @endif
                 @if ($detailedProduct->brand != null)
                     <div class="d-flex align-items-center bg-light p-20px rounded-2 w-100">
                         <div class="store-logo-container w-48px h-48px bg-white border bordre-2 border-gray rounded-1 overflow-hidden mr-3 d-flex flex-shrink-0 align-items-center justify-content-center">

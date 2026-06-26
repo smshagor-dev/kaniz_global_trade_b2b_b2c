@@ -11,6 +11,7 @@ use App\Models\Shop;
 use App\Models\Upload;
 use App\Models\User;
 use Artisan;
+use App\Services\B2BDashboardService;
 use Cache;
 use Carbon\Carbon;
 use CoreComponentRepository;
@@ -147,6 +148,7 @@ class AdminController extends Controller
         $data['total_shipped_order'] = Order::where('delivery_status', 'on_the_way')->count();
         $admin_id = User::select('id')->where('user_type', 'admin')->first()->id;
         $data['total_inhouse_sale'] = Order::where("seller_id", $admin_id)->sum('grand_total');
+        $data['b2b_stats'] = app(B2BDashboardService::class)->adminStats();
         $data['payment_type_wise_inhouse_sale'] = Order::select(DB::raw('case
                                                     when payment_type in ("wallet") then "wallet"
                                                     when payment_type NOT in ("cash_on_delivery") then "others"
@@ -160,6 +162,15 @@ class AdminController extends Controller
         $data['total_inhouse_order'] = Order::where("seller_id", $admin_id)->count();
 
         return view('backend.dashboard', $data);
+    }
+
+    public function b2b_dashboard()
+    {
+        CoreComponentRepository::initializeCache();
+
+        $data['b2b_stats'] = app(B2BDashboardService::class)->adminStats();
+
+        return view('backend.b2b.dashboard', $data);
     }
 
     public function top_category_products_section(Request $request)

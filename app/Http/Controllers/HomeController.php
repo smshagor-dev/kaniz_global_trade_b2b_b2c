@@ -15,6 +15,10 @@ use App\Models\Coupon;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\FlashDeal;
+use App\Models\B2BCompany;
+use App\Models\B2BShipment;
+use App\Models\B2BShippingProvider;
+use App\Models\B2BPackage;
 use App\Models\OrderDetail;
 use App\Models\ProductQuery;
 use Illuminate\Http\Request;
@@ -33,10 +37,13 @@ use App\Models\PreorderProduct;
 use App\Models\RegistrationVerificationCode;
 use App\Models\SmsTemplate;
 use App\Services\FacebookConversionService;
+use App\Services\B2BCompanyService;
+use App\Services\B2BDashboardService;
 use App\Services\SendSmsService;
 use App\Utility\EmailUtility;
 use Artisan;
 use DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\URL;
 use ZipArchive;
@@ -53,6 +60,7 @@ class HomeController extends Controller
     public function index()
     {
         $lang = get_system_language() ? get_system_language()->code : null;
+        $tradeServicesData = $this->buildTradeServicesData();
         $featured_categories = Cache::rememberForever('featured_categories', function () {
             return Category::with('bannerImage')->where('featured', 1)->get();
         });
@@ -64,16 +72,70 @@ class HomeController extends Controller
         if (addon_is_activated('portfolio_system')) {
             $goingons = Blog::where('status', 1)->where('going_on', 1)->latest()->get();
             if (!auth()->check()) {
-                return view('frontend.portfolio.index', compact('lang','goingons'));
+                return view('frontend.portfolio.index', compact('lang','goingons', 'tradeServicesData'));
             }
             //dd($authUser->shop);
             if (($authUser->verification_status == 0) ||( $authUser->shop && $authUser->shop->verification_status == 0)) {
-                return view('frontend.portfolio.index', compact('lang','goingons'));
+                return view('frontend.portfolio.index', compact('lang','goingons', 'tradeServicesData'));
             }
         }
 
 
-        return view('frontend.' . get_setting('homepage_select') . '.index', compact('featured_categories','hot_categories', 'lang'));
+        return view('frontend.' . get_setting('homepage_select') . '.index', compact('featured_categories','hot_categories', 'lang', 'tradeServicesData'));
+    }
+
+    protected function buildTradeServicesData(): array
+    {
+        $tradeServicesData = [
+            'verified_logistics_partners' => 0,
+            'public_suppliers' => 0,
+            'active_shipments' => 0,
+            'featured_suppliers' => 0,
+            'featured_supplier_monthly_price' => 0,
+            'featured_supplier_package_name' => null,
+            'featured_suppliers_list' => collect(),
+        ];
+
+        if (Schema::hasTable('b2b_shipping_providers')) {
+            $tradeServicesData['verified_logistics_partners'] = B2BShippingProvider::query()
+                ->where('is_active', true)
+                ->where('is_verified', true)
+                ->count();
+        }
+
+        if (Schema::hasTable('b2b_companies')) {
+            $tradeServicesData['public_suppliers'] = B2BCompany::query()
+                ->where('verification_status', 'approved')
+                ->where('public_profile_enabled', true)
+                ->whereIn('company_type', B2BCompany::SUPPLIER_TYPES)
+                ->count();
+
+            $tradeServicesData['featured_suppliers'] = B2BCompany::homepageFeaturedSuppliers()->count();
+            $tradeServicesData['featured_suppliers_list'] = B2BCompany::homepageFeaturedSuppliers()
+                ->with(['categories'])
+                ->orderByDesc('profile_score')
+                ->latest()
+                ->limit(6)
+                ->get();
+        }
+
+        if (Schema::hasTable('b2b_packages')) {
+            $featuredPlan = B2BPackage::featuredSupplierHomepage()
+                ->orderBy('sort_order')
+                ->orderBy('amount')
+                ->first();
+
+            $tradeServicesData['featured_supplier_package_name'] = $featuredPlan?->name;
+            $tradeServicesData['featured_supplier_monthly_price'] = $featuredPlan?->monthlyEquivalent() ?? 0;
+        }
+
+        if (Schema::hasTable('b2b_shipments')) {
+            $tradeServicesData['active_shipments'] = B2BShipment::query()
+                ->whereIn('status', ['preparing', 'picked_up', 'export_customs', 'in_transit', 'import_customs', 'out_for_delivery'])
+                ->count();
+        }
+
+        return $tradeServicesData;
     }
 
     public function load_todays_deal_section()
@@ -277,7 +339,10 @@ class HomeController extends Controller
             if ($users_cart) {
                 flash(translate('You had placed your items in the shopping cart. Try to order before the product quantity runs out.'))->warning();
             }
-            return view('frontend.user.customer.dashboard');
+            $b2bStats = app(B2BDashboardService::class)->buyerStats(Auth::id());
+            $activeB2bCompany = app(B2BCompanyService::class)->getCompanyByUser(Auth::id());
+            $switchableB2bCompanies = app(B2BCompanyService::class)->getSwitchableCompaniesByUser(Auth::id());
+            return view('frontend.user.customer.dashboard', compact('b2bStats', 'activeB2bCompany', 'switchableB2bCompanies'));
         } elseif (Auth::user()->user_type == 'delivery_boy') {
             return view('delivery_boys.dashboard');
         } else {

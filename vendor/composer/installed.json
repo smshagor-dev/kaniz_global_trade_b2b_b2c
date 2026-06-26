@@ -7307,7 +7307,7 @@
             "support": {
                 "source": "https://github.com/paypal/Checkout-PHP-SDK/tree/master"
             },
-            "abandoned": true,
+            "abandoned": "paypal/paypal-server-sdk",
             "install-path": "../paypal/paypal-checkout-sdk"
         },
         {

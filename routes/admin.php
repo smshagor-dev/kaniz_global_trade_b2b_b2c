@@ -420,6 +420,9 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::post('/currency/store', 'store')->name('currency.store');
         Route::post('/currency/currency_edit', 'edit')->name('currency.edit');
         Route::post('/currency/update_status', 'update_status')->name('currency.update_status');
+        Route::post('/currency/api-settings', 'updateApiSettings')->name('currency.api_settings.update');
+        Route::post('/currency/sync', 'syncRates')->name('currency.sync');
+        Route::post('/currency/test-connection', 'testConnection')->name('currency.test_connection');
     });
 
     //Tax

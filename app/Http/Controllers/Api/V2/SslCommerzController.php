@@ -4,7 +4,6 @@
 namespace App\Http\Controllers\Api\V2;
 
 
-use App\Models\BusinessSetting;
 use App\Http\Controllers\SSLCommerz;
 use App\Models\CombinedOrder;
 use App\Models\Order;
@@ -29,7 +28,7 @@ class SslCommerzController extends Controller
     public function __construct()
     {
         # IF SANDBOX TRUE, THEN IT WILL CONNECT WITH SSLCOMMERZ SANDBOX (TEST) SYSTEM
-        if (BusinessSetting::where('type', 'sslcommerz_sandbox')->first()->value == 1) {
+        if ((int) get_setting('sslcommerz_sandbox', 0) === 1) {
             $this->setSSLCommerzMode(true);
         } else {
             $this->setSSLCommerzMode(false);

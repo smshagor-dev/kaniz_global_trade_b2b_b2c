@@ -173,4 +173,64 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(Preorder::class);
     }
+
+    public function b2bCompany()
+    {
+        return $this->hasOne(B2BCompany::class);
+    }
+
+    public function b2bCompanyMemberships()
+    {
+        return $this->hasMany(B2BCompanyMember::class, 'user_id');
+    }
+
+    public function b2bCompanyInvitations()
+    {
+        return $this->hasMany(B2BCompanyInvitation::class, 'invited_by');
+    }
+
+    public function b2bRfqs()
+    {
+        return $this->hasMany(B2BRfq::class);
+    }
+
+    public function b2bQuotations()
+    {
+        return $this->hasMany(B2BQuotation::class, 'supplier_user_id');
+    }
+
+    public function buyerPurchaseOrders()
+    {
+        return $this->hasMany(B2BPurchaseOrder::class, 'buyer_user_id');
+    }
+
+    public function supplierPurchaseOrders()
+    {
+        return $this->hasMany(B2BPurchaseOrder::class, 'supplier_user_id');
+    }
+
+    public function buyerProformaInvoices()
+    {
+        return $this->hasMany(B2BProformaInvoice::class, 'buyer_user_id');
+    }
+
+    public function supplierProformaInvoices()
+    {
+        return $this->hasMany(B2BProformaInvoice::class, 'supplier_user_id');
+    }
+
+    public function buyerNegotiations()
+    {
+        return $this->hasMany(B2BNegotiation::class, 'buyer_user_id');
+    }
+
+    public function supplierNegotiations()
+    {
+        return $this->hasMany(B2BNegotiation::class, 'supplier_user_id');
+    }
+
+    public function b2bAuditLogs()
+    {
+        return $this->hasMany(B2BAuditLog::class, 'actor_user_id');
+    }
 }

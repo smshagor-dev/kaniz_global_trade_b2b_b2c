@@ -25,9 +25,13 @@ class MyfatoorahController extends Controller
      */
     public function __construct()
     {
-
-        // If you want to set the credentials and the mode manually.
-        $this->mfObj = new PaymentMyfatoorahApiV2(env('MYFATOORAH_TOKEN'), env('MYFATOORAH_COUNTRY_ISO'), get_setting('myfatoorah_sandbox') == 1 ? true : false);
+        if (class_exists(PaymentMyfatoorahApiV2::class) && get_setting('myfatoorah') == 1) {
+            $this->mfObj = new PaymentMyfatoorahApiV2(
+                env('MYFATOORAH_TOKEN'),
+                env('MYFATOORAH_COUNTRY_ISO'),
+                get_setting('myfatoorah_sandbox') == 1 ? true : false
+            );
+        }
     }
 
     /**
@@ -38,6 +42,10 @@ class MyfatoorahController extends Controller
 
     public function pay(Request $request)
     {
+        if (!$this->mfObj) {
+            return response()->json(['result' => false, 'message' => translate('MyFatoorah is not available right now.')]);
+        }
+
         $payment_type = $request->payment_type;
         $amount = $request->amount;
         $user = User::find($request->user_id);
@@ -93,6 +101,10 @@ class MyfatoorahController extends Controller
 
     public function callback(Request $request)
     {
+        if (!$this->mfObj) {
+            return response()->json(['result' => false, 'message' => translate('MyFatoorah is not available right now.')]);
+        }
+
         try {
             $response = $this->mfObj->getPaymentStatus(request('paymentId'), 'PaymentId');
             if ($response->InvoiceStatus == 'Paid') {

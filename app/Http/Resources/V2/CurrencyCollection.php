@@ -16,6 +16,8 @@ class CurrencyCollection extends ResourceCollection
                     'code' => $data->code,
                     'symbol' => $data->symbol,
                     'exchange_rate' => (double) $data->exchange_rate,
+                    'decimal_places' => (int) ($data->decimal_places ?? get_setting('no_of_decimals')),
+                    'symbol_position' => $data->symbol_position ?? 'prefix',
                     'is_default' => get_setting('system_default_currency')==$data->id?true:false
                 ];
             })

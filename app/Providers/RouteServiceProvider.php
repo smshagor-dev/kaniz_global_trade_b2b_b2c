@@ -72,6 +72,8 @@ class RouteServiceProvider extends ServiceProvider
 
     $this->mapWholesaleRoutes();
 
+    $this->mapB2BRoutes();
+
     $this->mapPreorderRoutes();
 
     $this->mapCybersourceRoutes();
@@ -111,6 +113,13 @@ class RouteServiceProvider extends ServiceProvider
        ->group(base_path('routes/wholesale.php'));
   }
 
+  protected function mapB2BRoutes()
+  {
+    Route::middleware('web')
+       ->namespace($this->namespace)
+       ->group(base_path('routes/b2b.php'));
+  }
+
   /**
    * Define the "delivery boy" routes for the application.
    *
@@ -120,9 +129,9 @@ class RouteServiceProvider extends ServiceProvider
    */
   protected function mapDeliveryBoyRoutes()
   {
-    Route::middleware('web')
-       ->namespace($this->namespace)
-       ->group(base_path('routes/delivery_boy.php'));
+    $this->mapOptionalWebRouteFile('routes/delivery_boy.php', [
+      \App\Http\Controllers\DeliveryBoyController::class,
+    ]);
   }
 
     /**
@@ -134,9 +143,10 @@ class RouteServiceProvider extends ServiceProvider
    */
   protected function mapAuctionRoutes()
   {
-    Route::middleware('web')
-       ->namespace($this->namespace)
-       ->group(base_path('routes/auction.php'));
+    $this->mapOptionalWebRouteFile('routes/auction.php', [
+      \App\Http\Controllers\AuctionProductController::class,
+      \App\Http\Controllers\AuctionProductBidController::class,
+    ]);
   }
 
   /**
@@ -148,9 +158,10 @@ class RouteServiceProvider extends ServiceProvider
    */
   protected function mapSellerPackageRoutes()
   {
-    Route::middleware('web')
-       ->namespace($this->namespace)
-       ->group(base_path('routes/seller_package.php'));
+    $this->mapOptionalWebRouteFile('routes/seller_package.php', [
+      \App\Http\Controllers\SellerPackageController::class,
+      \App\Http\Controllers\SellerPackagePaymentController::class,
+    ]);
   }
 
   /**
@@ -162,9 +173,9 @@ class RouteServiceProvider extends ServiceProvider
    */
   protected function mapAffiliateRoutes()
   {
-    Route::middleware('web')
-       ->namespace($this->namespace)
-       ->group(base_path('routes/affiliate.php'));
+    $this->mapOptionalWebRouteFile('routes/affiliate.php', [
+      \App\Http\Controllers\AffiliateController::class,
+    ]);
   }
 
   /**
@@ -176,9 +187,10 @@ class RouteServiceProvider extends ServiceProvider
    */
   protected function mapOfflinePaymentRoutes()
   {
-    Route::middleware('web')
-       ->namespace($this->namespace)
-       ->group(base_path('routes/offline_payment.php'));
+    $this->mapOptionalWebRouteFile('routes/offline_payment.php', [
+      \App\Http\Controllers\OfflinePayoutMethodController::class,
+      \App\Http\Controllers\ManualPaymentMethodController::class,
+    ]);
   }
 
 
@@ -191,9 +203,12 @@ class RouteServiceProvider extends ServiceProvider
    */
   protected function mapPaytmRoutes()
   {
-    Route::middleware('web')
-       ->namespace($this->namespace)
-       ->group(base_path('routes/paytm.php'));
+    $this->mapOptionalWebRouteFile('routes/paytm.php', [
+      \App\Http\Controllers\Payment\PaytmController::class,
+      \App\Http\Controllers\Payment\ToyyibpayController::class,
+      \App\Http\Controllers\Payment\KhaltiController::class,
+      \App\Http\Controllers\Payment\PhonepeController::class,
+    ]);
   }
 
   /**
@@ -205,9 +220,12 @@ class RouteServiceProvider extends ServiceProvider
    */
   protected function mapAfricanPaymentGatewayRoutes()
   {
-    Route::middleware('web')
-       ->namespace($this->namespace)
-       ->group(base_path('routes/african_pg.php'));
+    $this->mapOptionalWebRouteFile('routes/african_pg.php', [
+      \App\Http\Controllers\AfricanPaymentGatewayController::class,
+      \App\Http\Controllers\Payment\FlutterwaveController::class,
+      \App\Http\Controllers\Payment\MpesaController::class,
+      \App\Http\Controllers\Payment\PayfastController::class,
+    ]);
   }
 
   /**
@@ -219,9 +237,10 @@ class RouteServiceProvider extends ServiceProvider
    */
   protected function mapRefundRoutes()
   {
-    Route::middleware('web')
-       ->namespace($this->namespace)
-       ->group(base_path('routes/refund_request.php'));
+    $this->mapOptionalWebRouteFile('routes/refund_request.php', [
+      \App\Http\Controllers\RefundRequestController::class,
+      \App\Http\Controllers\RefundReasonController::class,
+    ]);
   }
 
   /**
@@ -233,9 +252,9 @@ class RouteServiceProvider extends ServiceProvider
    */
   protected function mapClubPointsRoutes()
   {
-    Route::middleware('web')
-       ->namespace($this->namespace)
-       ->group(base_path('routes/club_points.php'));
+    $this->mapOptionalWebRouteFile('routes/club_points.php', [
+      \App\Http\Controllers\ClubPointController::class,
+    ]);
   }
 
   /**
@@ -247,9 +266,12 @@ class RouteServiceProvider extends ServiceProvider
    */
   protected function mapOtpRoutes()
   {
-    Route::middleware('web')
-       ->namespace($this->namespace)
-       ->group(base_path('routes/otp.php'));
+    $this->mapOptionalWebRouteFile('routes/otp.php', [
+      \App\Http\Controllers\OTPVerificationController::class,
+      \App\Http\Controllers\OTPController::class,
+      \App\Http\Controllers\SmsController::class,
+      \App\Http\Controllers\SmsTemplateController::class,
+    ]);
   }
 
   /**
@@ -261,9 +283,10 @@ class RouteServiceProvider extends ServiceProvider
    */
   protected function mapPosRoutes()
   {
-    Route::middleware('web')
-       ->namespace($this->namespace)
-       ->group(base_path('routes/pos.php'));
+    $this->mapOptionalWebRouteFile('routes/pos.php', [
+      \App\Http\Controllers\PosController::class,
+      \App\Http\Controllers\Seller\PosController::class,
+    ]);
   }
 
   /**
@@ -345,9 +368,10 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function mapPreorderRoutes()
     {
-        Route::middleware('web')
-            ->namespace($this->namespace)
-            ->group(base_path('routes/preorder.php'));
+        $this->mapOptionalWebRouteFile('routes/preorder.php', [
+            \App\Http\Controllers\Preorder\DashboardController::class,
+            \App\Http\Controllers\Preorder\seller\DashboardController::class,
+        ]);
     }
 
   /**
@@ -430,9 +454,9 @@ class RouteServiceProvider extends ServiceProvider
    */
   protected function mapShiprocketRoutes()
   {
-    Route::middleware('web')
-       ->namespace($this->namespace)
-       ->group(base_path('routes/shiprocket.php'));
+    $this->mapOptionalWebRouteFile('routes/shiprocket.php', [
+      \App\Http\Controllers\ShiprocketController::class,
+    ]);
   }
 
   /**
@@ -444,9 +468,9 @@ class RouteServiceProvider extends ServiceProvider
    */
   protected function mapSteadfastRoutes()
   {
-    Route::middleware('web')
-       ->namespace($this->namespace)
-       ->group(base_path('routes/steadfast.php'));
+    $this->mapOptionalWebRouteFile('routes/steadfast.php', [
+      \App\Http\Controllers\SteadfastController::class,
+    ]);
   }
 
   /**
@@ -458,9 +482,9 @@ class RouteServiceProvider extends ServiceProvider
    */
   protected function mapPathaoRoutes()
   {
-    Route::middleware('web')
-       ->namespace($this->namespace)
-       ->group(base_path('routes/pathao.php'));
+    $this->mapOptionalWebRouteFile('routes/pathao.php', [
+      \App\Http\Controllers\PathaoController::class,
+    ]);
   }
 
     /**
@@ -472,9 +496,9 @@ class RouteServiceProvider extends ServiceProvider
    */
   protected function mapKnetRoutes()
   {
-    Route::middleware('web')
-       ->namespace($this->namespace)
-       ->group(base_path('routes/knet.php'));
+    $this->mapOptionalWebRouteFile('routes/knet.php', [
+      \App\Http\Controllers\Payment\KnetController::class,
+    ]);
   }
 
   /**
@@ -486,9 +510,9 @@ class RouteServiceProvider extends ServiceProvider
    */
   protected function mapUddoktapayRoutes()
   {
-    Route::middleware('web')
-       ->namespace($this->namespace)
-       ->group(base_path('routes/uddoktapay.php'));
+    $this->mapOptionalWebRouteFile('routes/uddoktapay.php', [
+      \App\Http\Controllers\Payment\UddoktapayController::class,
+    ]);
   }
   
     /**
@@ -500,8 +524,21 @@ class RouteServiceProvider extends ServiceProvider
    */
   protected function mapRedxRoutes()
   {
+    $this->mapOptionalWebRouteFile('routes/redx.php', [
+      \App\Http\Controllers\RedxController::class,
+    ]);
+  }
+
+  protected function mapOptionalWebRouteFile(string $routeFile, array $controllerClasses): void
+  {
+    foreach ($controllerClasses as $controllerClass) {
+      if (!class_exists($controllerClass)) {
+        return;
+      }
+    }
+
     Route::middleware('web')
        ->namespace($this->namespace)
-       ->group(base_path('routes/redx.php'));
+       ->group(base_path($routeFile));
   }
 }

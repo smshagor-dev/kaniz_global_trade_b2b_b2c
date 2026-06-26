@@ -256,6 +256,9 @@
         @include('frontend.inc.nav')
 
         @yield('content')
+        @if (Route::currentRouteNamed('home') && !empty($tradeServicesData))
+            @include('frontend.partials.trade_services_home', ['tradeServicesData' => $tradeServicesData])
+        @endif
 
         <!-- footer -->
         @include('frontend.inc.footer')
@@ -281,12 +284,18 @@
     @php
         $alert_location = get_setting('custom_alert_location');
         $order = in_array($alert_location, ['top-left', 'top-right']) ? 'asc' : 'desc';
-        $custom_alerts = App\Models\CustomAlert::where('status', 1)->orderBy('id', $order)->get();
+        $custom_alerts = \Illuminate\Support\Facades\Schema::hasTable('custom_alerts')
+            ? App\Models\CustomAlert::where('status', 1)->orderBy('id', $order)->get()
+            : collect();
         $hasUnreviewed = false;
         
         use App\Models\Order;
         use App\Models\OrderDetail;
-        if(auth()->user()){
+        if(
+            auth()->user()
+            && \Illuminate\Support\Facades\Schema::hasTable('order_details')
+            && \Illuminate\Support\Facades\Schema::hasColumn('order_details', 'reviewed')
+        ){
         $userOrderIds = Order::where('user_id', auth()->user()->id)->pluck('id');
         $hasUnreviewed = OrderDetail::whereIn('order_id', $userOrderIds)->where('delivery_status', 'delivered')->where('reviewed', 0)->exists();
         }
@@ -371,7 +380,9 @@
 
     <!-- website popup -->
     @php
-        $dynamic_popups = App\Models\DynamicPopup::where('status', 1)->orderBy('id', 'asc')->get();
+        $dynamic_popups = \Illuminate\Support\Facades\Schema::hasTable('dynamic_popups')
+            ? App\Models\DynamicPopup::where('status', 1)->orderBy('id', 'asc')->get()
+            : collect();
         $popup_count = 0;
         $hideWrapper = false;
         if(count($dynamic_popups) == 1 && ($dynamic_popups[0]->id == 100 && $hasUnreviewed == false)) {
@@ -686,12 +697,14 @@
                 @endif
             });
 
-            $.post('{{ route('home.section.auction_products') }}', {
-                _token: '{{ csrf_token() }}'
-            }, function(data) {
-                $('#auction_products').html(data);
-                AIZ.plugins.slickCarousel();
-            });
+            @if (Route::has('home.section.auction_products'))
+                $.post('{{ route('home.section.auction_products') }}', {
+                    _token: '{{ csrf_token() }}'
+                }, function(data) {
+                    $('#auction_products').html(data);
+                    AIZ.plugins.slickCarousel();
+                });
+            @endif
 
             var isPreorderEnabled = @json(addon_is_activated('preorder'));
 

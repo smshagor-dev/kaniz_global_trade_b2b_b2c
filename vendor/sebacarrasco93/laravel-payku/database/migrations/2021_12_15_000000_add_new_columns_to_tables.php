@@ -13,15 +13,27 @@ class AddNewColumnsToTables extends Migration
      */
     public function up()
     {
-        Schema::table('payku_transactions', function (Blueprint $table) {
-            $table->string('full_name')->nullable();
-        });
+        if (Schema::hasTable('payku_transactions') && !Schema::hasColumn('payku_transactions', 'full_name')) {
+            Schema::table('payku_transactions', function (Blueprint $table) {
+                $table->string('full_name')->nullable();
+            });
+        }
 
-        Schema::table('payku_payments', function (Blueprint $table) {
-            $table->string('payment_key')->nullable();
-            $table->string('transaction_key')->nullable();
-            $table->datetime('deposit_date')->nullable();
-        });
+        if (Schema::hasTable('payku_payments')) {
+            Schema::table('payku_payments', function (Blueprint $table) {
+                if (!Schema::hasColumn('payku_payments', 'payment_key')) {
+                    $table->string('payment_key')->nullable();
+                }
+
+                if (!Schema::hasColumn('payku_payments', 'transaction_key')) {
+                    $table->string('transaction_key')->nullable();
+                }
+
+                if (!Schema::hasColumn('payku_payments', 'deposit_date')) {
+                    $table->datetime('deposit_date')->nullable();
+                }
+            });
+        }
     }
 
     /**

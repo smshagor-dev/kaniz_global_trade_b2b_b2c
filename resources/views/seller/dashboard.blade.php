@@ -11,7 +11,164 @@
             </div>
         </div>
     @endif
+    @if (!empty($active_b2b_company))
+        <div class="aiz-titlebar mt-2 mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-7">
+                    <h6 class="mb-1">{{ translate('Active B2B Company') }}</h6>
+                    <p class="mb-0 text-muted">
+                        {{ $active_b2b_company->company_name }}
+                        <span class="ml-2 badge badge-inline badge-secondary">{{ ucfirst($active_b2b_company->company_type) }}</span>
+                    </p>
+                </div>
+                <div class="col-md-5 text-md-right">
+                    @if (!empty($switchable_b2b_companies) && $switchable_b2b_companies->count() > 1)
+                        <form action="{{ route('b2b.company.switch') }}" method="POST" class="d-inline-block">
+                            @csrf
+                            <select name="company_id" class="form-control d-inline-block w-auto" onchange="this.form.submit()">
+                                @foreach ($switchable_b2b_companies as $switchableCompany)
+                                    <option value="{{ $switchableCompany->id }}" @selected((int) $active_b2b_company->id === (int) $switchableCompany->id)>
+                                        {{ $switchableCompany->company_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </form>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
     @php $authUser = auth()->user(); @endphp
+    @if(!empty($b2b_stats))
+        <div class="row">
+            <div class="col-sm-6 col-md-6 col-xxl-3">
+                <div class="card shadow-none mb-4 bg-soft-primary">
+                    <div class="card-body">
+                        <h6 class="text-primary">{{ translate('Pending RFQs') }}</h6>
+                        <h3 class="mb-0">{{ $b2b_stats['pending_rfqs'] }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-6 col-xxl-3">
+                <div class="card shadow-none mb-4 bg-soft-success">
+                    <div class="card-body">
+                        <h6 class="text-success">{{ translate('Accepted Quotes') }}</h6>
+                        <h3 class="mb-0">{{ $b2b_stats['accepted_quotes'] }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-6 col-xxl-3">
+                <div class="card shadow-none mb-4 bg-soft-info">
+                    <div class="card-body">
+                        <h6 class="text-info">{{ translate('Pending PO') }}</h6>
+                        <h3 class="mb-0">{{ $b2b_stats['pending_purchase_orders'] }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-6 col-xxl-3">
+                <div class="card shadow-none mb-4 bg-soft-warning">
+                    <div class="card-body">
+                        <h6 class="text-warning">{{ translate('B2B Revenue') }}</h6>
+                        <h3 class="mb-0">{{ single_price($b2b_stats['revenue']) }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-4">
+                <div class="card shadow-none mb-4 border">
+                    <div class="card-body">
+                        <h6 class="mb-3">{{ translate('B2B Activity') }}</h6>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{{ translate('Quoted RFQs') }}</span>
+                            <strong>{{ $b2b_stats['quoted_rfqs'] }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{{ translate('Invoices') }}</span>
+                            <strong>{{ $b2b_stats['invoices'] }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>{{ translate('Unread Negotiations') }}</span>
+                            <strong>{{ $b2b_stats['unread_negotiations'] }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card shadow-none mb-4 border">
+                    <div class="card-body">
+                        <h6 class="mb-3">{{ translate('Supplier Profile') }}</h6>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{{ translate('Completeness') }}</span>
+                            <strong>{{ $b2b_stats['profile_completeness'] }}%</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{{ translate('Public Profile') }}</span>
+                            <strong>{{ $b2b_stats['public_profile_enabled'] ? translate('Enabled') : translate('Disabled') }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{{ translate('Pending Certifications') }}</span>
+                            <strong>{{ $b2b_stats['pending_certifications'] }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{{ translate('Approved Certifications') }}</span>
+                            <strong>{{ $b2b_stats['approved_certifications'] }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>{{ translate('Profile Views') }}</span>
+                            <strong>{{ $b2b_stats['profile_views'] }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card shadow-none mb-4 border">
+                    <div class="card-body">
+                        <h6 class="mb-3">{{ translate('Logistics Overview') }}</h6>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{{ translate('Pending Shipments') }}</span>
+                            <strong>{{ $b2b_stats['pending_shipments'] }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{{ translate('Active Shipments') }}</span>
+                            <strong>{{ $b2b_stats['active_shipments'] }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{{ translate('Completed Shipments') }}</span>
+                            <strong>{{ $b2b_stats['completed_shipments'] }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{{ translate('Delayed Shipments') }}</span>
+                            <strong>{{ $b2b_stats['delayed_shipments'] }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>{{ translate('Sample Orders') }}</span>
+                            <strong>{{ $b2b_stats['sample_orders'] }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="card shadow-none mb-4 border">
+                    <div class="card-body">
+                        <h6 class="mb-3">{{ translate('Top B2B Products') }}</h6>
+                        <div class="row">
+                            @forelse($b2b_stats['top_products'] as $topProduct)
+                                <div class="col-md-4 mb-2">
+                                    <div class="border rounded p-3 h-100">
+                                        <div class="fw-600">{{ $topProduct->product?->getTranslation('name') ?? translate('Custom Product') }}</div>
+                                        <small class="text-muted">{{ $topProduct->quote_count }} {{ translate('quotes') }}</small>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="col-12 text-muted">{{ translate('No B2B product quote data available yet.') }}</div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
     <div class="row">
         <div class="col-sm-6 col-md-6 col-xxl-3">
             <div class="card shadow-none mb-4 bg-primary ">

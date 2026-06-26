@@ -5,12 +5,21 @@ namespace App\Http\Controllers\Seller;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\Product;
+use App\Services\B2BCompanyService;
+use App\Services\B2BDashboardService;
 use Auth;
 use Carbon\Carbon;
 use DB;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        protected B2BDashboardService $b2bDashboardService,
+        protected B2BCompanyService $b2bCompanyService
+    )
+    {
+    }
+
     public function index()
     {
         $authUserId = auth()->user()->id;
@@ -53,6 +62,9 @@ class DashboardController extends Controller
                                 ->select(DB::raw("sum(grand_total) as total, DATE_FORMAT(created_at, '%d %b') as date"))
                                 ->groupBy(DB::raw("DATE_FORMAT(created_at, '%Y-%m-%d')"))
                                 ->get()->pluck('total', 'date');  
+        $data['active_b2b_company'] = $this->b2bCompanyService->getCompanyByUser($authUserId);
+        $data['switchable_b2b_companies'] = $this->b2bCompanyService->getSwitchableCompaniesByUser($authUserId);
+        $data['b2b_stats'] = $this->b2bDashboardService->sellerStats($authUserId);
 
         return view('seller.dashboard', $data);
     }
