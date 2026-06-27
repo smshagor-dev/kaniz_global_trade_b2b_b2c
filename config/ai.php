@@ -19,32 +19,17 @@ return [
             'base_url' => env('AI_GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta'),
         ],
         'openai' => [
-            'label' => 'OpenAI',
+            'label' => 'ChatGPT',
             'base_url' => env('AI_OPENAI_BASE_URL', 'https://api.openai.com/v1'),
         ],
         'claude' => [
             'label' => 'Claude',
             'base_url' => env('AI_CLAUDE_BASE_URL', 'https://api.anthropic.com/v1'),
         ],
-        'deepseek' => [
-            'label' => 'DeepSeek',
-            'base_url' => env('AI_DEEPSEEK_BASE_URL', 'https://api.deepseek.com'),
-        ],
-        'ollama' => [
-            'label' => 'Ollama',
-            'base_url' => env('AI_OLLAMA_BASE_URL', 'http://127.0.0.1:11434'),
-        ],
-        'custom' => [
-            'label' => 'Custom',
-            'base_url' => env('AI_CUSTOM_BASE_URL'),
-        ],
     ],
     'pricing' => [
         'gemini' => [],
         'openai' => [],
         'claude' => [],
-        'deepseek' => [],
-        'ollama' => [],
-        'custom' => [],
     ],
 ];

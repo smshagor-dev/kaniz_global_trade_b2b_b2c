@@ -5,6 +5,14 @@
     $docs = $integration['docs'] ?? [];
     $health = $integration['health'] ?? [];
     $status = $integration['connection_status'] ?? 'not_configured';
+    $urlLabels = $integration['url_labels'] ?? [
+        'webhook_url' => 'Webhook URL',
+        'callback_url' => 'Callback URL',
+        'tracking_webhook_url' => 'Tracking Webhook URL',
+        'shipment_webhook_url' => 'Shipment Webhook URL',
+        'pickup_webhook_url' => 'Pickup Webhook URL',
+        'test_connection_url' => 'Test Connection URL',
+    ];
     $statusMap = [
         'connected' => 'success',
         'not_configured' => 'secondary',
@@ -39,14 +47,7 @@
                     <div class="table-responsive mb-3">
                         <table class="table table-sm mb-0">
                             <tbody>
-                                @foreach ([
-                                    'webhook_url' => 'Webhook URL',
-                                    'callback_url' => 'Callback URL',
-                                    'tracking_webhook_url' => 'Tracking Webhook URL',
-                                    'shipment_webhook_url' => 'Shipment Webhook URL',
-                                    'pickup_webhook_url' => 'Pickup Webhook URL',
-                                    'test_connection_url' => 'Test Connection URL',
-                                ] as $key => $label)
+                                @foreach ($urlLabels as $key => $label)
                                     <tr>
                                         <th class="border-0 pl-0">{{ translate($label) }}</th>
                                         <td class="border-0">

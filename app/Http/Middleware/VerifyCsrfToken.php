@@ -37,7 +37,9 @@ class VerifyCsrfToken extends Middleware
         '/rozer*',
         '/phonepe*',
         '/import-data',
+        '/aiz-uploader*',
         'cyber-source/*',
         '/b2b/carrier-webhooks/*',
+        '/b2b/insurance-webhooks/*',
     ];
 }

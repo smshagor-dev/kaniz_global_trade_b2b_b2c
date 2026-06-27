@@ -16,7 +16,7 @@
                     <div class="d-flex flex-wrap justify-content-lg-end">
                         <a href="{{ route('admin.b2b.ports.index') }}" class="btn btn-soft-secondary btn-sm mr-2 mb-2">{{ translate('Ports') }}</a>
                         <a href="{{ route('admin.b2b.freight-quotes.index') }}" class="btn btn-soft-warning btn-sm mr-2 mb-2">{{ translate('Freight Quotes') }}</a>
-                        <a href="{{ route('admin.b2b.logistics-charge-settings.index') }}" class="btn btn-soft-dark btn-sm mr-2 mb-2">{{ translate('Logistics Charges') }}</a>
+                        <a href="{{ route('admin.b2b.logistics-charge-settings.index') }}" class="btn btn-soft-info btn-sm mr-2 mb-2">{{ translate('Logistics Charges') }}</a>
                         <a href="{{ route('admin.b2b.freight-pricing-rules.index') }}" class="btn btn-soft-success btn-sm mr-2 mb-2">{{ translate('Pricing Rules') }}</a>
                         <a href="{{ route('admin.b2b.hs-codes.index') }}" class="btn btn-soft-danger btn-sm mb-2">{{ translate('HS Codes') }}</a>
                     </div>

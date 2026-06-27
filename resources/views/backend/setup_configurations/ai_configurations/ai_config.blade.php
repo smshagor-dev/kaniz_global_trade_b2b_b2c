@@ -5,9 +5,14 @@
     <div class="col-lg-5">
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0 h6">{{ $editProvider ? translate('Edit AI Provider') : translate('Add AI Provider') }}</h5>
+                <h5 class="mb-0 h6">{{ translate('AI Provider Configuration') }}</h5>
             </div>
             <div class="card-body">
+                @php
+                    $selectedProviderKey = old('provider', optional($editProvider)->provider ?: 'gemini');
+                    $selectedProviderMeta = $providerMeta[$selectedProviderKey] ?? ['label' => ucfirst($selectedProviderKey)];
+                    $selectedProviderLabel = $selectedProviderMeta['label'] ?? ucfirst($selectedProviderKey);
+                @endphp
                 <form action="{{ $editProvider ? route('ai.providers.update', encrypt($editProvider->id)) : route('ai.providers.store') }}" method="POST">
                     @csrf
                     @if ($editProvider)
@@ -15,15 +20,20 @@
                     @endif
                     <div class="form-group">
                         <label>{{ translate('Provider') }}</label>
-                        <select class="form-control aiz-selectpicker" name="provider">
+                        <select class="form-control aiz-selectpicker" name="provider" @if($editProvider) disabled @endif>
                             @foreach ($providerOptions as $providerOption)
-                                <option value="{{ $providerOption }}" @selected(optional($editProvider)->provider === $providerOption)>{{ ucfirst($providerOption) }}</option>
+                                <option value="{{ $providerOption }}" @selected($selectedProviderKey === $providerOption)>
+                                    {{ data_get($providerMeta, $providerOption . '.label', ucfirst($providerOption)) }}
+                                </option>
                             @endforeach
                         </select>
+                        @if ($editProvider)
+                            <input type="hidden" name="provider" value="{{ $selectedProviderKey }}">
+                        @endif
                     </div>
                     <div class="form-group">
                         <label>{{ translate('Display Name') }}</label>
-                        <input type="text" class="form-control" name="name" value="{{ old('name', optional($editProvider)->name) }}" required>
+                        <input type="text" class="form-control" name="name" value="{{ old('name', optional($editProvider)->name ?: $selectedProviderLabel) }}" required>
                     </div>
                     <div class="form-group">
                         <label>{{ translate('API Key') }}</label>
@@ -75,9 +85,9 @@
                     </div>
                     <div class="form-group">
                         <label class="aiz-switch aiz-switch-success mb-0"><input type="checkbox" name="is_default" value="1" @checked(old('is_default', optional($editProvider)->is_default ?? false))><span></span></label>
-                        <span class="ml-2">{{ translate('Set as default') }}</span>
+                        <span class="ml-2">{{ translate('Use as default global provider') }}</span>
                     </div>
-                    <button type="submit" class="btn btn-primary">{{ $editProvider ? translate('Update Provider') : translate('Add Provider') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ $editProvider ? translate('Update Provider Config') : translate('Save Provider Config') }}</button>
                     @if ($editProvider)
                         <a href="{{ route('ai-config') }}" class="btn btn-soft-secondary ml-2">{{ translate('Cancel') }}</a>
                     @endif
@@ -87,11 +97,11 @@
 
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0 h6">{{ translate('Legacy Gemini Compatibility') }}</h5>
+                <h5 class="mb-0 h6">{{ translate('Legacy Compatibility') }}</h5>
             </div>
             <div class="card-body">
-                <p class="mb-2">{{ translate('Existing Gemini product generation remains active through the new AI foundation layer.') }}</p>
-                <p class="mb-0">{{ translate('The legacy Gemini settings form still syncs into the new provider table for backward compatibility.') }}</p>
+                <p class="mb-2">{{ translate('Existing product generation remains active through the new AI foundation layer.') }}</p>
+                <p class="mb-0">{{ translate('Legacy business settings still sync with the provider table for backward compatibility.') }}</p>
             </div>
         </div>
     </div>
@@ -99,7 +109,7 @@
     <div class="col-lg-7">
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 h6">{{ translate('AI Providers') }}</h5>
+                <h5 class="mb-0 h6">{{ translate('Provider Status') }}</h5>
                 <div>
                     <a href="{{ route('ai-cost-analytics') }}" class="btn btn-soft-primary btn-sm">{{ translate('Cost Analytics') }}</a>
                     <a href="{{ route('ai-feedback') }}" class="btn btn-soft-warning btn-sm">{{ translate('Feedback') }}</a>
@@ -139,13 +149,13 @@
                                 </td>
                                 <td>
                                     <a href="{{ route('ai-config', ['edit' => $provider->id]) }}" class="btn btn-soft-info btn-sm">{{ translate('Edit') }}</a>
-                                    <form action="{{ route('ai.providers.test', encrypt($provider->id)) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="btn btn-soft-primary btn-sm">{{ translate('Test') }}</button>
-                                    </form>
                                     <form action="{{ route('ai.providers.default', encrypt($provider->id)) }}" method="POST" class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-soft-success btn-sm">{{ translate('Default') }}</button>
+                                    </form>
+                                    <form action="{{ route('ai.providers.test', encrypt($provider->id)) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-soft-primary btn-sm">{{ translate('Test') }}</button>
                                     </form>
                                     <form action="{{ route('ai.providers.toggle', encrypt($provider->id)) }}" method="POST" class="d-inline">
                                         @csrf
@@ -154,7 +164,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="5" class="text-center">{{ translate('No AI providers configured yet.') }}</td></tr>
+                            <tr><td colspan="5" class="text-center">{{ translate('No AI provider has been configured yet.') }}</td></tr>
                         @endforelse
                     </tbody>
                 </table>

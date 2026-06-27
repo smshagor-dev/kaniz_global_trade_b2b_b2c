@@ -197,16 +197,13 @@ return new class extends Migration
     {
         $geminiModel = DB::table('business_settings')->where('type', 'gemini_model')->value('value');
         $aiActivation = (int) (DB::table('business_settings')->where('type', 'ai_activation')->value('value') ?? 0);
-        $geminiApiKey = env('GEMINI_API_KEY');
-
-        if (!$geminiModel && !$geminiApiKey) {
+        if (!$geminiModel && $aiActivation !== 1) {
             return;
         }
 
         AIProviderSetting::query()->updateOrCreate(
             ['provider' => 'gemini', 'name' => 'Legacy Gemini'],
             [
-                'api_key' => $geminiApiKey,
                 'base_url' => config('ai.providers.gemini.base_url'),
                 'model' => $geminiModel ?: 'gemini-2.5-flash',
                 'temperature' => 0.70,
@@ -215,7 +212,7 @@ return new class extends Migration
                 'retry_count' => 1,
                 'daily_limit' => null,
                 'monthly_limit' => null,
-                'is_active' => $aiActivation === 1 || (bool) $geminiApiKey,
+                'is_active' => $aiActivation === 1,
                 'is_default' => $aiActivation === 1,
                 'settings' => [],
                 'last_status' => 'migrated_from_legacy',

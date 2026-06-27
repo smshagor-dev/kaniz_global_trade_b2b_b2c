@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\B2BFreightForwarder;
+use App\Models\B2BInsuranceProvider;
 use App\Models\B2BShippingProvider;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
@@ -57,6 +58,7 @@ class B2BIntegrationManagementService
             'connection_status' => $this->connectionStatus($model),
             'environment_label' => $this->environmentLabel($model),
             'urls' => $configured ? $this->urls($model, $type, $slug) : [],
+            'url_labels' => $this->urlLabels($type),
             'events' => $this->enabledEvents($model),
             'docs' => $docs,
             'health' => $this->healthMetrics($model),
@@ -111,6 +113,18 @@ class B2BIntegrationManagementService
 
     public function sampleWebhookPayload(Model $model, string $type, ?string $channel = null): array
     {
+        if ($type === 'insurance') {
+            return [
+                'event' => $channel ?: 'policy.updated',
+                'provider' => $this->routeIdentifier($model),
+                'policy_number' => 'IP-SAMPLE-001',
+                'claim_number' => 'IC-SAMPLE-001',
+                'status' => 'processed',
+                'occurred_at' => now()->toIso8601String(),
+                'description' => 'Sample insurance webhook event.',
+            ];
+        }
+
         $channelStatus = match ($channel) {
             'tracking' => $type === 'freight' ? 'Vessel Arrived' : 'In Transit',
             'pickup' => 'Pickup Scheduled',
@@ -206,6 +220,16 @@ class B2BIntegrationManagementService
 
     public function urls(Model $model, string $type, string|int $identifier): array
     {
+        if ($type === 'insurance') {
+            return [
+                'webhook_url' => route('b2b.insurance-webhooks.handle', ['provider' => $identifier]),
+                'callback_url' => route('admin.b2b.insurance.dashboard'),
+                'policy_webhook_url' => route('b2b.insurance-webhooks.handle', ['provider' => $identifier]),
+                'claim_webhook_url' => route('b2b.insurance-webhooks.handle', ['provider' => $identifier]),
+                'test_connection_url' => route('admin.b2b.insurance.providers.test', ['providerId' => $model->id]),
+            ];
+        }
+
         if ($type === 'freight') {
             return [
                 'webhook_url' => route('b2b.freight-webhooks.handle', ['forwarder' => $identifier]),
@@ -229,6 +253,10 @@ class B2BIntegrationManagementService
 
     public function credentialsConfigured(Model $model): bool
     {
+        if ($model instanceof B2BInsuranceProvider) {
+            return $model->credentialsConfigured();
+        }
+
         if ($model instanceof B2BShippingProvider) {
             return $model->credentialsConfigured();
         }
@@ -257,6 +285,18 @@ class B2BIntegrationManagementService
 
     protected function authenticationMethod(Model $model, string $type): string
     {
+        if ($type === 'insurance') {
+            if (filled($model->username) && filled($model->password)) {
+                return 'Basic Auth';
+            }
+
+            if (filled($model->api_key) && filled($model->api_secret)) {
+                return 'API Key / Secret';
+            }
+
+            return filled($model->api_key) ? 'Bearer Token / API Key' : 'Manual';
+        }
+
         if ($type === 'freight') {
             return filled($model->oauth_token) ? 'OAuth Token' : 'API Key / Secret';
         }
@@ -277,5 +317,27 @@ class B2BIntegrationManagementService
     protected function isSandbox(Model $model): bool
     {
         return method_exists($model, 'isSandbox') ? $model->isSandbox() : false;
+    }
+
+    protected function urlLabels(string $type): array
+    {
+        if ($type === 'insurance') {
+            return [
+                'webhook_url' => 'Webhook URL',
+                'callback_url' => 'Dashboard URL',
+                'policy_webhook_url' => 'Policy Webhook URL',
+                'claim_webhook_url' => 'Claim Webhook URL',
+                'test_connection_url' => 'Test Connection URL',
+            ];
+        }
+
+        return [
+            'webhook_url' => 'Webhook URL',
+            'callback_url' => 'Callback URL',
+            'tracking_webhook_url' => 'Tracking Webhook URL',
+            'shipment_webhook_url' => 'Shipment Webhook URL',
+            'pickup_webhook_url' => 'Pickup Webhook URL',
+            'test_connection_url' => 'Test Connection URL',
+        ];
     }
 }

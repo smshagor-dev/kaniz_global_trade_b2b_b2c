@@ -25,6 +25,7 @@ use App\Services\Currency\CurrencyService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
@@ -58,7 +59,60 @@ class B2BInsuranceService
             'integration_modes' => B2BInsuranceProvider::INTEGRATION_MODES,
             'insurance_types' => B2BInsuranceProvider::INSURANCE_TYPES,
             'claim_document_types' => self::CLAIM_DOCUMENT_TYPES,
+            'real_providers' => $this->researchedProviders(),
         ];
+    }
+
+    public function providerPreset(string $key): ?array
+    {
+        return $this->researchedProviders()[$key] ?? null;
+    }
+
+    public function configuredProviderKeys(): array
+    {
+        return array_keys($this->researchedProviders());
+    }
+
+    public function applyProviderPreset(string $key, bool $testMode = true, array $overrides = []): array
+    {
+        $preset = $this->providerPreset($key);
+        if (!$preset) {
+            return $overrides;
+        }
+
+        $resolvedBaseUrl = $testMode
+            ? ($preset['sandbox_base_url'] ?? null)
+            : ($preset['production_base_url'] ?? ($preset['sandbox_base_url'] ?? null));
+
+        $customConfig = array_filter(array_merge(
+            (array) ($preset['custom_config'] ?? []),
+            [
+                'provider_key' => $key,
+                'documentation_url' => $preset['documentation_url'] ?? null,
+                'portal_url' => $preset['portal_url'] ?? null,
+                'auth_type' => $preset['auth_type'] ?? null,
+                'focus' => $preset['focus'] ?? null,
+                'readiness' => $preset['readiness'] ?? null,
+                'supported_workflows' => $preset['supported_workflows'] ?? [],
+                'setup_steps' => $preset['setup_steps'] ?? [],
+                'sample_endpoints' => $preset['sample_endpoints'] ?? [],
+            ],
+            (array) ($overrides['custom_config'] ?? [])
+        ), static fn ($value) => $value !== null && $value !== []);
+
+        return array_merge([
+            'name' => $preset['name'],
+            'company' => $preset['company'] ?? $preset['name'],
+            'country' => $preset['country'] ?? null,
+            'integration_mode' => $preset['default_integration_mode'] ?? 'api',
+            'api_base_url' => $resolvedBaseUrl,
+            'is_test_mode' => $testMode,
+            'coverage' => $preset['coverage'] ?? [],
+            'policy_types' => $preset['policy_types'] ?? [],
+            'supported_countries' => !empty($preset['country']) ? [$preset['country']] : [],
+            'custom_config' => $customConfig,
+            'notes' => trim('Managed by provider preset. ' . ($preset['documentation_url'] ?? '')),
+        ], $overrides);
     }
 
     public function createProvider(array $data, ?int $actorUserId = null): B2BInsuranceProvider
@@ -99,6 +153,25 @@ class B2BInsuranceService
 
             return $provider->fresh();
         });
+    }
+
+    public function upsertDefaultProvider(array $data, ?int $actorUserId = null): B2BInsuranceProvider
+    {
+        $provider = B2BInsuranceProvider::query()
+            ->orderByDesc('is_default')
+            ->orderBy('id')
+            ->first();
+
+        $payload = array_merge($data, [
+            'is_default' => $data['is_default'] ?? true,
+            'is_active' => $data['is_active'] ?? true,
+        ]);
+
+        if ($provider) {
+            return $this->updateProvider($provider, $payload, $actorUserId);
+        }
+
+        return $this->createProvider($payload, $actorUserId);
     }
 
     public function updateProvider(B2BInsuranceProvider $provider, array $data, ?int $actorUserId = null): B2BInsuranceProvider
@@ -196,6 +269,7 @@ class B2BInsuranceService
                 'status' => 'quoted',
                 'expires_at' => now()->addDays(7),
             ]));
+            $quote = $this->syncQuoteWithProvider($quote);
 
             $this->recordEvent($quote, 'quote_generated', 'Insurance quote generated', 'Trade insurance quote generated.', $company?->id, $actor?->id, $quote->request_payload);
             $this->auditService->log($actor?->id, $company?->id, 'insurance_quote_generated', $quote, 'Insurance quote generated.', ['quote_number' => $quote->quote_number]);
@@ -290,6 +364,7 @@ class B2BInsuranceService
                 'issued_at' => now(),
                 'activated_at' => ($data['status'] ?? 'approved') === 'active' ? now() : null,
             ]));
+            $policy = $this->syncPolicyWithProvider($policy);
 
             $quote->update(['status' => 'accepted']);
 
@@ -338,6 +413,7 @@ class B2BInsuranceService
                 'incident_at' => $data['incident_at'] ?? now(),
                 'submitted_at' => now(),
             ]));
+            $claim = $this->syncClaimWithProvider($claim);
 
             foreach (($data['documents'] ?? []) as $document) {
                 $this->attachClaimDocument($claim, $document, $actor);
@@ -624,6 +700,108 @@ class B2BInsuranceService
         ]);
     }
 
+    public function testConnection(B2BInsuranceProvider $provider): array
+    {
+        if ($provider->integration_mode !== 'api') {
+            return [
+                'success' => true,
+                'status' => 'manual',
+                'message' => 'Manual insurance provider does not require API authentication.',
+                'http_status' => null,
+            ];
+        }
+
+        if (!$provider->credentialsConfigured()) {
+            return [
+                'success' => false,
+                'status' => 'not_configured',
+                'message' => 'Insurance provider API credentials are incomplete.',
+                'http_status' => null,
+            ];
+        }
+
+        $endpoint = $this->providerHealthEndpoint($provider);
+        if (!filled($endpoint)) {
+            return [
+                'success' => false,
+                'status' => 'missing_endpoint',
+                'message' => 'Insurance provider API base URL is missing.',
+                'http_status' => null,
+            ];
+        }
+
+        $method = strtoupper((string) data_get($provider->custom_config, 'healthcheck_method', 'GET'));
+        $requestPayload = data_get($provider->custom_config, 'healthcheck_payload', []);
+        $headers = (array) data_get($provider->credentials, 'headers', []);
+        $startedAt = microtime(true);
+
+        try {
+            $client = Http::timeout((int) data_get($provider->custom_config, 'timeout', 20))
+                ->acceptJson()
+                ->withHeaders($headers);
+
+            if (filled($provider->username) && filled($provider->password)) {
+                $client = $client->withBasicAuth((string) $provider->username, (string) $provider->password);
+            } elseif (filled($provider->api_key) && filled($provider->api_secret)) {
+                $client = $client->withHeaders([
+                    'X-API-KEY' => (string) $provider->api_key,
+                    'X-API-SECRET' => (string) $provider->api_secret,
+                ]);
+            } elseif (filled($provider->api_key)) {
+                $client = $client->withToken((string) $provider->api_key);
+            }
+
+            $response = $method === 'POST'
+                ? $client->post($endpoint, is_array($requestPayload) ? $requestPayload : [])
+                : $client->get($endpoint);
+
+            $latency = (int) round((microtime(true) - $startedAt) * 1000);
+            $successful = $response->successful();
+
+            $this->logProviderCall($provider, $provider, [
+                'direction' => 'outbound',
+                'endpoint' => $endpoint,
+                'request_method' => $method,
+                'http_status' => $response->status(),
+                'status' => $successful ? 'connected' : 'failed',
+                'latency_ms' => $latency,
+                'request_payload' => $requestPayload,
+                'response_payload' => $response->json() ?? ['body' => $response->body()],
+                'error_message' => $successful ? null : Str::limit($response->body(), 500),
+            ]);
+
+            return [
+                'success' => $successful,
+                'status' => $successful ? 'connected' : 'failed',
+                'message' => $successful
+                    ? 'Insurance provider API connection succeeded.'
+                    : 'Insurance provider API connection failed: ' . Str::limit($response->body(), 200),
+                'http_status' => $response->status(),
+                'latency_ms' => $latency,
+            ];
+        } catch (\Throwable $throwable) {
+            $latency = (int) round((microtime(true) - $startedAt) * 1000);
+
+            $this->logProviderCall($provider, $provider, [
+                'direction' => 'outbound',
+                'endpoint' => $endpoint,
+                'request_method' => $method,
+                'status' => 'failed',
+                'latency_ms' => $latency,
+                'request_payload' => $requestPayload,
+                'error_message' => Str::limit($throwable->getMessage(), 500),
+            ]);
+
+            return [
+                'success' => false,
+                'status' => 'failed',
+                'message' => 'Insurance provider API connection failed: ' . Str::limit($throwable->getMessage(), 200),
+                'http_status' => null,
+                'latency_ms' => $latency,
+            ];
+        }
+    }
+
     protected function analyzeRisk(array $data, ?User $actor = null, ?B2BCompany $company = null): array
     {
         $score = 25.0;
@@ -802,5 +980,407 @@ class B2BInsuranceService
                 'fallback' => true,
             ];
         }
+    }
+
+    protected function providerHealthEndpoint(B2BInsuranceProvider $provider): ?string
+    {
+        $customEndpoint = data_get($provider->custom_config, 'healthcheck_endpoint');
+
+        if (filled($customEndpoint)) {
+            return (string) $customEndpoint;
+        }
+
+        if (!filled($provider->api_base_url)) {
+            return null;
+        }
+
+        return rtrim((string) $provider->api_base_url, '/');
+    }
+
+    protected function syncQuoteWithProvider(B2BInsuranceQuote $quote): B2BInsuranceQuote
+    {
+        $quote->loadMissing('provider');
+        $provider = $quote->provider;
+
+        if (!$provider || !$provider->is_active) {
+            return $quote;
+        }
+
+        $response = $this->sendProviderRequest(
+            $provider,
+            $quote,
+            (string) data_get($provider->custom_config, 'quote_create_path', ''),
+            'POST',
+            [
+                'quote_number' => $quote->quote_number,
+                'insurance_type' => $quote->insurance_type,
+                'transport_mode' => $quote->transport_mode,
+                'origin_country' => $quote->origin_country,
+                'destination_country' => $quote->destination_country,
+                'shipment_value' => $quote->shipment_value,
+                'coverage_amount' => $quote->coverage_amount,
+                'currency' => $quote->currency,
+            ]
+        );
+
+        if (!$response) {
+            return $quote;
+        }
+
+        $quote->update([
+            'response_payload' => array_merge((array) $quote->response_payload, ['provider_sync' => $response]),
+        ]);
+
+        return $quote->fresh();
+    }
+
+    protected function syncPolicyWithProvider(B2BInsurancePolicy $policy): B2BInsurancePolicy
+    {
+        $policy->loadMissing(['provider', 'quote']);
+        $provider = $policy->provider;
+
+        if (!$provider || !$provider->is_active) {
+            return $policy;
+        }
+
+        $response = $this->sendProviderRequest(
+            $provider,
+            $policy,
+            (string) data_get($provider->custom_config, 'policy_issue_path', ''),
+            'POST',
+            [
+                'policy_number' => $policy->policy_number,
+                'quote_number' => $policy->quote?->quote_number,
+                'coverage_amount' => $policy->coverage_amount,
+                'premium' => $policy->premium,
+                'currency' => $policy->currency,
+                'coverage_start' => optional($policy->coverage_start)->format('Y-m-d'),
+                'coverage_end' => optional($policy->coverage_end)->format('Y-m-d'),
+            ]
+        );
+
+        if (!$response) {
+            return $policy;
+        }
+
+        $policy->update([
+            'metadata' => array_merge((array) $policy->metadata, ['provider_sync' => $response]),
+        ]);
+
+        return $policy->fresh();
+    }
+
+    protected function syncClaimWithProvider(B2BInsuranceClaim $claim): B2BInsuranceClaim
+    {
+        $claim->loadMissing(['provider', 'policy']);
+        $provider = $claim->provider;
+
+        if (!$provider || !$provider->is_active) {
+            return $claim;
+        }
+
+        $response = $this->sendProviderRequest(
+            $provider,
+            $claim,
+            (string) data_get($provider->custom_config, 'claim_create_path', ''),
+            'POST',
+            [
+                'claim_number' => $claim->claim_number,
+                'policy_number' => $claim->policy?->policy_number,
+                'claim_type' => $claim->claim_type,
+                'claim_amount' => $claim->claim_amount,
+                'currency' => $claim->currency,
+                'summary' => $claim->summary,
+                'description' => $claim->description,
+                'incident_country' => $claim->incident_country,
+                'incident_at' => optional($claim->incident_at)->toIso8601String(),
+            ]
+        );
+
+        if (!$response) {
+            return $claim;
+        }
+
+        $claim->update([
+            'resolution_data' => array_merge((array) $claim->resolution_data, ['provider_sync' => $response]),
+        ]);
+
+        return $claim->fresh();
+    }
+
+    protected function sendProviderRequest(B2BInsuranceProvider $provider, Model $loggable, string $path, string $method, array $payload): ?array
+    {
+        if ($provider->integration_mode !== 'api' || !$provider->credentialsConfigured() || trim($path) === '' || !filled($provider->api_base_url)) {
+            return null;
+        }
+
+        $endpoint = rtrim((string) $provider->api_base_url, '/') . '/' . ltrim($path, '/');
+        $startedAt = microtime(true);
+
+        try {
+            $client = $this->providerHttpClient($provider);
+            $response = match (strtoupper($method)) {
+                'GET' => $client->get($endpoint, $payload),
+                'PUT' => $client->put($endpoint, $payload),
+                'PATCH' => $client->patch($endpoint, $payload),
+                'DELETE' => $client->delete($endpoint, $payload),
+                default => $client->post($endpoint, $payload),
+            };
+
+            $latency = (int) round((microtime(true) - $startedAt) * 1000);
+            $successful = $response->successful();
+            $responsePayload = $response->json() ?? ['body' => $response->body()];
+
+            $this->logProviderCall($provider, $loggable, [
+                'direction' => 'outbound',
+                'endpoint' => $endpoint,
+                'request_method' => strtoupper($method),
+                'http_status' => $response->status(),
+                'status' => $successful ? 'processed' : 'failed',
+                'latency_ms' => $latency,
+                'request_payload' => $payload,
+                'response_payload' => $responsePayload,
+                'error_message' => $successful ? null : Str::limit($response->body(), 500),
+            ]);
+
+            return [
+                'success' => $successful,
+                'http_status' => $response->status(),
+                'endpoint' => $endpoint,
+                'payload' => $responsePayload,
+            ];
+        } catch (\Throwable $throwable) {
+            $latency = (int) round((microtime(true) - $startedAt) * 1000);
+
+            $this->logProviderCall($provider, $loggable, [
+                'direction' => 'outbound',
+                'endpoint' => $endpoint,
+                'request_method' => strtoupper($method),
+                'status' => 'failed',
+                'latency_ms' => $latency,
+                'request_payload' => $payload,
+                'error_message' => Str::limit($throwable->getMessage(), 500),
+            ]);
+
+            return [
+                'success' => false,
+                'endpoint' => $endpoint,
+                'error' => Str::limit($throwable->getMessage(), 500),
+            ];
+        }
+    }
+
+    protected function providerHttpClient(B2BInsuranceProvider $provider)
+    {
+        $headers = (array) data_get($provider->credentials, 'headers', []);
+        $client = Http::timeout((int) data_get($provider->custom_config, 'timeout', 20))
+            ->acceptJson()
+            ->withHeaders($headers);
+
+        $providerKey = (string) data_get($provider->custom_config, 'provider_key', '');
+
+        if ($providerKey === 'qbe_partner_api') {
+            return $client->withHeaders(array_filter([
+                'client-id' => (string) ($provider->api_key ?: ''),
+                'client-secret' => (string) ($provider->api_secret ?: ''),
+                'x-qbe-tran-id' => 'kaniz-' . Str::uuid(),
+            ]));
+        }
+
+        if (filled($provider->username) && filled($provider->password)) {
+            return $client->withBasicAuth((string) $provider->username, (string) $provider->password);
+        }
+
+        if (filled($provider->api_key) && filled($provider->api_secret)) {
+            return $client->withHeaders([
+                'X-API-KEY' => (string) $provider->api_key,
+                'X-API-SECRET' => (string) $provider->api_secret,
+            ]);
+        }
+
+        if (filled($provider->api_key)) {
+            return $client->withToken((string) $provider->api_key);
+        }
+
+        return $client;
+    }
+
+    protected function researchedProviders(): array
+    {
+        return [
+            'allianz_trade' => [
+                'name' => 'Allianz Trade',
+                'company' => 'Allianz Trade',
+                'country' => 'Germany',
+                'focus' => 'Trade credit insurance',
+                'readiness' => 'partner_portal',
+                'documentation_url' => 'https://developers.allianz-trade.com/',
+                'portal_url' => 'https://developers.allianz-trade.com/api-catalogue',
+                'auth_type' => 'Partner onboarding and portal credentials',
+                'supported_workflows' => [
+                    'trade_credit',
+                    'credit_limit_automation',
+                    'company_grade',
+                    'portfolio_monitoring',
+                ],
+                'setup_steps' => [
+                    'Request API access from Allianz Trade',
+                    'Confirm available products in the API catalogue',
+                    'Receive partner credentials and endpoint details',
+                    'Map cover and credit-limit events into your ERP workflow',
+                ],
+                'default_integration_mode' => 'api',
+                'default_test_mode' => true,
+                'custom_config' => [
+                    'provider_key' => 'allianz_trade',
+                    'healthcheck_method' => 'GET',
+                    'quote_create_path' => '',
+                    'policy_issue_path' => '',
+                    'claim_create_path' => '',
+                    'notes' => 'Official portal is public, but operational endpoints are partner-gated.',
+                ],
+            ],
+            'coface' => [
+                'name' => 'Coface',
+                'company' => 'Coface',
+                'country' => 'France',
+                'focus' => 'Trade credit insurance and business information',
+                'readiness' => 'public_docs_with_contract',
+                'documentation_url' => 'https://developers.coface.com/',
+                'portal_url' => 'https://coface.github.io/',
+                'auth_type' => 'OAuth 2.0 Password Grant plus x-api-key',
+                'sandbox_base_url' => 'https://icon-api-test.coface.com/',
+                'production_base_url' => 'https://icon-api.coface.com/',
+                'supported_workflows' => [
+                    'business_information',
+                    'company_search',
+                    'monitoring_notifications',
+                    'risk_assessment',
+                ],
+                'setup_steps' => [
+                    'Sign contract or contact Coface for API access',
+                    'Activate your Dev Portal account',
+                    'Use x-api-key plus portal login/password to retrieve token',
+                    'Develop against the test endpoint before switching to production',
+                ],
+                'default_integration_mode' => 'api',
+                'default_test_mode' => true,
+                'custom_config' => [
+                    'provider_key' => 'coface',
+                    'healthcheck_method' => 'GET',
+                    'healthcheck_endpoint' => 'https://icon-api-test.coface.com/',
+                    'quote_create_path' => '',
+                    'policy_issue_path' => '',
+                    'claim_create_path' => '',
+                    'notes' => 'Best fit for buyer lookup and credit-risk enrichment inside B2B onboarding.',
+                ],
+            ],
+            'atradius' => [
+                'name' => 'Atradius',
+                'company' => 'Atradius',
+                'country' => 'Netherlands',
+                'focus' => 'Trade credit insurance',
+                'readiness' => 'public_portal_with_registration',
+                'documentation_url' => 'https://api.atradius.com/',
+                'portal_url' => 'https://api.atradius.com/developers',
+                'auth_type' => 'Developer portal registration and product subscription',
+                'supported_workflows' => [
+                    'buyers_api',
+                    'cover_api',
+                    'policy_api',
+                    'non_payments_api',
+                    'declarations_api',
+                ],
+                'setup_steps' => [
+                    'Register for API access in the Atradius portal',
+                    'Subscribe to needed API products',
+                    'Obtain credentials from the developer portal',
+                    'Implement buyer, cover, policy, and non-payment flows incrementally',
+                ],
+                'default_integration_mode' => 'api',
+                'default_test_mode' => true,
+                'custom_config' => [
+                    'provider_key' => 'atradius',
+                    'healthcheck_method' => 'GET',
+                    'healthcheck_endpoint' => 'https://api.atradius.com/',
+                    'quote_create_path' => '',
+                    'policy_issue_path' => '',
+                    'claim_create_path' => '',
+                    'notes' => 'Atradius exposes dedicated APIs for buyer data, cover, policy, claims/non-payments, and declarations.',
+                ],
+            ],
+            'chubb_studio' => [
+                'name' => 'Chubb Studio',
+                'company' => 'Chubb',
+                'country' => 'United States',
+                'focus' => 'Embedded insurance, policies, payments, claims, servicing',
+                'readiness' => 'partner_platform',
+                'documentation_url' => 'https://studio.chubb.com/connect/documentation',
+                'portal_url' => 'https://studio.chubb.com/connect/',
+                'auth_type' => 'Partner onboarding and Chubb Studio application access',
+                'supported_workflows' => [
+                    'discovery',
+                    'pricing',
+                    'sales',
+                    'payments',
+                    'claims',
+                    'servicing',
+                ],
+                'setup_steps' => [
+                    'Complete Chubb partnership onboarding',
+                    'Receive product configuration in Chubb Studio Canvas',
+                    'Use Chubb Studio Connect to onboard applications and team members',
+                    'Test discovery, sales, payment, and claim flows in the sandbox',
+                ],
+                'default_integration_mode' => 'api',
+                'default_test_mode' => true,
+                'custom_config' => [
+                    'provider_key' => 'chubb_studio',
+                    'healthcheck_method' => 'GET',
+                    'quote_create_path' => '',
+                    'policy_issue_path' => '',
+                    'claim_create_path' => '',
+                    'notes' => 'Public documentation shows schema groups; executable endpoints are available after partner onboarding.',
+                ],
+            ],
+            'qbe_partner_api' => [
+                'name' => 'QBE Partner API',
+                'company' => 'QBE',
+                'country' => 'Australia',
+                'focus' => 'Embedded insurance distribution and claims',
+                'readiness' => 'public_partner_docs',
+                'documentation_url' => 'https://connect.api-au.qbe.com/',
+                'portal_url' => 'https://www.qbe.com/sg/agents-and-partners/partner-api/partner-api-onboarding',
+                'auth_type' => 'Partner onboarding plus header-based credentials',
+                'supported_workflows' => [
+                    'quote',
+                    'policy_issue',
+                    'policy_retrieval',
+                    'claim_lodgement',
+                    'claim_status',
+                ],
+                'sample_endpoints' => [
+                    'POST /claims',
+                    'POST /claims/status',
+                ],
+                'setup_steps' => [
+                    'Contact QBE for partnership and cyber assessment',
+                    'Share IP ranges for credential provisioning',
+                    'Use partner headers and transaction IDs in requests',
+                    'Pilot claim and policy flows before go-live',
+                ],
+                'default_integration_mode' => 'api',
+                'default_test_mode' => true,
+                'custom_config' => [
+                    'provider_key' => 'qbe_partner_api',
+                    'healthcheck_method' => 'GET',
+                    'quote_create_path' => '',
+                    'policy_issue_path' => '',
+                    'claim_create_path' => '/claims',
+                    'claim_status_path' => '/claims/status',
+                    'notes' => 'Public docs expose claim request contracts, but base URLs and credentials are partner-scoped.',
+                ],
+            ],
+        ];
     }
 }

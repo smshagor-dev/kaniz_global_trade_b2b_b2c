@@ -76,6 +76,9 @@
     "extra": {
         "laravel": {
             "dont-discover": [
+                "genealabs/laravel-socialiter",
+                "laravel/sanctum",
+                "sebacarrasco93/laravel-payku"
             ]
         }
     },

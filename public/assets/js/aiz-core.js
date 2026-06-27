@@ -15,6 +15,20 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
         appUrl: $('meta[name="app-url"]').attr("content"),
         fileBaseUrl: $('meta[name="file-base-url"]').attr("content"),
     };
+    if (!AIZ.data.appUrl) {
+        AIZ.data.appUrl = window.location.origin;
+    } else if (AIZ.data.appUrl.indexOf("//") === 0) {
+        AIZ.data.appUrl = window.location.protocol + AIZ.data.appUrl;
+    }
+    AIZ.helpers = AIZ.helpers || {};
+    AIZ.helpers.refreshCsrfToken = function () {
+        return $.get(AIZ.data.appUrl + "/refresh-csrf").done(function (token) {
+            if (token) {
+                AIZ.data.csrf = token;
+                $('meta[name="csrf-token"]').attr("content", token);
+            }
+        });
+    };
     AIZ.uploader = {
         data: {
             selectedFiles: [],
@@ -674,10 +688,8 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
             }
 
             // setTimeout(function() {
-            $.post(
-                AIZ.data.appUrl + "/aiz-uploader",
-                { _token: AIZ.data.csrf },
-                function (data) {
+            $.get(AIZ.data.appUrl + "/aiz-uploader")
+                .done(function (data) {
                     $("body").append(data);
                     $("#aizUploaderModal").modal("show");
                     AIZ.plugins.aizUppy();
@@ -732,8 +744,13 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                             $("#aizUploaderModal").modal("hide");
                         }
                     );
-                }
-            );
+                })
+                .fail(function () {
+                    AIZ.plugins.notify(
+                        "danger",
+                        AIZ.local.something_went_wrong
+                    );
+                });
             // }, 50);
         },
         initForInput: function () {
@@ -1247,6 +1264,37 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                     headers: {
                         "X-CSRF-TOKEN": AIZ.data.csrf,
                     },
+                });
+                uppy.on("upload-error", function (file, error, response) {
+                    var statusCode =
+                        response && response.status ? response.status : null;
+
+                    if (statusCode === 419 && !file.csrfRetried) {
+                        file.csrfRetried = true;
+
+                        AIZ.helpers.refreshCsrfToken().done(function () {
+                            var xhrUpload = uppy.getPlugin("XHRUpload");
+
+                            if (xhrUpload) {
+                                xhrUpload.setOptions({
+                                    headers: {
+                                        "X-CSRF-TOKEN": AIZ.data.csrf,
+                                    },
+                                });
+                            }
+
+                            uppy.retryUpload(file.id);
+                        });
+
+                        return;
+                    }
+
+                    AIZ.plugins.notify(
+                        "danger",
+                        error && error.message
+                            ? error.message
+                            : AIZ.local.something_went_wrong
+                    );
                 });
                 uppy.on("upload-success", function () {
                     AIZ.uploader.getAllUploads(

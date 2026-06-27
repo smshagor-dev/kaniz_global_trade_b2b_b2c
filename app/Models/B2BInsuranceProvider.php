@@ -118,6 +118,32 @@ class B2BInsuranceProvider extends Model
         return $this->hasMany(B2BInsuranceApiLog::class, 'provider_id');
     }
 
+    public function credentialsConfigured(): bool
+    {
+        if ($this->integration_mode !== 'api') {
+            return true;
+        }
+
+        if (is_array($this->credentials) && count(array_filter($this->credentials, fn ($value) => filled($value))) > 0) {
+            return true;
+        }
+
+        if (filled($this->username) && filled($this->password)) {
+            return true;
+        }
+
+        if (filled($this->api_key) && filled($this->api_secret)) {
+            return true;
+        }
+
+        return filled($this->api_key);
+    }
+
+    public function isSandbox(): bool
+    {
+        return (bool) $this->is_test_mode;
+    }
+
     public function filterPersistable(array $attributes): array
     {
         static $columns;

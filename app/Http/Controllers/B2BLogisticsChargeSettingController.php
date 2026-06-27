@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AIProviderSetting;
 use App\Models\BusinessSetting;
+use App\Services\AI\AILegacySettingsService;
 use App\Services\B2BGlobalConfigService;
 use App\Services\B2BEscrowFeeService;
 use App\Services\B2BInspectionServiceChargeService;
+use App\Services\B2BInsuranceService;
 use App\Services\B2BLogisticsChargeService;
 use App\Services\B2BOrderPlatformFeeService;
 use App\Services\B2BSampleProcessingFeeService;
@@ -22,7 +25,9 @@ class B2BLogisticsChargeSettingController extends Controller
         protected B2BSampleProcessingFeeService $sampleProcessingFeeService,
         protected B2BInspectionServiceChargeService $inspectionServiceChargeService,
         protected B2BTradeDocumentFeeService $tradeDocumentFeeService,
-        protected B2BGlobalConfigService $globalConfigService
+        protected B2BGlobalConfigService $globalConfigService,
+        protected AILegacySettingsService $legacySettingsService,
+        protected B2BInsuranceService $insuranceService
     )
     {
     }
@@ -44,14 +49,18 @@ class B2BLogisticsChargeSettingController extends Controller
             'tradeDocumentChargeTypes' => B2BTradeDocumentFeeService::CHARGE_TYPES,
             'currencyCode' => get_system_default_currency()->code,
             'aiSettings' => $this->globalConfigService->aiSettings(),
-            'insuranceSettings' => $this->globalConfigService->insuranceSettings(),
+            'aiProviders' => AIProviderSetting::query()
+                ->orderByDesc('is_active')
+                ->orderByDesc('is_default')
+                ->orderBy('name')
+                ->get(),
         ]);
     }
 
     public function update(Request $request)
     {
         $section = $request->validate([
-            'config_section' => 'required|in:shipping,order,escrow,sample,inspection,trade_document,ai,insurance',
+            'config_section' => 'required|in:shipping,order,escrow,sample,inspection,trade_document,ai',
         ])['config_section'];
 
         if ($section === 'shipping') {
@@ -139,6 +148,11 @@ class B2BLogisticsChargeSettingController extends Controller
                 'b2b_trade_document_fee_fixed' => (float) ($data['b2b_trade_document_fee_fixed'] ?? 0),
             ];
         } elseif ($section === 'ai') {
+            $data = $request->validate([
+                'b2b_ai_provider_id' => 'required|integer|exists:ai_provider_settings,id',
+                'b2b_ai_global_price' => 'nullable|numeric|min:0',
+            ]);
+
             $settings = [
                 'b2b_ai_tools_enabled' => $request->boolean('b2b_ai_tools_enabled'),
                 'b2b_ai_visible' => $request->boolean('b2b_ai_visible'),
@@ -146,24 +160,35 @@ class B2BLogisticsChargeSettingController extends Controller
                 'b2b_ai_product_description_enabled' => $request->boolean('b2b_ai_product_description_enabled'),
                 'b2b_ai_negotiation_enabled' => $request->boolean('b2b_ai_negotiation_enabled'),
                 'b2b_ai_translation_enabled' => $request->boolean('b2b_ai_translation_enabled'),
+                'b2b_ai_global_price' => (float) ($data['b2b_ai_global_price'] ?? 0),
             ];
 
             $this->globalConfigService->updateMany($settings);
+            BusinessSetting::updateOrCreate(
+                ['type' => 'b2b_ai_provider_id'],
+                ['value' => (string) $data['b2b_ai_provider_id']]
+            );
+
+            $provider = AIProviderSetting::query()->findOrFail($data['b2b_ai_provider_id']);
+            AIProviderSetting::query()->update(['is_default' => false]);
+            $provider->update([
+                'is_active' => $settings['b2b_ai_tools_enabled'],
+                'is_default' => $settings['b2b_ai_tools_enabled'],
+            ]);
+
+            BusinessSetting::updateOrCreate(
+                ['type' => 'gemini_model'],
+                ['value' => (string) ($provider->model ?: 'gemini-2.5-flash')]
+            );
+            BusinessSetting::updateOrCreate(
+                ['type' => 'ai_activation'],
+                ['value' => $settings['b2b_ai_tools_enabled'] ? '1' : '0']
+            );
+
+            $this->legacySettingsService->sync();
             Artisan::call('cache:clear');
 
             flash(translate('Global B2B AI configuration updated successfully.'))->success();
-
-            return back();
-        } else {
-            $settings = [
-                'b2b_insurance_module_enabled' => $request->boolean('b2b_insurance_module_enabled'),
-                'b2b_insurance_visible' => $request->boolean('b2b_insurance_visible'),
-            ];
-
-            $this->globalConfigService->updateMany($settings);
-            Artisan::call('cache:clear');
-
-            flash(translate('Global B2B insurance configuration updated successfully.'))->success();
 
             return back();
         }

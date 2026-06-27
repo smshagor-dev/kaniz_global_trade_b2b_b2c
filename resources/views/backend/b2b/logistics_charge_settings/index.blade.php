@@ -8,109 +8,97 @@
     <div class="card mb-4">
         <div class="card-body">
             <p class="text-muted mb-0">
-                {{ translate('Configure global B2B AI, insurance visibility, shipping charges, platform fees, sample processing fees, inspection service charges, and trade document fees from one place.') }}
+                {{ translate('Configure global B2B AI flow, shipping charges, platform fees, sample processing fees, inspection service charges, and trade document fees from one place.') }}
             </p>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-lg-6">
+        <div class="col-12">
             <form action="{{ route('admin.b2b.logistics-charge-settings.update') }}" method="POST">
                 @csrf
                 <input type="hidden" name="config_section" value="ai">
-                <div class="card mb-4 h-100 border-info">
+                <div class="card mb-4 border-info">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span>{{ translate('B2B AI Global Flow') }}</span>
-                        <a href="{{ route('ai-config') }}" class="btn btn-soft-info btn-sm">{{ translate('AI Providers') }}</a>
+                        <div class="d-flex flex-wrap">
+                            <a href="{{ route('ai-config') }}" class="btn btn-soft-info btn-sm mr-2">{{ translate('AI Studio') }}</a>
+                            <a href="{{ route('ai-commercial-dashboard') }}" class="btn btn-soft-primary btn-sm mr-2">{{ translate('Commercial Intelligence') }}</a>
+                            <a href="{{ route('ai-prompt-templates-config') }}" class="btn btn-soft-secondary btn-sm mr-2">{{ translate('Prompt Templates') }}</a>
+                            <a href="{{ route('ai-cost-analytics') }}" class="btn btn-soft-warning btn-sm">{{ translate('Cost Analytics') }}</a>
+                        </div>
                     </div>
                     <div class="card-body">
-                        <div class="form-group">
-                            <label class="aiz-checkbox">
-                                <input type="checkbox" name="b2b_ai_tools_enabled" value="1" @checked($aiSettings['enabled'])>
-                                <span class="aiz-square-check"></span>
-                                <span>{{ translate('Enable B2B AI module globally') }}</span>
-                            </label>
-                        </div>
-                        <div class="form-group">
-                            <label class="aiz-checkbox">
-                                <input type="checkbox" name="b2b_ai_visible" value="1" @checked($aiSettings['visible'])>
-                                <span class="aiz-square-check"></span>
-                                <span>{{ translate('Show AI UI in buyer and seller panels') }}</span>
-                            </label>
-                        </div>
-                        <div class="border rounded p-3 mb-3 bg-light">
-                            <div class="fw-700 mb-2">{{ translate('Separate AI flow') }}</div>
-                            <div class="text-muted fs-13">{{ translate('This flow is fully separate from B2B membership packages. Admin can control visibility and access here from Global B2B Config.') }}</div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-2">
-                                <label class="aiz-checkbox">
-                                    <input type="checkbox" name="b2b_ai_rfq_enabled" value="1" @checked($aiSettings['rfq_enabled'])>
-                                    <span class="aiz-square-check"></span>
-                                    <span>{{ translate('AI RFQ') }}</span>
-                                </label>
+                        <div class="form-row align-items-end">
+                            <div class="col-xl-3 col-lg-4">
+                                <div class="form-group mb-xl-0">
+                                    <label>{{ translate('Active Provider') }}</label>
+                                    <select class="form-control aiz-selectpicker" name="b2b_ai_provider_id" required>
+                                        @foreach ($aiProviders as $provider)
+                                            <option value="{{ $provider->id }}" @selected((int) old('b2b_ai_provider_id', $aiSettings['provider_id']) === (int) $provider->id)>
+                                                {{ $provider->name }} ({{ strtoupper($provider->provider) }}){{ $provider->model ? ' - ' . $provider->model : '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-2">
-                                <label class="aiz-checkbox">
-                                    <input type="checkbox" name="b2b_ai_product_description_enabled" value="1" @checked($aiSettings['product_description_enabled'])>
-                                    <span class="aiz-square-check"></span>
-                                    <span>{{ translate('AI Product Description') }}</span>
-                                </label>
+                            <div class="col-xl-2 col-lg-3 col-md-4">
+                                <div class="form-group mb-xl-0">
+                                    <label>{{ translate('Global Pricing') }} ({{ $currencyCode }})</label>
+                                    <input type="number" step="0.01" min="0" name="b2b_ai_global_price" class="form-control" value="{{ old('b2b_ai_global_price', $aiSettings['global_price']) }}">
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-2">
-                                <label class="aiz-checkbox">
-                                    <input type="checkbox" name="b2b_ai_negotiation_enabled" value="1" @checked($aiSettings['negotiation_enabled'])>
-                                    <span class="aiz-square-check"></span>
-                                    <span>{{ translate('AI Negotiation') }}</span>
-                                </label>
+                            <div class="col-xl-2 col-lg-2 col-md-4">
+                                <div class="form-group mb-xl-0">
+                                    <label class="aiz-checkbox mb-0">
+                                        <input type="checkbox" name="b2b_ai_tools_enabled" value="1" @checked($aiSettings['enabled'])>
+                                        <span class="aiz-square-check"></span>
+                                        <span>{{ translate('Module Active') }}</span>
+                                    </label>
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-2">
-                                <label class="aiz-checkbox">
-                                    <input type="checkbox" name="b2b_ai_translation_enabled" value="1" @checked($aiSettings['translation_enabled'])>
-                                    <span class="aiz-square-check"></span>
-                                    <span>{{ translate('AI Translation') }}</span>
-                                </label>
+                            <div class="col-xl-2 col-lg-3 col-md-4">
+                                <div class="form-group mb-xl-0">
+                                    <label class="aiz-checkbox mb-0">
+                                        <input type="checkbox" name="b2b_ai_visible" value="1" @checked($aiSettings['visible'])>
+                                        <span class="aiz-square-check"></span>
+                                        <span>{{ translate('Panel Visible') }}</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-xl-2 col-lg-12">
+                                <div class="border rounded p-2 bg-light">
+                                    <div class="d-flex flex-wrap">
+                                        <label class="aiz-checkbox mb-1 mr-3">
+                                            <input type="checkbox" name="b2b_ai_rfq_enabled" value="1" @checked($aiSettings['rfq_enabled'])>
+                                            <span class="aiz-square-check"></span>
+                                            <span>{{ translate('RFQ') }}</span>
+                                        </label>
+                                        <label class="aiz-checkbox mb-1 mr-3">
+                                            <input type="checkbox" name="b2b_ai_product_description_enabled" value="1" @checked($aiSettings['product_description_enabled'])>
+                                            <span class="aiz-square-check"></span>
+                                            <span>{{ translate('Product') }}</span>
+                                        </label>
+                                        <label class="aiz-checkbox mb-1 mr-3">
+                                            <input type="checkbox" name="b2b_ai_negotiation_enabled" value="1" @checked($aiSettings['negotiation_enabled'])>
+                                            <span class="aiz-square-check"></span>
+                                            <span>{{ translate('Negotiation') }}</span>
+                                        </label>
+                                        <label class="aiz-checkbox mb-0">
+                                            <input type="checkbox" name="b2b_ai_translation_enabled" value="1" @checked($aiSettings['translation_enabled'])>
+                                            <span class="aiz-square-check"></span>
+                                            <span>{{ translate('Translation') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-xl-1 col-lg-12">
+                                <button type="submit" class="btn btn-info btn-block">{{ translate('Save') }}</button>
                             </div>
                         </div>
-                        <div class="d-flex flex-wrap mt-3">
-                            <a href="{{ route('ai-commercial-dashboard') }}" class="btn btn-soft-primary btn-sm mr-2 mb-2">{{ translate('Commercial Intelligence') }}</a>
-                            <a href="{{ route('ai-prompt-templates-config') }}" class="btn btn-soft-secondary btn-sm mr-2 mb-2">{{ translate('Prompt Templates') }}</a>
-                            <a href="{{ route('ai-cost-analytics') }}" class="btn btn-soft-dark btn-sm mb-2">{{ translate('Cost Analytics') }}</a>
+                        <div class="text-muted fs-13 mt-3">
+                            {{ translate('AI Studio manages provider credentials, base URL, and model. This row only selects the active B2B provider and global pricing used across the B2B AI flow.') }}
                         </div>
-                        <button type="submit" class="btn btn-info mt-3">{{ translate('Save AI Global Config') }}</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-        <div class="col-lg-6">
-            <form action="{{ route('admin.b2b.logistics-charge-settings.update') }}" method="POST">
-                @csrf
-                <input type="hidden" name="config_section" value="insurance">
-                <div class="card mb-4 h-100 border-success">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span>{{ translate('B2B Insurance Visibility') }}</span>
-                        <a href="{{ route('admin.b2b.insurance.dashboard') }}" class="btn btn-soft-success btn-sm">{{ translate('Insurance Dashboard') }}</a>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-group">
-                            <label class="aiz-checkbox">
-                                <input type="checkbox" name="b2b_insurance_module_enabled" value="1" @checked($insuranceSettings['enabled'])>
-                                <span class="aiz-square-check"></span>
-                                <span>{{ translate('Enable B2B insurance module globally') }}</span>
-                            </label>
-                        </div>
-                        <div class="form-group">
-                            <label class="aiz-checkbox">
-                                <input type="checkbox" name="b2b_insurance_visible" value="1" @checked($insuranceSettings['visible'])>
-                                <span class="aiz-square-check"></span>
-                                <span>{{ translate('Show insurance UI in buyer and seller panels') }}</span>
-                            </label>
-                        </div>
-                        <div class="border rounded p-3 bg-light">
-                            <div class="fw-700 mb-2">{{ translate('AI + Insurance visibility') }}</div>
-                            <div class="text-muted fs-13">{{ translate('Insurance stays visible alongside AI in the B2B user interfaces, while admin controls the global availability from this config screen.') }}</div>
-                        </div>
-                        <button type="submit" class="btn btn-success mt-3">{{ translate('Save Insurance Config') }}</button>
                     </div>
                 </div>
             </form>

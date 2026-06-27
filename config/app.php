@@ -173,6 +173,9 @@ return [
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
         KingFlamez\Rave\RaveServiceProvider::class,
+        GeneaLabs\LaravelSocialiter\Providers\ServiceProvider::class,
+        SebaCarrasco93\LaravelPayku\RouteServiceProvider::class,
+        App\Providers\LaravelPaykuServiceProvider::class,
         
         /*
          * Package Service Providers...
@@ -240,7 +243,9 @@ return [
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
         'PDF' => niklasravnsborg\LaravelPdf\Facades\Pdf::class,
+        'LaravelPayku' => SebaCarrasco93\LaravelPayku\Facades\LaravelPayku::class,
         'Str' => Illuminate\Support\Str::class,
+        'Socialiter' => GeneaLabs\LaravelSocialiter\Facades\Socialiter::class,
         'Rave' => KingFlamez\Rave\Facades\Rave::class,
     ],
 

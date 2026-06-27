@@ -652,6 +652,30 @@
                         <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Global B2B Config') }}</span>
                     </a>
                 </li>
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('admin.b2b.insurance.config') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.insurance.config']) }}">
+                        <div class="aiz-side-nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                                <path d="M8 1 2.5 3v4.46c0 3.3 2.23 6.38 5.5 7.54 3.27-1.16 5.5-4.24 5.5-7.54V3L8 1Zm0 1.59 4 1.45v3.42c0 2.56-1.65 4.97-4 5.99-2.35-1.02-4-3.43-4-5.99V4.04l4-1.45Zm-.75 2.16v2.5H4.75v1.5h2.5v2.5h1.5v-2.5h2.5v-1.5h-2.5v-2.5h-1.5Z"
+                                    fill="{{ get_setting('navbar_text_color') }}" />
+                            </svg>
+                        </div>
+                        <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('B2B Insurance Config') }}</span>
+                    </a>
+                </li>
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('admin.b2b.insurance.dashboard') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['admin.b2b.insurance.dashboard']) }}">
+                        <div class="aiz-side-nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                                <path d="M2 3.5A1.5 1.5 0 0 1 3.5 2h9A1.5 1.5 0 0 1 14 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 12.5v-9Zm1.5 0v9h9v-9h-9ZM5 5h6v1.5H5V5Zm0 2.5h6V9H5V7.5Zm0 2.5h4V11H5V10Z"
+                                    fill="{{ get_setting('navbar_text_color') }}" />
+                            </svg>
+                        </div>
+                        <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Insurance Dashboard') }}</span>
+                    </a>
+                </li>
 
                 <li class="aiz-side-nav-item">
                     <span class="px-25px pt-10px text-uppercase fs-12 fw-400  d-block my-1 opacity-50"

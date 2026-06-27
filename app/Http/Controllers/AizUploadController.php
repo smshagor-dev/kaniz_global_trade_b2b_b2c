@@ -10,6 +10,7 @@ use Storage;
 use Image;
 use enshrined\svgSanitize\Sanitizer;
 use Str;
+use Illuminate\Support\Facades\Log;
 
 class AizUploadController extends Controller
 {
@@ -72,6 +73,13 @@ class AizUploadController extends Controller
 
     public function upload(Request $request)
     {
+        if (!Auth::check()) {
+            return response()->json([
+                'result' => false,
+                'message' => translate('Please login again and retry the upload.'),
+            ], 401);
+        }
+
         $type = array(
             "jpg" => "image",
             "jpeg" => "image",
@@ -156,7 +164,10 @@ class AizUploadController extends Controller
                     $upload->file_size = $fileSizeKB . ' kb';
                     $upload->save();
 
-                    return '{}';
+                    return response()->json([
+                        'result' => true,
+                        'id' => $upload->id,
+                    ]);
                 } elseif ($extension == 'gif') {
                     $img = $request->file('aiz_file');
 
@@ -181,7 +192,10 @@ class AizUploadController extends Controller
                     $upload->file_size = $fileSizeKB . ' kb';
                     $upload->save();
 
-                    return '{}';
+                    return response()->json([
+                        'result' => true,
+                        'id' => $upload->id,
+                    ]);
                 } elseif ($extension == 'svg') {
                     $sanitizer = new Sanitizer();
                     // Load the dirty svg
@@ -201,6 +215,11 @@ class AizUploadController extends Controller
                         $extension = get_setting('uploaded_image_format');
                     }
                     try {
+                        $directory = base_path('public/uploads/all');
+                        if (!is_dir($directory)) {
+                            mkdir($directory, 0777, true);
+                        }
+
                         $path = 'uploads/all/'. Str::random(40) . '.' .$extension;
                         $img = Image::make($request->file('aiz_file')->getRealPath())->encode($extension, 75);
                         $height = $img->height();
@@ -285,7 +304,16 @@ class AizUploadController extends Controller
                         clearstatcache();
                         $size = $img->filesize();
                     } catch (\Exception $e) {
-                        //dd($e);
+                        Log::error('AIZ uploader image processing failed.', [
+                            'file' => $request->file('aiz_file')->getClientOriginalName(),
+                            'extension' => $extension,
+                            'message' => $e->getMessage(),
+                        ]);
+
+                        return response()->json([
+                            'result' => false,
+                            'message' => translate('Image processing failed. Please try another image.'),
+                        ], 500);
                     }
                 } else {
                     $path = $request->file('aiz_file')->store('uploads/all', 'local');
@@ -318,8 +346,17 @@ class AizUploadController extends Controller
                 $upload->file_size = $size;
                 $upload->save();
             }
-            return '{}';
+
+            return response()->json([
+                'result' => true,
+                'id' => $upload->id,
+            ]);
         }
+
+        return response()->json([
+            'result' => false,
+            'message' => translate('No file was uploaded.'),
+        ], 422);
     }
 
     public function get_uploaded_files(Request $request)

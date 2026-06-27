@@ -64,35 +64,57 @@ class AIController extends Controller
 
     public function ai_configuration(Request $request)
     {
+        $provider = $this->legacySettingsService->ensureGeminiProvider();
         $this->legacySettingsService->sync();
+        $providerOptions = array_keys((array) config('ai.providers', []));
+        $editProvider = $request->filled('edit')
+            ? AIProviderSetting::query()->find($request->integer('edit'))
+            : null;
+
+        if (!$editProvider) {
+            $preferredProvider = $request->string('provider')->toString();
+            if ($preferredProvider !== '') {
+                $editProvider = AIProviderSetting::query()
+                    ->where('provider', $preferredProvider)
+                    ->orderByDesc('is_default')
+                    ->orderBy('id')
+                    ->first();
+            }
+        }
 
         return view('backend.setup_configurations.ai_configurations.ai_config', [
-            'providers' => AIProviderSetting::query()->orderByDesc('is_default')->orderBy('name')->get(),
-            'providerOptions' => array_keys((array) config('ai.providers', [])),
-            'editProvider' => $request->filled('edit')
-                ? AIProviderSetting::find($request->integer('edit'))
-                : null,
+            'providers' => AIProviderSetting::query()
+                ->orderByDesc('is_default')
+                ->orderByDesc('is_active')
+                ->orderBy('name')
+                ->get(),
+            'providerOptions' => $providerOptions,
+            'providerMeta' => (array) config('ai.providers', []),
+            'editProvider' => $editProvider,
         ]);
     }
 
     public function storeProvider(Request $request): RedirectResponse
     {
         $validated = $request->validate($this->providerRules());
-        AIProviderSetting::query()->create($this->providerPayload($validated));
+        $provider = AIProviderSetting::query()->firstOrNew(['provider' => $validated['provider']]);
+        $provider->fill($this->providerPayload($validated, $provider));
+        $provider->save();
 
         if (!empty($validated['is_default'])) {
-            $this->setDefaultProviderId((int) AIProviderSetting::query()->latest('id')->value('id'));
+            $this->setDefaultProviderId($provider->id);
         }
 
         $this->legacySettingsService->sync();
-        flash(translate('AI provider created successfully'))->success();
+        flash(translate('AI configuration saved successfully'))->success();
 
         return back();
     }
 
     public function updateProvider(Request $request, $id): RedirectResponse
     {
-        $provider = AIProviderSetting::findOrFail(decrypt($id));
+        $provider = AIProviderSetting::query()
+            ->findOrFail(decrypt($id));
         $validated = $request->validate($this->providerRules($provider->id));
         $payload = $this->providerPayload($validated, $provider);
 
@@ -107,14 +129,15 @@ class AIController extends Controller
         }
 
         $this->legacySettingsService->sync();
-        flash(translate('AI provider updated successfully'))->success();
+        flash(translate('AI configuration updated successfully'))->success();
 
         return redirect()->route('ai-config');
     }
 
     public function testProvider($id): RedirectResponse
     {
-        $provider = AIProviderSetting::findOrFail(decrypt($id));
+        $provider = AIProviderSetting::query()
+            ->findOrFail(decrypt($id));
 
         try {
             $result = $this->aiManager->driver($provider->provider)->testConnection($provider);
@@ -138,7 +161,8 @@ class AIController extends Controller
 
     public function setDefaultProvider($id): RedirectResponse
     {
-        $provider = AIProviderSetting::findOrFail(decrypt($id));
+        $provider = AIProviderSetting::query()
+            ->findOrFail(decrypt($id));
         $this->setDefaultProviderId($provider->id);
         $this->legacySettingsService->sync();
 
@@ -149,7 +173,8 @@ class AIController extends Controller
 
     public function toggleProvider($id): RedirectResponse
     {
-        $provider = AIProviderSetting::findOrFail(decrypt($id));
+        $provider = AIProviderSetting::query()
+            ->findOrFail(decrypt($id));
         $provider->update(['is_active' => !$provider->is_active]);
         $this->legacySettingsService->sync();
 
@@ -362,11 +387,15 @@ class AIController extends Controller
             $settings = json_decode($validated['settings_json'], true) ?: [];
         }
 
+        $providerKey = (string) ($validated['provider'] ?? $provider?->provider ?? 'gemini');
+        $providerConfig = (array) config('ai.providers.' . $providerKey, []);
+        $providerLabel = (string) ($providerConfig['label'] ?? ucfirst($providerKey));
+
         return [
-            'provider' => $validated['provider'],
-            'name' => $validated['name'],
+            'provider' => $providerKey,
+            'name' => $validated['name'] ?: $providerLabel,
             'api_key' => $validated['api_key'] ?? null,
-            'base_url' => $validated['base_url'] ?: data_get(config('ai.providers'), $validated['provider'] . '.base_url'),
+            'base_url' => $validated['base_url'] ?: ($providerConfig['base_url'] ?? null),
             'model' => $validated['model'],
             'temperature' => $validated['temperature'] ?? 0.7,
             'max_tokens' => $validated['max_tokens'] ?? 1024,

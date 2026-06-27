@@ -53,6 +53,10 @@ Route::controller(B2BContainerShipmentController::class)->group(function () {
     Route::get('/b2b/container-tracking', 'track')->name('b2b.container-tracking.track');
 });
 
+Route::controller(B2BInsuranceController::class)->group(function () {
+    Route::post('/b2b/insurance-webhooks/{provider}', 'handleWebhook')->name('b2b.insurance-webhooks.handle');
+});
+
 Route::group(['middleware' => ['auth', 'verified', 'unbanned']], function () {
     Route::controller(B2BCompanyController::class)->group(function () {
         Route::get('/b2b/company', 'show')->name('b2b.company.show');
@@ -316,8 +320,17 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin']], function 
     Route::get('/b2b/dashboard', [AdminController::class, 'b2b_dashboard'])->name('admin.b2b.dashboard');
     Route::get('/b2b/trade-finance', [B2BTradeFinanceController::class, 'adminDashboard'])->name('admin.b2b.trade-finance.dashboard');
     Route::get('/b2b/insurance', [B2BInsuranceController::class, 'adminDashboard'])->name('admin.b2b.insurance.dashboard');
+    Route::get('/b2b/insurance/config', [B2BInsuranceController::class, 'adminConfig'])->name('admin.b2b.insurance.config');
+    Route::post('/b2b/insurance/config', [B2BInsuranceController::class, 'updateConfig'])->name('admin.b2b.insurance.config.update');
     Route::post('/b2b/insurance/providers', [B2BInsuranceController::class, 'storeProvider'])->name('admin.b2b.insurance.providers.store');
     Route::post('/b2b/insurance/providers/{providerId}/update', [B2BInsuranceController::class, 'updateProvider'])->name('admin.b2b.insurance.providers.update');
+    Route::post('/b2b/insurance/providers/{providerId}/test', [B2BInsuranceController::class, 'testConnection'])->name('admin.b2b.insurance.providers.test');
+    Route::post('/b2b/insurance/providers/{providerId}/test-authentication', [B2BInsuranceController::class, 'testAuthentication'])->name('admin.b2b.insurance.providers.test-authentication');
+    Route::post('/b2b/insurance/providers/{providerId}/verify-credentials', [B2BInsuranceController::class, 'verifyCredentials'])->name('admin.b2b.insurance.providers.verify-credentials');
+    Route::post('/b2b/insurance/providers/{providerId}/test-webhook', [B2BInsuranceController::class, 'testWebhook'])->name('admin.b2b.insurance.providers.test-webhook');
+    Route::post('/b2b/insurance/providers/{providerId}/send-sample-webhook', [B2BInsuranceController::class, 'sendSampleWebhook'])->name('admin.b2b.insurance.providers.send-sample-webhook');
+    Route::post('/b2b/insurance/providers/{providerId}/regenerate-secret', [B2BInsuranceController::class, 'regenerateSecret'])->name('admin.b2b.insurance.providers.regenerate-secret');
+    Route::post('/b2b/insurance/providers/{providerId}/integration-events', [B2BInsuranceController::class, 'updateIntegrationEvents'])->name('admin.b2b.insurance.providers.integration-events');
     Route::post('/b2b/insurance/quotes/{quoteId}/issue-policy', [B2BInsuranceController::class, 'issuePolicy'])->name('admin.b2b.insurance.policies.issue');
     Route::post('/b2b/insurance/claims/{claimId}/status', [B2BInsuranceController::class, 'updateClaimStatus'])->name('admin.b2b.insurance.claims.status');
     Route::post('/b2b/insurance/payments', [B2BInsuranceController::class, 'recordPayment'])->name('admin.b2b.insurance.payments.store');

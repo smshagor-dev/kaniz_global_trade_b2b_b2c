@@ -6,9 +6,11 @@ use App\Observers\SearchIndexObserver;
 use App\Services\AI\AIManager;
 use App\Services\Search\SearchManager;
 use App\Services\Search\SearchModelRegistry;
+use GeneaLabs\LaravelSocialiter\Socialiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Pagination\Paginator;
+use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -34,6 +36,9 @@ class AppServiceProvider extends ServiceProvider
    */
   public function register()
   {
+    Sanctum::ignoreMigrations();
+    Socialiter::ignoreMigrations();
+
     $this->app->singleton(AIManager::class, fn () => new AIManager());
     $this->app->singleton(SearchManager::class, fn () => new SearchManager());
   }
