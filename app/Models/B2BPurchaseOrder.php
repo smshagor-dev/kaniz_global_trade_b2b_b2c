@@ -156,4 +156,19 @@ class B2BPurchaseOrder extends Model
     {
         return $this->hasMany(B2BFinanceDispute::class, 'purchase_order_id');
     }
+
+    public function insuranceQuotes()
+    {
+        return $this->hasMany(B2BInsuranceQuote::class, 'purchase_order_id');
+    }
+
+    public function insurancePolicies()
+    {
+        return $this->hasMany(B2BInsurancePolicy::class, 'purchase_order_id');
+    }
+
+    public function insuranceClaims()
+    {
+        return $this->hasMany(B2BInsuranceClaim::class, 'purchase_order_id');
+    }
 }

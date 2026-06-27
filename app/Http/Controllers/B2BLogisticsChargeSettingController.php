@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BusinessSetting;
+use App\Services\B2BGlobalConfigService;
 use App\Services\B2BEscrowFeeService;
 use App\Services\B2BInspectionServiceChargeService;
 use App\Services\B2BLogisticsChargeService;
@@ -20,7 +21,8 @@ class B2BLogisticsChargeSettingController extends Controller
         protected B2BEscrowFeeService $escrowFeeService,
         protected B2BSampleProcessingFeeService $sampleProcessingFeeService,
         protected B2BInspectionServiceChargeService $inspectionServiceChargeService,
-        protected B2BTradeDocumentFeeService $tradeDocumentFeeService
+        protected B2BTradeDocumentFeeService $tradeDocumentFeeService,
+        protected B2BGlobalConfigService $globalConfigService
     )
     {
     }
@@ -41,13 +43,15 @@ class B2BLogisticsChargeSettingController extends Controller
             'inspectionChargeTypes' => B2BInspectionServiceChargeService::CHARGE_TYPES,
             'tradeDocumentChargeTypes' => B2BTradeDocumentFeeService::CHARGE_TYPES,
             'currencyCode' => get_system_default_currency()->code,
+            'aiSettings' => $this->globalConfigService->aiSettings(),
+            'insuranceSettings' => $this->globalConfigService->insuranceSettings(),
         ]);
     }
 
     public function update(Request $request)
     {
         $section = $request->validate([
-            'config_section' => 'required|in:shipping,order,escrow,sample,inspection,trade_document',
+            'config_section' => 'required|in:shipping,order,escrow,sample,inspection,trade_document,ai,insurance',
         ])['config_section'];
 
         if ($section === 'shipping') {
@@ -120,7 +124,7 @@ class B2BLogisticsChargeSettingController extends Controller
                 'b2b_inspection_service_charge_percent' => (float) ($data['b2b_inspection_service_charge_percent'] ?? 0),
                 'b2b_inspection_service_charge_fixed' => (float) ($data['b2b_inspection_service_charge_fixed'] ?? 0),
             ];
-        } else {
+        } elseif ($section === 'trade_document') {
             $data = $request->validate([
                 'b2b_trade_document_fee_enabled' => 'nullable|boolean',
                 'b2b_trade_document_fee_type' => 'required|in:fixed,percentage',
@@ -134,6 +138,34 @@ class B2BLogisticsChargeSettingController extends Controller
                 'b2b_trade_document_fee_percent' => (float) ($data['b2b_trade_document_fee_percent'] ?? 0),
                 'b2b_trade_document_fee_fixed' => (float) ($data['b2b_trade_document_fee_fixed'] ?? 0),
             ];
+        } elseif ($section === 'ai') {
+            $settings = [
+                'b2b_ai_tools_enabled' => $request->boolean('b2b_ai_tools_enabled'),
+                'b2b_ai_visible' => $request->boolean('b2b_ai_visible'),
+                'b2b_ai_rfq_enabled' => $request->boolean('b2b_ai_rfq_enabled'),
+                'b2b_ai_product_description_enabled' => $request->boolean('b2b_ai_product_description_enabled'),
+                'b2b_ai_negotiation_enabled' => $request->boolean('b2b_ai_negotiation_enabled'),
+                'b2b_ai_translation_enabled' => $request->boolean('b2b_ai_translation_enabled'),
+            ];
+
+            $this->globalConfigService->updateMany($settings);
+            Artisan::call('cache:clear');
+
+            flash(translate('Global B2B AI configuration updated successfully.'))->success();
+
+            return back();
+        } else {
+            $settings = [
+                'b2b_insurance_module_enabled' => $request->boolean('b2b_insurance_module_enabled'),
+                'b2b_insurance_visible' => $request->boolean('b2b_insurance_visible'),
+            ];
+
+            $this->globalConfigService->updateMany($settings);
+            Artisan::call('cache:clear');
+
+            flash(translate('Global B2B insurance configuration updated successfully.'))->success();
+
+            return back();
         }
 
         foreach ($settings as $type => $value) {

@@ -3,6 +3,7 @@
 use App\Http\Controllers\AddonController;
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\Admin\Report\EarningReportController;
+use App\Http\Controllers\Admin\SearchAdminController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AIController;
 use App\Http\Controllers\AizUploadController;
@@ -891,12 +892,36 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/global-seo', 'global_seo')->name('global_seo');
     });
 
+    Route::controller(SearchAdminController::class)->group(function () {
+        Route::get('/enterprise-search', 'dashboard')->name('admin.search.dashboard');
+        Route::get('/enterprise-search/analytics', 'analytics')->name('admin.search.analytics');
+        Route::post('/enterprise-search/settings', 'updateSettings')->name('admin.search.settings.update');
+        Route::post('/enterprise-search/reindex', 'reindex')->name('admin.search.reindex');
+        Route::post('/enterprise-search/retry-failures', 'retryFailures')->name('admin.search.retry-failures');
+    });
+
     Route::controller(AIController::class)->group(function () {
         Route::get('/token-usage', 'ai_token_usage')->name('ai-token-usege');
         Route::get('/ai-configuration', 'ai_configuration')->name('ai-config');
+        Route::post('/ai-configuration/providers', 'storeProvider')->name('ai.providers.store');
+        Route::patch('/ai-configuration/providers/{id}', 'updateProvider')->name('ai.providers.update');
+        Route::post('/ai-configuration/providers/{id}/test', 'testProvider')->name('ai.providers.test');
+        Route::post('/ai-configuration/providers/{id}/default', 'setDefaultProvider')->name('ai.providers.default');
+        Route::post('/ai-configuration/providers/{id}/toggle', 'toggleProvider')->name('ai.providers.toggle');
         Route::get('/ai-templates', 'ai_templates')->name('ai-prompt-templates-config');
+        Route::post('/ai-templates', 'createPromptTemplate')->name('ai-prompt-templates.store');
         Route::patch('/ai-templates/{id}','update')->name('ai-prompt-templates.update');
+        Route::get('/ai-cost-analytics', 'costAnalytics')->name('ai-cost-analytics');
+        Route::get('/ai-feedback', 'feedback')->name('ai-feedback');
         Route::get('/ai-add-edit-products','add_edit_products')->name('ai-add_edit_products');
+        Route::get('/ai-commercial-intelligence', 'commercialDashboard')->name('ai-commercial-dashboard');
+        Route::get('/ai-commercial-intelligence/price-recommendations', 'commercialPriceRecommendations')->name('ai-commercial-price');
+        Route::get('/ai-commercial-intelligence/supplier-risk', 'commercialSupplierRisk')->name('ai-commercial-supplier-risk');
+        Route::get('/ai-commercial-intelligence/buyer-risk', 'commercialBuyerRisk')->name('ai-commercial-buyer-risk');
+        Route::get('/ai-commercial-intelligence/opportunities', 'commercialOpportunities')->name('ai-commercial-opportunities');
+        Route::get('/ai-commercial-intelligence/currency-analysis', 'commercialCurrency')->name('ai-commercial-currency');
+        Route::get('/ai-commercial-intelligence/freight-recommendations', 'commercialFreight')->name('ai-commercial-freight');
+        Route::get('/ai-commercial-intelligence/notifications', 'commercialNotifications')->name('ai-commercial-notifications');
     });
 
     Route::controller(MarketingController::class)->group(function () {

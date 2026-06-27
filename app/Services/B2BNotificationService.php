@@ -9,6 +9,9 @@ use App\Models\B2BProformaInvoice;
 use App\Models\B2BNegotiation;
 use App\Models\B2BContainerShipment;
 use App\Models\B2BFreightQuote;
+use App\Models\B2BInsuranceClaim;
+use App\Models\B2BInsurancePolicy;
+use App\Models\B2BInsuranceQuote;
 use App\Models\B2BShipment;
 use App\Models\NotificationType;
 use App\Models\User;
@@ -221,6 +224,41 @@ class B2BNotificationService
                 'booking_number' => $shipment->booking_number,
             ])
         );
+    }
+
+    public function notifyInsuranceQuoteGenerated(B2BInsuranceQuote $quote): void
+    {
+        $link = route('b2b.insurance.dashboard');
+
+        $this->notifyCompanies($quote->buyer_company_id, $quote->supplier_company_id, $link);
+    }
+
+    public function notifyInsurancePolicyIssued(B2BInsurancePolicy $policy): void
+    {
+        $link = route('admin.b2b.insurance.dashboard');
+
+        $this->notifyCompanies($policy->buyer_company_id, $policy->supplier_company_id, $link);
+    }
+
+    public function notifyInsuranceClaimSubmitted(B2BInsuranceClaim $claim): void
+    {
+        $link = route('b2b.insurance.dashboard');
+
+        $this->notifyCompanies($claim->buyer_company_id, $claim->supplier_company_id, $link);
+    }
+
+    public function notifyInsuranceClaimStatusUpdated(B2BInsuranceClaim $claim, string $status): void
+    {
+        $link = route('admin.b2b.insurance.dashboard');
+
+        $this->notifyCompanies($claim->buyer_company_id, $claim->supplier_company_id, $link);
+    }
+
+    public function notifyInsurancePolicyExpiring(B2BInsurancePolicy $policy, bool $expired = false): void
+    {
+        $link = route('b2b.insurance.dashboard');
+
+        $this->notifyCompanies($policy->buyer_company_id, $policy->supplier_company_id, $link);
     }
 
     protected function notifyCompanies(?int $buyerCompanyId, ?int $supplierCompanyId, string $link): void

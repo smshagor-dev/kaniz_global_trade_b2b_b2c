@@ -210,7 +210,6 @@ class B2BPackageController extends Controller
         $featuredProjection = $packageFor === 'supplier'
             ? $this->b2bPackageService->featuredSupplierRevenueProjection(B2BCompany::publicSuppliers()->count())
             : null;
-
         return view('b2b.packages.index', compact(
             'company',
             'packages',
@@ -299,6 +298,11 @@ class B2BPackageController extends Controller
             'verified_badge' => 'nullable|boolean',
             'analytics_access' => 'nullable|boolean',
             'dedicated_support' => 'nullable|boolean',
+            'ai_access' => 'nullable|boolean',
+            'ai_rfq_access' => 'nullable|boolean',
+            'ai_product_description_access' => 'nullable|boolean',
+            'ai_negotiation_access' => 'nullable|boolean',
+            'ai_translation_access' => 'nullable|boolean',
             'logo' => 'nullable|string|max:255',
             'highlight_text' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:5000',
@@ -311,9 +315,21 @@ class B2BPackageController extends Controller
         $data['verified_badge'] = $request->boolean('verified_badge');
         $data['analytics_access'] = $request->boolean('analytics_access');
         $data['dedicated_support'] = $request->boolean('dedicated_support');
+        $data['ai_access'] = $request->boolean('ai_access');
+        $data['ai_rfq_access'] = $request->boolean('ai_rfq_access');
+        $data['ai_product_description_access'] = $request->boolean('ai_product_description_access');
+        $data['ai_negotiation_access'] = $request->boolean('ai_negotiation_access');
+        $data['ai_translation_access'] = $request->boolean('ai_translation_access');
         $data['is_active'] = $request->boolean('is_active', true);
         $data['sort_order'] = (int) ($request->sort_order ?? 0);
         $data['package_type'] = $request->input('package_type', 'membership');
+
+        if (!$data['ai_access']) {
+            $data['ai_rfq_access'] = false;
+            $data['ai_product_description_access'] = false;
+            $data['ai_negotiation_access'] = false;
+            $data['ai_translation_access'] = false;
+        }
 
         if ($forceSupplierFeatured) {
             $data['package_for'] = 'supplier';

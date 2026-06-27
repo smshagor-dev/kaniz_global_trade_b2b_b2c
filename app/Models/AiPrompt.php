@@ -3,13 +3,27 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use App\Traits\PreventDemoModeChanges;
 
-class AiPrompt extends Model
+class AiPrompt extends AIPromptTemplate
 {
     use HasFactory;
-    use PreventDemoModeChanges;
 
-    protected $fillable = ['type','prompt'];
+    protected $table = 'ai_prompt_templates';
+
+    protected $appends = ['identifier', 'prompt'];
+
+    public function getIdentifierAttribute(): string
+    {
+        return (string) ($this->legacy_identifier ?: $this->module . '_' . $this->name);
+    }
+
+    public function getPromptAttribute(): string
+    {
+        return (string) $this->user_prompt_template;
+    }
+
+    public function setPromptAttribute($value): void
+    {
+        $this->attributes['user_prompt_template'] = $value;
+    }
 }

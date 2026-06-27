@@ -441,7 +441,9 @@
                     <a href="{{ route('admin.b2b.purchase-orders.index') }}" class="btn btn-soft-success btn-block mb-2">{{ translate('Purchase Orders') }}</a>
                     <a href="{{ route('admin.b2b.shipments.index') }}" class="btn btn-soft-warning btn-block mb-2">{{ translate('Shipments') }}</a>
                     <a href="{{ route('admin.b2b.freight-quotes.index') }}" class="btn btn-soft-secondary btn-block mb-2">{{ translate('Freight Quotes') }}</a>
+                    <a href="{{ route('admin.b2b.insurance.dashboard') }}" class="btn btn-soft-info btn-block mb-2">{{ translate('Insurance Dashboard') }}</a>
                     <a href="{{ route('admin.b2b.logistics-charge-settings.index') }}" class="btn btn-soft-dark btn-block mb-2">{{ translate('Logistics Charges') }}</a>
+                    <a href="{{ route('ai-config') }}" class="btn btn-soft-primary btn-block mb-2">{{ translate('B2B AI Providers') }}</a>
                     <a href="{{ route('admin.b2b.audit-logs.index') }}" class="btn btn-soft-danger btn-block">{{ translate('Audit Logs') }}</a>
                 </div>
             </div>

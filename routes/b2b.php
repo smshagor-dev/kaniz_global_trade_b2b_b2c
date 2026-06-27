@@ -2,10 +2,12 @@
 
 use App\Http\Controllers\B2BCompanyController;
 use App\Http\Controllers\B2BAuditLogController;
+use App\Http\Controllers\B2BAIController;
 use App\Http\Controllers\B2BNegotiationController;
 use App\Http\Controllers\B2BContainerShipmentController;
 use App\Http\Controllers\B2BCustomsDocumentController;
 use App\Http\Controllers\B2BFreightForwarderController;
+use App\Http\Controllers\B2BInsuranceController;
 use App\Http\Controllers\B2BFreightPricingRuleController;
 use App\Http\Controllers\B2BFreightQuoteController;
 use App\Http\Controllers\B2BHsCodeController;
@@ -111,6 +113,27 @@ Route::group(['middleware' => ['auth', 'verified', 'unbanned']], function () {
         Route::post('/b2b/rfqs/{id}/cancel', 'cancel')->name('b2b.rfqs.cancel');
     });
 
+    Route::controller(B2BAIController::class)->middleware('approved_b2b_company:any')->group(function () {
+        Route::get('/b2b/ai', 'dashboard')->name('b2b.ai.dashboard');
+        Route::match(['get', 'post'], '/b2b/ai/price-recommendation', 'priceRecommendation')->name('b2b.ai.price-recommendation');
+        Route::match(['get', 'post'], '/b2b/ai/supplier-risk', 'supplierRisk')->name('b2b.ai.supplier-risk');
+        Route::match(['get', 'post'], '/b2b/ai/buyer-risk', 'buyerRisk')->name('b2b.ai.buyer-risk');
+        Route::match(['get', 'post'], '/b2b/ai/freight-recommendation', 'freightRecommendation')->name('b2b.ai.freight-recommendation');
+        Route::match(['get', 'post'], '/b2b/ai/currency-analysis', 'currencyAnalysis')->name('b2b.ai.currency-analysis');
+        Route::match(['get', 'post'], '/b2b/ai/trade-finance', 'tradeFinanceRecommendation')->name('b2b.ai.trade-finance');
+        Route::get('/b2b/ai/opportunities', 'opportunities')->name('b2b.ai.opportunities');
+        Route::get('/b2b/ai/notifications', 'notifications')->name('b2b.ai.notifications');
+        Route::get('/b2b/ai/dashboard-insights', 'dashboardInsights')->name('b2b.ai.dashboard-insights');
+        Route::match(['get', 'post'], '/b2b/ai/rfq-assistant', 'rfqAssistant')->name('b2b.ai.rfq-assistant');
+        Route::post('/b2b/ai/rfq-assistant/generate', 'rfqAssistant')->name('b2b.ai.rfq-assistant.generate');
+        Route::get('/b2b/ai/rfqs/{id}/supplier-matches', 'supplierMatches')->name('b2b.ai.rfqs.supplier-matches');
+        Route::match(['get', 'post'], '/b2b/ai/hs-code', 'hsCode')->name('b2b.ai.hs-code');
+        Route::post('/b2b/ai/hs-code/suggest', 'hsCode')->name('b2b.ai.hs-code.suggest');
+        Route::get('/b2b/ai/summary/{type}/{id}', 'documentSummary')->name('b2b.ai.summary');
+        Route::match(['get', 'post'], '/b2b/ai/trade-assistant', 'tradeAssistant')->name('b2b.ai.trade-assistant');
+        Route::post('/b2b/ai/trade-assistant/ask', 'tradeAssistant')->name('b2b.ai.trade-assistant.ask');
+    });
+
     Route::controller(B2BQuotationController::class)->middleware('approved_b2b_company:buyer,package')->group(function () {
         Route::post('/b2b/quotations/{id}/accept', 'accept')->name('b2b.quotations.accept');
         Route::post('/b2b/quotations/{id}/reject', 'reject')->name('b2b.quotations.reject');
@@ -169,6 +192,14 @@ Route::group(['middleware' => ['auth', 'verified', 'unbanned']], function () {
         Route::post('/b2b/proforma-invoices/{invoiceId}/disputes', 'createDispute')->name('b2b.trade-finance.disputes.store');
         Route::post('/b2b/disputes/{disputeId}/messages', 'addDisputeMessage')->name('b2b.trade-finance.disputes.messages.store');
         Route::post('/b2b/proforma-invoices/{invoiceId}/refunds', 'requestRefund')->name('b2b.trade-finance.refunds.store');
+    });
+
+    Route::controller(B2BInsuranceController::class)->middleware('approved_b2b_company:buyer,package')->group(function () {
+        Route::get('/b2b/insurance', 'buyerDashboard')->name('b2b.insurance.dashboard');
+        Route::post('/b2b/insurance/quotes', 'requestQuote')->name('b2b.insurance.quotes.store');
+        Route::post('/b2b/insurance/policies/{policyId}/claims', 'submitClaim')->name('b2b.insurance.claims.store');
+        Route::get('/b2b/insurance/policies/{policyId}/export', 'exportPolicy')->name('b2b.insurance.policies.export');
+        Route::get('/b2b/insurance/claims/{claimId}/export', 'exportClaim')->name('b2b.insurance.claims.export');
     });
 
     Route::controller(B2BProformaInvoiceController::class)->middleware('approved_b2b_company:buyer,package')->group(function () {
@@ -271,11 +302,27 @@ Route::group(['prefix' => 'seller', 'middleware' => ['auth', 'verified', 'unbann
         Route::post('/b2b/proforma-invoices/{invoiceId}/refunds', 'requestRefund')->name('seller.b2b.trade-finance.refunds.store');
         Route::post('/b2b/letters-of-credit/{lcId}/status', 'updateLetterOfCreditStatus')->name('seller.b2b.trade-finance.letters-of-credit.status');
     });
+
+    Route::controller(B2BInsuranceController::class)->middleware('approved_b2b_company:supplier,package')->group(function () {
+        Route::get('/b2b/insurance', 'supplierDashboard')->name('seller.b2b.insurance.dashboard');
+        Route::post('/b2b/insurance/quotes', 'requestQuote')->name('seller.b2b.insurance.quotes.store');
+        Route::post('/b2b/insurance/policies/{policyId}/claims', 'submitClaim')->name('seller.b2b.insurance.claims.store');
+        Route::get('/b2b/insurance/policies/{policyId}/export', 'exportPolicy')->name('seller.b2b.insurance.policies.export');
+        Route::get('/b2b/insurance/claims/{claimId}/export', 'exportClaim')->name('seller.b2b.insurance.claims.export');
+    });
 });
 
 Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin']], function () {
     Route::get('/b2b/dashboard', [AdminController::class, 'b2b_dashboard'])->name('admin.b2b.dashboard');
     Route::get('/b2b/trade-finance', [B2BTradeFinanceController::class, 'adminDashboard'])->name('admin.b2b.trade-finance.dashboard');
+    Route::get('/b2b/insurance', [B2BInsuranceController::class, 'adminDashboard'])->name('admin.b2b.insurance.dashboard');
+    Route::post('/b2b/insurance/providers', [B2BInsuranceController::class, 'storeProvider'])->name('admin.b2b.insurance.providers.store');
+    Route::post('/b2b/insurance/providers/{providerId}/update', [B2BInsuranceController::class, 'updateProvider'])->name('admin.b2b.insurance.providers.update');
+    Route::post('/b2b/insurance/quotes/{quoteId}/issue-policy', [B2BInsuranceController::class, 'issuePolicy'])->name('admin.b2b.insurance.policies.issue');
+    Route::post('/b2b/insurance/claims/{claimId}/status', [B2BInsuranceController::class, 'updateClaimStatus'])->name('admin.b2b.insurance.claims.status');
+    Route::post('/b2b/insurance/payments', [B2BInsuranceController::class, 'recordPayment'])->name('admin.b2b.insurance.payments.store');
+    Route::get('/b2b/insurance/policies/{policyId}/export', [B2BInsuranceController::class, 'exportPolicy'])->name('admin.b2b.insurance.policies.export');
+    Route::get('/b2b/insurance/claims/{claimId}/export', [B2BInsuranceController::class, 'exportClaim'])->name('admin.b2b.insurance.claims.export');
     Route::post('/b2b/disputes/{disputeId}/resolve', [B2BTradeFinanceController::class, 'resolveDispute'])->name('admin.b2b.trade-finance.disputes.resolve');
     Route::post('/b2b/settlements/{settlementId}/approve', [B2BTradeFinanceController::class, 'approveSettlement'])->name('admin.b2b.trade-finance.settlements.approve');
     Route::post('/b2b/settlements/{settlementId}/complete', [B2BTradeFinanceController::class, 'completeSettlement'])->name('admin.b2b.trade-finance.settlements.complete');

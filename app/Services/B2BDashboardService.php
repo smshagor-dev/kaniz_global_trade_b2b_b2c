@@ -10,6 +10,9 @@ use App\Models\B2BFinanceRefund;
 use App\Models\B2BFreightForwarder;
 use App\Models\B2BFreightQuote;
 use App\Models\B2BFreightQuoteCost;
+use App\Models\B2BInsuranceClaim;
+use App\Models\B2BInsurancePayment;
+use App\Models\B2BInsurancePolicy;
 use App\Models\B2BPaymentMilestone;
 use App\Models\B2BProformaInvoice;
 use App\Models\B2BPurchaseOrder;
@@ -87,6 +90,9 @@ class B2BDashboardService
             'finance_completed_settlements' => $companyId ? B2BSettlement::where('supplier_company_id', $companyId)->where('status', 'completed')->count() : 0,
             'finance_open_disputes' => $companyId ? B2BFinanceDispute::where('supplier_company_id', $companyId)->where('status', 'open')->count() : 0,
             'finance_milestones_due' => $companyId ? B2BPaymentMilestone::where('supplier_company_id', $companyId)->whereIn('status', ['pending', 'funded'])->count() : 0,
+            'insurance_policies' => $companyId ? B2BInsurancePolicy::where('supplier_company_id', $companyId)->count() : 0,
+            'insurance_claims' => $companyId ? B2BInsuranceClaim::where('supplier_company_id', $companyId)->count() : 0,
+            'insurance_open_claims' => $companyId ? B2BInsuranceClaim::where('supplier_company_id', $companyId)->whereIn('status', ['submitted', 'review', 'investigation', 'appealed'])->count() : 0,
             'profile_views' => 0,
         ];
     }
@@ -128,6 +134,9 @@ class B2BDashboardService
             'finance_refunds' => $companyId ? B2BFinanceRefund::where('reference_type', B2BProformaInvoice::class)
                 ->whereIn('reference_id', B2BProformaInvoice::where('buyer_company_id', $companyId)->pluck('id'))
                 ->count() : 0,
+            'insurance_policies' => $companyId ? B2BInsurancePolicy::where('buyer_company_id', $companyId)->count() : 0,
+            'insurance_claims' => $companyId ? B2BInsuranceClaim::where('buyer_company_id', $companyId)->count() : 0,
+            'insurance_open_claims' => $companyId ? B2BInsuranceClaim::where('buyer_company_id', $companyId)->whereIn('status', ['submitted', 'review', 'investigation', 'appealed'])->count() : 0,
         ];
     }
 
@@ -235,6 +244,12 @@ class B2BDashboardService
             'finance_completed_settlements' => B2BSettlement::where('status', 'completed')->count(),
             'finance_pending_refunds' => B2BFinanceRefund::whereIn('status', ['pending_approval', 'approved'])->count(),
             'finance_milestones' => B2BPaymentMilestone::count(),
+            'insurance_providers' => B2BInsurancePolicy::query()->distinct('provider_id')->count('provider_id'),
+            'insurance_policies' => B2BInsurancePolicy::count(),
+            'insurance_claims' => B2BInsuranceClaim::count(),
+            'insurance_open_claims' => B2BInsuranceClaim::whereIn('status', ['submitted', 'review', 'investigation', 'appealed'])->count(),
+            'insurance_premium_revenue' => B2BInsurancePayment::where('payment_type', 'premium')->where('status', 'paid')->sum('amount'),
+            'insurance_claim_settlements' => B2BInsurancePayment::where('payment_type', 'claim_settlement')->where('status', 'paid')->sum('amount'),
             'order_platform_profit' => $this->orderPlatformFeeService->platformRevenue(),
             'escrow_platform_profit' => $this->escrowFeeService->platformRevenue(),
             'sample_processing_platform_profit' => $this->sampleProcessingFeeService->platformRevenue(),

@@ -1957,6 +1957,13 @@
                                     </a>
                                 </li>
                             @endcan
+                            <li class="aiz-side-nav-item">
+                                <a href="{{ route('admin.search.dashboard') }}"
+                                    class="aiz-side-nav-link {{ areActiveRoutes(['admin.search.dashboard', 'admin.search.analytics'])}}">
+                                    <span class="aiz-side-nav-text"
+                                        style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Enterprise Search') }}</span>
+                                </a>
+                            </li>
                             @can('commission_history_report')
                                 <li class="aiz-side-nav-item">
                                     <a href="{{ route('commission-log.index') }}" class="aiz-side-nav-link">
@@ -2219,13 +2226,31 @@
                                 <li class="aiz-side-nav-item">
                                     <a href="{{ route('ai-token-usege') }}" class="aiz-side-nav-link">
                                         <span class="aiz-side-nav-text"
-                                            style="color: {{ get_setting('navbar_text_color') }}">{{translate('Token Usage')}}</span>
+                                            style="color: {{ get_setting('navbar_text_color') }}">{{translate('AI Usage Logs')}}</span>
                                     </a>
                                 </li>
                                 <li class="aiz-side-nav-item">
                                     <a href="{{ route('ai-config') }}" class="aiz-side-nav-link">
                                         <span class="aiz-side-nav-text"
-                                            style="color: {{ get_setting('navbar_text_color') }}">{{translate('AI Configuration')}}</span>
+                                            style="color: {{ get_setting('navbar_text_color') }}">{{translate('AI Provider Settings')}}</span>
+                                    </a>
+                                </li>
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('ai-cost-analytics') }}" class="aiz-side-nav-link">
+                                        <span class="aiz-side-nav-text"
+                                            style="color: {{ get_setting('navbar_text_color') }}">{{translate('AI Cost Analytics')}}</span>
+                                    </a>
+                                </li>
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('ai-feedback') }}" class="aiz-side-nav-link">
+                                        <span class="aiz-side-nav-text"
+                                            style="color: {{ get_setting('navbar_text_color') }}">{{translate('AI Feedback')}}</span>
+                                    </a>
+                                </li>
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('ai-commercial-dashboard') }}" class="aiz-side-nav-link">
+                                        <span class="aiz-side-nav-text"
+                                            style="color: {{ get_setting('navbar_text_color') }}">{{translate('Commercial Intelligence')}}</span>
                                     </a>
                                 </li>
                             @endcan

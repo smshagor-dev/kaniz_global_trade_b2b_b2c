@@ -199,6 +199,26 @@
                     </li>
                 @endif
 
+                @if (Route::has('b2b.ai.dashboard') && (get_setting('b2b_ai_visible') === null || (int) get_setting('b2b_ai_visible') === 1))
+                    <li class="aiz-side-nav-item">
+                        <a href="{{ route('b2b.ai.dashboard') }}"
+                            class="aiz-side-nav-link {{ areActiveRoutes(['b2b.ai.dashboard', 'b2b.ai.rfq-assistant', 'b2b.ai.hs-code', 'b2b.ai.trade-assistant', 'b2b.ai.price-recommendation', 'b2b.ai.supplier-risk', 'b2b.ai.buyer-risk', 'b2b.ai.freight-recommendation', 'b2b.ai.currency-analysis', 'b2b.ai.trade-finance', 'b2b.ai.opportunities', 'b2b.ai.notifications', 'b2b.ai.dashboard-insights']) }}">
+                            <i class="las la-robot fs-16 text-soft-secondary"></i>
+                            <span class="aiz-side-nav-text ml-3">{{ translate('AI Trade Desk') }}</span>
+                        </a>
+                    </li>
+                @endif
+
+                @if (Route::has('b2b.insurance.dashboard') && (get_setting('b2b_insurance_visible') === null || (int) get_setting('b2b_insurance_visible') === 1))
+                    <li class="aiz-side-nav-item">
+                        <a href="{{ route('b2b.insurance.dashboard') }}"
+                            class="aiz-side-nav-link {{ areActiveRoutes(['b2b.insurance.dashboard', 'b2b.insurance.policies.export', 'b2b.insurance.claims.export']) }}">
+                            <i class="las la-shield-alt fs-16 text-soft-secondary"></i>
+                            <span class="aiz-side-nav-text ml-3">{{ translate('Trade Insurance') }}</span>
+                        </a>
+                    </li>
+                @endif
+
                 @if (get_setting('vendor_system_activation') == 1)
                 <!-- Followed Sellers -->
                 <li class="aiz-side-nav-item">

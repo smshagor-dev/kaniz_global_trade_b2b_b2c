@@ -91,6 +91,45 @@ class B2BPackageService
         return $package && $company->members()->whereIn('status', ['active', 'invited', 'suspended'])->count() < $package->member_limit;
     }
 
+    public function hasAiAccess(B2BCompany $company): bool
+    {
+        $package = $this->getActivePackageForCompany($company);
+
+        return (bool) ($package?->ai_access);
+    }
+
+    public function hasAiToolAccess(B2BCompany $company, string $field): bool
+    {
+        $package = $this->getActivePackageForCompany($company);
+
+        if (!$package || !$package->ai_access) {
+            return false;
+        }
+
+        return (bool) data_get($package, $field, false);
+    }
+
+    public function aiRevenueProjection(int $companyCount, ?string $packageFor = null): array
+    {
+        $plan = B2BPackage::query()
+            ->active()
+            ->membership()
+            ->when($packageFor, fn ($query) => $query->where('package_for', $packageFor))
+            ->where('ai_access', true)
+            ->orderBy('amount')
+            ->orderBy('sort_order')
+            ->first();
+
+        $monthlyPrice = $plan?->monthlyEquivalent() ?? 49.0;
+
+        return [
+            'plan_name' => $plan?->name ?? 'AI Tools Subscription',
+            'monthly_price' => $monthlyPrice,
+            'company_count' => $companyCount,
+            'projected_monthly_revenue' => round($monthlyPrice * $companyCount, 2),
+        ];
+    }
+
     public function activatePackage(B2BCompany $company, B2BPackage $package): void
     {
         $startsAt = now();

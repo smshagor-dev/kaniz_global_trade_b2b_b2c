@@ -115,6 +115,16 @@ class B2BPermissionService
         return $this->hasRole($userId, $companyId, ['owner', 'admin', 'finance_manager', 'procurement_manager', 'sales_manager']);
     }
 
+    public function canManageInsurance($userId, $companyId): bool
+    {
+        return $this->hasRole($userId, $companyId, ['owner', 'admin', 'finance_manager', 'procurement_manager', 'sales_manager', 'logistics_manager']);
+    }
+
+    public function canSubmitInsuranceClaim($userId, $companyId): bool
+    {
+        return $this->hasRole($userId, $companyId, ['owner', 'admin', 'finance_manager', 'procurement_manager', 'logistics_manager']);
+    }
+
     public function canManageFreight($userId, $companyId): bool
     {
         return $this->hasRole($userId, $companyId, ['owner', 'admin', 'logistics_manager', 'sales_manager']);

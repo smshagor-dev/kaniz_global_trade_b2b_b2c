@@ -67,6 +67,16 @@ abstract class B2BFeatureTestCase extends TestCase
         ];
 
         $requiredFreightTables = [
+            'search_documents',
+            'search_analytics_events',
+            'search_indexing_failures',
+            'search_indexing_runs',
+            'ai_provider_settings',
+            'ai_requests',
+            'ai_usage_logs',
+            'ai_prompt_templates',
+            'ai_cost_reports',
+            'ai_feedback',
             'b2b_ports',
             'b2b_freight_forwarders',
             'b2b_freight_quotes',
@@ -89,6 +99,14 @@ abstract class B2BFeatureTestCase extends TestCase
             'b2b_finance_disputes',
             'b2b_finance_dispute_messages',
             'b2b_finance_refunds',
+            'b2b_insurance_providers',
+            'b2b_insurance_quotes',
+            'b2b_insurance_policies',
+            'b2b_insurance_claims',
+            'b2b_insurance_claim_documents',
+            'b2b_insurance_payments',
+            'b2b_insurance_events',
+            'b2b_insurance_api_logs',
         ];
 
         $missingTables = collect(array_merge($requiredCoreTables, $requiredFreightTables))

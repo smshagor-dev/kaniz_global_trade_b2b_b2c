@@ -154,6 +154,16 @@ class B2BFreightQuote extends Model
         return $this->belongsTo(B2BHsCode::class, 'hs_code_record_id');
     }
 
+    public function insuranceQuotes()
+    {
+        return $this->hasMany(B2BInsuranceQuote::class, 'freight_quote_id');
+    }
+
+    public function insurancePolicies()
+    {
+        return $this->hasMany(B2BInsurancePolicy::class, 'freight_quote_id');
+    }
+
     public function filterPersistable(array $attributes): array
     {
         static $columns;

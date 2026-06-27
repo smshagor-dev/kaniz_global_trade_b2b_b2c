@@ -17,6 +17,9 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\SyncB2BFreightShipmentsCommand::class,
         \App\Console\Commands\CurrencySyncCommand::class,
         \App\Console\Commands\ProcessTradeFinanceCommand::class,
+        \App\Console\Commands\ProcessB2BInsuranceCommand::class,
+        \App\Console\Commands\SearchReindexCommand::class,
+        \App\Console\Commands\SearchRetryFailedCommand::class,
     ];
 
     /**
@@ -31,6 +34,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('b2b:freight:sync')->everyThirtyMinutes();
         $schedule->command('currency:sync')->hourly()->withoutOverlapping();
         $schedule->command('b2b:trade-finance:process')->everyThirtyMinutes()->withoutOverlapping();
+        $schedule->command('b2b:insurance:process')->hourly()->withoutOverlapping();
     }
 
     /**

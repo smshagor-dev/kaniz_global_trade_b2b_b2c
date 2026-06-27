@@ -14,7 +14,8 @@ class B2BShipmentTrackingService
         protected CarrierManager $carrierManager,
         protected B2BTradeService $b2bTradeService,
         protected B2BAuditService $b2bAuditService,
-        protected B2BNotificationService $b2bNotificationService
+        protected B2BNotificationService $b2bNotificationService,
+        protected ?B2BInsuranceService $insuranceService = null
     ) {
     }
 
@@ -64,6 +65,8 @@ class B2BShipmentTrackingService
             ]);
             $shipment->refresh();
         }
+
+        $this->insuranceService?->syncPoliciesForShipment($shipment->fresh());
 
         $this->b2bAuditService->log(
             null,
@@ -188,6 +191,8 @@ class B2BShipmentTrackingService
         foreach (($result['events'] ?? []) as $eventData) {
             $this->appendTrackingEvent($shipment, $eventData);
         }
+
+        $this->insuranceService?->syncPoliciesForShipment($shipment->fresh());
 
         return [
             'success' => true,

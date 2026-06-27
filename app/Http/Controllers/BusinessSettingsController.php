@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AIProviderSetting;
 use App\Models\ElementStyle;
+use App\Services\AI\AILegacySettingsService;
 use Illuminate\Http\Request;
 use App\Models\BusinessSetting;
 use App\Models\Category;
@@ -932,6 +934,25 @@ class BusinessSettingsController extends Controller
             $business_settings->value = $request->gemini_model;
             $business_settings->save();
         }
+
+        AIProviderSetting::query()->updateOrCreate(
+            ['provider' => 'gemini', 'name' => 'Legacy Gemini'],
+            [
+                'api_key' => $request->input('GEMINI_API_KEY'),
+                'base_url' => config('ai.providers.gemini.base_url'),
+                'model' => $request->input('gemini_model', 'gemini-2.5-flash'),
+                'temperature' => 0.70,
+                'max_tokens' => 1024,
+                'timeout' => 30,
+                'retry_count' => 1,
+                'is_active' => $request->has('ai_activation'),
+                'is_default' => $request->has('ai_activation'),
+                'settings' => [],
+                'last_status' => 'synced_from_legacy_form',
+            ]
+        );
+
+        app(AILegacySettingsService::class)->sync();
 
         Artisan::call('cache:clear');
 

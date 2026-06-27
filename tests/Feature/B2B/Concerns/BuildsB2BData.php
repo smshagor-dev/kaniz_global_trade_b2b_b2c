@@ -8,6 +8,10 @@ use App\Models\B2BContainerShipment;
 use App\Models\B2BCustomsDocument;
 use App\Models\B2BFreightForwarder;
 use App\Models\B2BPackage;
+use App\Models\B2BInsuranceClaim;
+use App\Models\B2BInsurancePolicy;
+use App\Models\B2BInsuranceProvider;
+use App\Models\B2BInsuranceQuote;
 use App\Models\B2BFreightPricingRule;
 use App\Models\B2BFreightQuote;
 use App\Models\B2BFreightQuoteCost;
@@ -210,6 +214,52 @@ trait BuildsB2BData
                 'joined_at' => now(),
             ]
         );
+    }
+
+    protected function createPackage(array $attributes = []): B2BPackage
+    {
+        $sequence = random_int(1000, 999999);
+
+        return B2BPackage::create(array_merge([
+            'name' => 'Package ' . $sequence,
+            'package_for' => 'buyer',
+            'package_type' => 'membership',
+            'amount' => 49,
+            'duration' => 30,
+            'rfq_limit' => 25,
+            'quotation_limit' => 25,
+            'product_limit' => 25,
+            'member_limit' => 5,
+            'priority_listing' => false,
+            'featured_profile' => false,
+            'verified_badge' => false,
+            'analytics_access' => true,
+            'dedicated_support' => false,
+            'ai_access' => true,
+            'ai_rfq_access' => true,
+            'ai_product_description_access' => true,
+            'ai_negotiation_access' => true,
+            'ai_translation_access' => true,
+            'highlight_text' => 'AI subscription',
+            'description' => 'AI-enabled package for tests.',
+            'sort_order' => 10,
+            'is_active' => true,
+        ], $attributes));
+    }
+
+    protected function activatePackageForCompany(B2BCompany $company, ?B2BPackage $package = null): B2BCompany
+    {
+        $package ??= $this->createPackage([
+            'package_for' => $company->isSupplierSide() ? 'supplier' : 'buyer',
+        ]);
+
+        $company->update([
+            'b2b_package_id' => $package->id,
+            'package_started_at' => now(),
+            'package_expires_at' => $package->duration > 0 ? now()->copy()->addDays($package->duration) : null,
+        ]);
+
+        return $company->fresh();
     }
 
     protected function setActiveCompany(B2BCompany $company): void
@@ -499,6 +549,134 @@ trait BuildsB2BData
             'document_type' => 'commercial_invoice',
             'title' => 'Customs document',
             'file_path' => 'uploads/b2b_customs_documents/test.pdf',
+        ], $attributes)));
+    }
+
+    protected function createInsuranceProvider(array $attributes = []): B2BInsuranceProvider
+    {
+        $sequence = random_int(1000, 999999);
+
+        return B2BInsuranceProvider::create((new B2BInsuranceProvider())->filterPersistable(array_merge([
+            'name' => 'Insurer ' . $sequence,
+            'company' => 'Insurer ' . $sequence,
+            'slug' => 'insurer-' . $sequence,
+            'country' => 'Bangladesh',
+            'coverage' => ['cargo_insurance', 'all_risk_insurance'],
+            'integration_mode' => 'manual',
+            'policy_types' => ['cargo_insurance', 'all_risk_insurance'],
+            'supported_countries' => ['Bangladesh', 'China'],
+            'premium_rules' => ['base_rate' => 0.012],
+            'claim_rules' => ['requires' => ['invoice', 'damage_report']],
+            'is_active' => true,
+            'is_default' => true,
+            'is_test_mode' => true,
+        ], $attributes)));
+    }
+
+    protected function createInsuranceQuote(array $attributes = []): B2BInsuranceQuote
+    {
+        $provider = $attributes['provider_id'] ?? $this->createInsuranceProvider()->id;
+
+        return B2BInsuranceQuote::create((new B2BInsuranceQuote())->filterPersistable(array_merge([
+            'quote_number' => 'IQ-' . now()->format('Ymd') . '-' . random_int(10000, 99999),
+            'provider_id' => $provider,
+            'buyer_company_id' => null,
+            'supplier_company_id' => null,
+            'created_by' => null,
+            'insurance_type' => 'cargo_insurance',
+            'transport_mode' => 'sea_freight',
+            'origin_country' => 'China',
+            'destination_country' => 'Bangladesh',
+            'commodity' => 'Electronics',
+            'shipment_value' => 10000,
+            'coverage_amount' => 10000,
+            'currency' => 'USD',
+            'exchange_rate_snapshot' => 1,
+            'currency_snapshot' => ['code' => 'USD'],
+            'risk_score' => 45,
+            'risk_breakdown' => ['risk_level' => 'medium'],
+            'premium' => 150,
+            'tax_amount' => 15,
+            'additional_charges' => 10,
+            'platform_fee' => 5,
+            'discount_amount' => 0,
+            'final_amount' => 180,
+            'premium_breakdown' => ['premium' => 150],
+            'calculation_history' => [['premium' => 150]],
+            'request_payload' => [],
+            'response_payload' => ['deterministic' => true],
+            'status' => 'quoted',
+            'expires_at' => now()->addDays(7),
+        ], $attributes)));
+    }
+
+    protected function createInsurancePolicy(array $attributes = []): B2BInsurancePolicy
+    {
+        $quote = isset($attributes['quote_id']) ? B2BInsuranceQuote::findOrFail($attributes['quote_id']) : $this->createInsuranceQuote();
+
+        return B2BInsurancePolicy::create((new B2BInsurancePolicy())->filterPersistable(array_merge([
+            'policy_number' => 'IP-' . now()->format('Ymd') . '-' . random_int(10000, 99999),
+            'provider_id' => $quote->provider_id,
+            'quote_id' => $quote->id,
+            'buyer_company_id' => $quote->buyer_company_id,
+            'supplier_company_id' => $quote->supplier_company_id,
+            'policy_holder_user_id' => null,
+            'issued_by' => null,
+            'shipment_id' => $quote->shipment_id,
+            'freight_quote_id' => $quote->freight_quote_id,
+            'purchase_order_id' => $quote->purchase_order_id,
+            'proforma_invoice_id' => $quote->proforma_invoice_id,
+            'insurance_type' => $quote->insurance_type,
+            'transport_mode' => $quote->transport_mode,
+            'coverage_plan' => 'standard',
+            'status' => 'approved',
+            'coverage_amount' => $quote->coverage_amount,
+            'premium' => $quote->premium,
+            'tax_amount' => $quote->tax_amount,
+            'deductible_amount' => 100,
+            'insured_value' => $quote->shipment_value,
+            'currency' => $quote->currency,
+            'exchange_rate_snapshot' => 1,
+            'currency_snapshot' => ['code' => 'USD'],
+            'coverage_details' => ['insurance_type' => $quote->insurance_type],
+            'premium_breakdown' => $quote->premium_breakdown,
+            'attachment_paths' => [],
+            'metadata' => [],
+            'coverage_start' => now()->toDateString(),
+            'coverage_end' => now()->addDays(30)->toDateString(),
+            'issued_at' => now(),
+        ], $attributes)));
+    }
+
+    protected function createInsuranceClaim(array $attributes = []): B2BInsuranceClaim
+    {
+        $policy = isset($attributes['policy_id']) ? B2BInsurancePolicy::findOrFail($attributes['policy_id']) : $this->createInsurancePolicy();
+
+        return B2BInsuranceClaim::create((new B2BInsuranceClaim())->filterPersistable(array_merge([
+            'claim_number' => 'IC-' . now()->format('Ymd') . '-' . random_int(10000, 99999),
+            'policy_id' => $policy->id,
+            'provider_id' => $policy->provider_id,
+            'buyer_company_id' => $policy->buyer_company_id,
+            'supplier_company_id' => $policy->supplier_company_id,
+            'claimant_user_id' => null,
+            'claimant_company_id' => $policy->buyer_company_id,
+            'shipment_id' => $policy->shipment_id,
+            'freight_quote_id' => $policy->freight_quote_id,
+            'purchase_order_id' => $policy->purchase_order_id,
+            'proforma_invoice_id' => $policy->proforma_invoice_id,
+            'status' => 'submitted',
+            'claim_type' => 'damage',
+            'summary' => 'Cargo damaged on arrival',
+            'description' => 'Boxes arrived damaged.',
+            'claim_amount' => 1000,
+            'approved_amount' => 0,
+            'settled_amount' => 0,
+            'currency' => $policy->currency,
+            'evidence' => ['photo'],
+            'timeline' => [],
+            'comments' => [],
+            'incident_at' => now()->subDay(),
+            'submitted_at' => now(),
         ], $attributes)));
     }
 }

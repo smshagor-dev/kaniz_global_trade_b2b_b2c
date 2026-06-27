@@ -72,6 +72,17 @@
         </div>
     </div>
 
+    <div class="col-xl-4 col-md-6">
+        <div class="dashboard-box h-150px mb-2rem overflow-hidden" style="background: #4D9F70">
+            <div class="d-flex align-items-center justify-content-between h-100 px-3">
+                <div>
+                    <h1 class="fs-30 fw-600 text-white mb-1">${{ number_format($totalCost, 4) }}</h1>
+                    <h3 class="fs-13 fw-600 text-white mb-0">{{ translate('Estimated Cost') }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- AI Usage Logs Table -->
     <div class="col-lg-12">
@@ -82,10 +93,13 @@
                         <tr>
                             <th class="text-uppercase fs-10 fs-md-12 fw-700 text-secondary">{{ translate('Date & Time') }}</th>
                             <th class="text-uppercase fs-10 fs-md-12 fw-700 text-secondary">{{ translate('User') }}</th>
+                            <th class="text-uppercase fs-10 fs-md-12 fw-700 text-secondary">{{ translate('Module') }}</th>
+                            <th class="text-uppercase fs-10 fs-md-12 fw-700 text-secondary">{{ translate('Provider') }}</th>
                             <th class="text-uppercase fs-10 fs-md-12 fw-700 text-secondary">{{ translate('Model') }}</th>
                             <th class="hide-xs text-uppercase fs-10 fs-md-12 fw-700 text-secondary">{{ translate('Prompt Tokens') }}</th>
                             <th class="hide-sm text-uppercase fs-12 fw-700 text-secondary">{{ translate('Completion Tokens') }}</th>
                             <th class="hide-md text-uppercase fs-12 fw-700 text-secondary">{{ translate('Total Tokens') }}</th>
+                            <th class="hide-md text-uppercase fs-12 fw-700 text-secondary">{{ translate('Cost') }}</th>
                         </tr>
                     </thead>
 
@@ -104,6 +118,18 @@
                                             {{ optional($log->user)->name ?? 'System' }}
                                         </span>
                                     </div>
+                                </td>
+
+                                <td class="align-middle" data-label="Model">
+                                    <span class="badge badge-inline badge-soft-secondary px-3 py-2">
+                                        {{ $log->module ?: 'general' }}
+                                    </span>
+                                </td>
+
+                                <td class="align-middle" data-label="Provider">
+                                    <span class="badge badge-inline badge-soft-primary px-3 py-2">
+                                        {{ $log->provider ?: 'n/a' }}
+                                    </span>
                                 </td>
 
                                 <td class="align-middle" data-label="Model">
@@ -132,11 +158,15 @@
                                     </div>
                                 </td>
 
+                                <td class="hide-md align-middle" data-label="Cost">
+                                    ${{ number_format($log->estimated_cost, 4) }}
+                                </td>
+
                                 
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-5">
+                                <td colspan="9" class="text-center py-5">
                                     <div class="w-100">
                                         <i class="las la-robot fs-48 text-soft-light mb-3"></i>
                                         <h5 class="fs-16 fw-bold text-gray">{{ translate('No AI Usage Logs found!') }}</h5>
@@ -175,7 +205,7 @@
             $(this).find('button[type=submit]').prop('disabled', true);
             $('#aiz-data-table tbody').html(`
                 <tr>
-                    <td colspan="6" class="text-center py-5">
+                    <td colspan="9" class="text-center py-5">
                         <div class="spinner-border text-primary" role="status">
                             <span class="sr-only">Loading...</span>
                         </div>

@@ -26,6 +26,23 @@
             </div>
         @endif
 
+        @if (Route::has('b2b.ai.rfq-assistant'))
+            <div class="alert alert-secondary">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                    <div class="mb-2 mb-md-0">
+                        <strong>{{ translate('Need help drafting this RFQ?') }}</strong>
+                        <div class="small text-muted">{{ translate('Use the AI assistant to improve the title, description, and sourcing requirements.') }}</div>
+                    </div>
+                    <a
+                        href="{{ route('b2b.ai.rfq-assistant', ['title' => old('title', $rfq?->title ?? ($selectedProduct ? translate('RFQ for') . ' ' . $selectedProduct->getTranslation('name') : null)), 'description' => old('description', $rfq?->description), 'category_id' => old('category_id', $rfq?->category_id ?? $selectedProduct?->category_id), 'product_id' => old('product_id', $rfq?->product_id ?? $selectedProduct?->id), 'quantity' => old('quantity', $rfq?->quantity), 'unit' => old('unit', $rfq?->unit ?? $selectedProduct?->unit), 'target_price' => old('target_price', $rfq?->target_price), 'currency' => old('currency', $rfq?->currency ?? get_system_default_currency()->code), 'incoterm' => old('incoterm', $rfq?->incoterm), 'destination_country' => old('destination_country', $rfq?->destination_country), 'destination_city' => old('destination_city', $rfq?->destination_city)]) }}"
+                        class="btn btn-soft-primary rounded-0"
+                    >
+                        {{ translate('Open AI Assistant') }}
+                    </a>
+                </div>
+            </div>
+        @endif
+
         <form action="{{ $action }}" method="POST" enctype="multipart/form-data">
             @csrf
             <input type="hidden" name="product_id" value="{{ old('product_id', $rfq?->product_id ?? $selectedProduct?->id) }}">

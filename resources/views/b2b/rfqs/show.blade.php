@@ -35,6 +35,21 @@
         </div>
     </div>
 
+    @if (Route::has('b2b.ai.rfqs.supplier-matches'))
+        <div class="card rounded-0 shadow-none border mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{{ translate('AI Insights') }}</h5>
+                <div>
+                    <a href="{{ route('b2b.ai.rfqs.supplier-matches', $rfq->id) }}" class="btn btn-soft-primary btn-sm">{{ translate('Supplier Matches') }}</a>
+                    <a href="{{ route('b2b.ai.summary', ['type' => 'rfq', 'id' => $rfq->id]) }}" class="btn btn-soft-info btn-sm">{{ translate('Summarize RFQ') }}</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="mb-0 text-muted">{{ translate('Review ranked supplier matches and generate a permission-aware RFQ summary without changing the current quotation workflow.') }}</p>
+            </div>
+        </div>
+    @endif
+
     <div class="card rounded-0 shadow-none border">
         <div class="card-header">
             <h5 class="mb-0">{{ translate('Supplier Quotations') }}</h5>

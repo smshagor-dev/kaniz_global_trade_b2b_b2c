@@ -195,6 +195,21 @@ class B2BProformaInvoice extends Model
         return $this->morphMany(B2BFinanceRefund::class, 'reference');
     }
 
+    public function insuranceQuotes()
+    {
+        return $this->hasMany(B2BInsuranceQuote::class, 'proforma_invoice_id');
+    }
+
+    public function insurancePolicies()
+    {
+        return $this->hasMany(B2BInsurancePolicy::class, 'proforma_invoice_id');
+    }
+
+    public function insuranceClaims()
+    {
+        return $this->hasMany(B2BInsuranceClaim::class, 'proforma_invoice_id');
+    }
+
     public function usesEscrow(): bool
     {
         return (float) $this->escrow_fee_amount > 0;

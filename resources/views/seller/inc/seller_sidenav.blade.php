@@ -302,6 +302,24 @@
                         <span class="aiz-side-nav-text">{{ translate('Negotiations') }}</span>
                     </a>
                 </li>
+                @if (Route::has('b2b.ai.dashboard') && (get_setting('b2b_ai_visible') === null || (int) get_setting('b2b_ai_visible') === 1))
+                    <li class="aiz-side-nav-item">
+                        <a href="{{ route('b2b.ai.dashboard') }}"
+                            class="aiz-side-nav-link {{ areActiveRoutes(['b2b.ai.dashboard', 'b2b.ai.rfq-assistant', 'b2b.ai.hs-code', 'b2b.ai.trade-assistant', 'b2b.ai.price-recommendation', 'b2b.ai.supplier-risk', 'b2b.ai.buyer-risk', 'b2b.ai.freight-recommendation', 'b2b.ai.currency-analysis', 'b2b.ai.trade-finance', 'b2b.ai.opportunities', 'b2b.ai.notifications', 'b2b.ai.dashboard-insights']) }}">
+                            <i class="las la-robot aiz-side-nav-icon"></i>
+                            <span class="aiz-side-nav-text">{{ translate('AI Trade Desk') }}</span>
+                        </a>
+                    </li>
+                @endif
+                @if (Route::has('seller.b2b.insurance.dashboard') && (get_setting('b2b_insurance_visible') === null || (int) get_setting('b2b_insurance_visible') === 1))
+                    <li class="aiz-side-nav-item">
+                        <a href="{{ route('seller.b2b.insurance.dashboard') }}"
+                            class="aiz-side-nav-link {{ areActiveRoutes(['seller.b2b.insurance.dashboard', 'seller.b2b.insurance.policies.export', 'seller.b2b.insurance.claims.export']) }}">
+                            <i class="las la-shield-alt aiz-side-nav-icon"></i>
+                            <span class="aiz-side-nav-text">{{ translate('Trade Insurance') }}</span>
+                        </a>
+                    </li>
+                @endif
                 <li class="aiz-side-nav-item">
                     <a href="{{ route('seller.b2b.product-promotions.index') }}"
                         class="aiz-side-nav-link {{ areActiveRoutes(['seller.b2b.product-promotions.index']) }}">

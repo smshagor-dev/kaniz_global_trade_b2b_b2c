@@ -42,6 +42,7 @@ use App\Http\Controllers\Payment\SslcommerzController;
 use App\Http\Controllers\Payment\StripeController;
 use App\Http\Controllers\Payment\TapController;
 use App\Http\Controllers\Payment\VoguepayController;
+use App\Http\Controllers\EnterpriseSearchController;
 use App\Http\Controllers\ProductQueryController;
 use App\Http\Controllers\PurchaseHistoryController;
 use App\Http\Controllers\ReviewController;
@@ -217,6 +218,13 @@ Route::controller(SearchController::class)->group(function () {
     Route::post('/ajax-search', 'ajax_search')->name('search.ajax');
     Route::get('/category/{category_slug}', 'listingByCategory')->name('products.category');
     Route::get('/brand/{brand_slug}', 'listingByBrand')->name('products.brand');
+});
+
+Route::controller(EnterpriseSearchController::class)->group(function () {
+    Route::get('/global-search', 'index')->name('global.search');
+    Route::get('/global-search/json', 'json')->name('global.search.json');
+    Route::get('/global-search/autocomplete', 'autocomplete')->name('global.search.autocomplete');
+    Route::get('/global-search/click/{documentId}', 'click')->name('global.search.click');
 });
 
 // Cart

@@ -170,6 +170,21 @@ class B2BShipment extends Model
         return $this->morphMany(B2BAuditLog::class, 'auditable');
     }
 
+    public function insuranceQuotes()
+    {
+        return $this->hasMany(B2BInsuranceQuote::class, 'shipment_id');
+    }
+
+    public function insurancePolicies()
+    {
+        return $this->hasMany(B2BInsurancePolicy::class, 'shipment_id');
+    }
+
+    public function insuranceClaims()
+    {
+        return $this->hasMany(B2BInsuranceClaim::class, 'shipment_id');
+    }
+
     public function usesLiveTracking(): bool
     {
         return $this->live_tracking_enabled && $this->shippingProvider?->isApiProvider();
