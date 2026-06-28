@@ -2,7 +2,7 @@
 
 @section('content')
 
-    @include('auth.'.get_setting('authentication_layout_select').'.admin_login')
+    @include('auth.'.authentication_layout().'.admin_login')
     
 @endsection
 

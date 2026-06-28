@@ -2,7 +2,7 @@
 
 @section('content')
 
-    @include('auth.'.get_setting('authentication_layout_select').'.forgot_password')
+    @include('auth.'.authentication_layout().'.forgot_password')
 
 @endsection
 

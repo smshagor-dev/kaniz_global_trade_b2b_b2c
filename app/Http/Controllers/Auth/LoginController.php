@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\RecalculateUserRiskJob;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use GeneaLabs\LaravelSocialiter\Facades\Socialiter;
 use Socialite;
 use App\Models\User;
 use App\Models\Customer;
 use App\Models\Cart;
+use App\Models\UserDeviceLog;
 use App\Services\SocialRevoke;
 use App\Utility\EmailUtility;
 use Session;
@@ -336,6 +338,21 @@ class LoginController extends Controller
      */
     public function authenticated()
     {
+        if (auth()->check()) {
+            UserDeviceLog::query()->create([
+                'user_id' => auth()->id(),
+                'ip_address' => request()->ip(),
+                'user_agent' => (string) request()->userAgent(),
+                'device_hash' => hash('sha256', ((string) request()->ip()) . '|' . ((string) request()->userAgent())),
+                'country' => request()->header('CF-IPCountry') ?: null,
+                'city' => null,
+                'login_at' => now(),
+                'metadata' => ['route' => request()->route()?->getName()],
+            ]);
+
+            RecalculateUserRiskJob::dispatch(auth()->id(), 'login_new_device', 'User logged in and device trail was updated.');
+        }
+
         if (session('temp_user_id') != null) {
             if(auth()->user()->user_type == 'customer'){
                 Cart::where('temp_user_id', session('temp_user_id'))

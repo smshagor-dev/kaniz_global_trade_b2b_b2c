@@ -1,4 +1,4 @@
-@extends('frontend.layouts.user_panel')
+@extends('b2b.layouts.app')
 
 @section('panel_content')
     <div class="aiz-titlebar mb-4">
@@ -35,7 +35,7 @@
             </div>
             <div class="card-body">
                 <div class="white-space-pre-line">{{ $answer['answer'] }}</div>
-                <div class="text-muted small mt-3">{{ translate('Provider') }}: {{ $answer['provider'] }} · {{ translate('Model') }}: {{ $answer['model'] }}</div>
+                <div class="text-muted small mt-3">{{ translate('Provider') }}: {{ $answer['provider'] }} Ã‚Â· {{ translate('Model') }}: {{ $answer['model'] }}</div>
             </div>
         </div>
     @endif

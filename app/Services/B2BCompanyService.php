@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\B2BCompany;
 use App\Models\B2BCompanyMember;
+use App\Services\Fraud\FraudRestrictionService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Session;
 
@@ -11,12 +12,14 @@ class B2BCompanyService
 {
     public function __construct(
         protected B2BPermissionService $b2bPermissionService,
-        protected B2BPackageService $b2bPackageService
+        protected B2BPackageService $b2bPackageService,
+        protected FraudRestrictionService $fraudRestrictionService
     )
     {
     }
 
-    protected array $supplierTypes = ['supplier', 'manufacturer', 'wholesaler', 'distributor'];
+    protected array $supplierTypes = B2BCompany::SUPPLIER_TYPES;
+    protected array $buyerTypes = B2BCompany::BUYER_TYPES;
 
     public function getOwnedCompanyByUser($userId)
     {
@@ -135,7 +138,7 @@ class B2BCompanyService
         return (bool) (
             $company &&
             $company->verification_status === 'approved' &&
-            $company->company_type === 'buyer' &&
+            in_array($company->company_type, $this->buyerTypes, true) &&
             $this->b2bPermissionService->canAccessCompany($userId, $company->id)
         );
     }
@@ -195,7 +198,8 @@ class B2BCompanyService
             $company &&
             $this->isApprovedBuyer($userId, $company->id) &&
             $this->b2bPermissionService->canCreateRfq($userId, $company->id) &&
-            $this->b2bPackageService->canCreateRfq($company)
+            $this->b2bPackageService->canCreateRfq($company) &&
+            $this->fraudRestrictionService->canCreateRfq($userId)
         );
     }
 
@@ -207,7 +211,8 @@ class B2BCompanyService
             $company &&
             $this->isApprovedSupplier($userId, $company->id) &&
             $this->b2bPermissionService->canSubmitQuotation($userId, $company->id) &&
-            $this->b2bPackageService->canReplyToRfq($company)
+            $this->b2bPackageService->canReplyToRfq($company) &&
+            $this->fraudRestrictionService->canReplyToRfq($userId)
         );
     }
 

@@ -233,4 +233,29 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(B2BAuditLog::class, 'actor_user_id');
     }
+
+    public function fraudChecks()
+    {
+        return $this->hasMany(FraudCheck::class);
+    }
+
+    public function latestFraudCheck()
+    {
+        return $this->hasOne(FraudCheck::class)->latestOfMany('updated_at');
+    }
+
+    public function verificationDocuments()
+    {
+        return $this->hasMany(VerificationDocument::class);
+    }
+
+    public function userDeviceLogs()
+    {
+        return $this->hasMany(UserDeviceLog::class);
+    }
+
+    public function reportsAgainst()
+    {
+        return $this->hasMany(UserReport::class, 'reported_user_id');
+    }
 }

@@ -1,4 +1,4 @@
-@extends('seller.layouts.app')
+@extends('b2b.layouts.supplier')
 
 @section('panel_content')
     <div class="aiz-titlebar mt-2 mb-4"><h1 class="h3">{{ translate('Freight Quotes') }}</h1></div>

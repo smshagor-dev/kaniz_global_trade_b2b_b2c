@@ -30,7 +30,7 @@ class B2BNotificationService
                 ->whereHas('b2bCompany', function ($query) use ($rfq) {
                     $query->where('id', $rfq->supplier_company_id)
                         ->where('verification_status', 'approved')
-                        ->whereIn('company_type', ['supplier', 'manufacturer', 'wholesaler', 'distributor']);
+                        ->whereIn('company_type', \App\Models\B2BCompany::SUPPLIER_TYPES);
                 })
                 ->first();
 
@@ -46,7 +46,7 @@ class B2BNotificationService
             ->where('id', '!=', $rfq->user_id)
             ->whereHas('b2bCompany', function ($query) {
                 $query->where('verification_status', 'approved')
-                    ->whereIn('company_type', ['supplier', 'manufacturer', 'wholesaler', 'distributor']);
+                    ->whereIn('company_type', \App\Models\B2BCompany::SUPPLIER_TYPES);
             })
             ->pluck('id');
 

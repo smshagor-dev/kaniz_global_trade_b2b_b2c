@@ -77,7 +77,7 @@ class ForgotPasswordController extends Controller
                 Mail::to($user->email)->queue(new MailManager($array));
 
                 $email = $user->email;
-                return view('auth.'.get_setting('authentication_layout_select').'.reset_password', compact('email'));
+                return view('auth.'.authentication_layout().'.reset_password', compact('email'));
             }
             else {
                 flash(translate('No account exists with this email'))->error();
@@ -91,7 +91,7 @@ class ForgotPasswordController extends Controller
                 $user->save();
                 SmsUtility::password_reset($user);
                 $country_code= $request['country_code'];
-                return view('otp_systems.frontend.auth.'.get_setting('authentication_layout_select').'.reset_with_phone', compact('phone','country_code'));
+                return view('otp_systems.frontend.auth.'.authentication_layout().'.reset_with_phone', compact('phone','country_code'));
             }
             else {
                 flash(translate('No account exists with this phone number'))->error();

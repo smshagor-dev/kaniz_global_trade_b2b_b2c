@@ -1407,6 +1407,16 @@ if (!function_exists('get_setting')) {
     }
 }
 
+if (!function_exists('authentication_layout')) {
+    function authentication_layout(): string
+    {
+        $layout = (string) get_setting('authentication_layout_select', 'boxed');
+        $allowedLayouts = ['boxed', 'focused', 'free'];
+
+        return in_array($layout, $allowedLayouts, true) ? $layout : 'boxed';
+    }
+}
+
 function hex2rgba($color, $opacity = false)
 {
     return (new ColorCodeConverter())->convertHexToRgba($color, $opacity);

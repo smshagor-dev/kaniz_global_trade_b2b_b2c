@@ -66,29 +66,13 @@
             <div class="col-6 text-right d-none d-lg-block top-text-color-visibility"
                 style="color: {{ $topHeaderTextColor }}">
                 <ul class="list-inline mb-0 h-100 d-flex justify-content-end align-items-center">
-                    @if (get_setting('vendor_system_activation') == 1)
-                        <!-- Seller Dropdown and Helpline -->
-                        <li class="list-inline-item d-flex">
-
-                            <!-- Become a Seller Dropdown -->
-                            <div class="dropdown">
-                                <a href="{{ route(get_setting('seller_registration_verify') === '1' ? 'shop-reg.verification' : 'shops.create') }}"
-                                    class="fs-12 dropdown-toggle top-text-color-visibility"
-                                    style="color: {{ $topHeaderTextColor }}" data-toggle="dropdown"
-                                    aria-haspopup="true" aria-expanded="false">
-                                    {{ translate('Become a Seller !') }}
-                                </a>
-
-                                <!-- Dropdown Menu -->
-                                <div class="dropdown-menu fs-12 p-0 mt-1">
-                                    <a class="dropdown-item py-2 px-2 text-dark"
-                                        href="{{ route('seller.login') }}">
-                                        {{ translate('Login to Seller') }}
-                                    </a>
-                                </div>
-                            </div>
-                        </li>
-                    @endif
+                    <li class="list-inline-item d-flex align-items-center">
+                        <div class="d-flex flex-wrap align-items-center">
+                            @include('frontend.partials.b2b_portal_links', [
+                                'itemClass' => 'fs-12 mr-3 top-text-color-visibility',
+                            ])
+                        </div>
+                    </li>
                     @if (get_setting('helpline_number'))
                         <li class="list-inline-item ml-3 pl-3 mr-0 pr-0 top-text-color-visibility"
                             style="color: {{ $topHeaderTextColor }}">

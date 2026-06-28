@@ -6,6 +6,7 @@ use Cookie;
 use Session;
 use App\Models\Cart;
 use App\Models\User;
+use App\Jobs\RunFraudCheckJob;
 use App\Rules\Recaptcha;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
@@ -157,6 +158,10 @@ class RegisterController extends Controller
         $user = $this->create($request->all());
 
         $this->guard()->login($user);
+        RunFraudCheckJob::dispatch($user->id, [
+            'event_type' => 'customer_registration',
+            'reason' => 'Fraud check triggered after customer registration.',
+        ]);
 
         if($user->email != null){
             if(BusinessSetting::where('type', 'email_verification')->first()->value != 1 || get_setting('customer_registration_verify') === '1'){

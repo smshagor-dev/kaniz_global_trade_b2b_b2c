@@ -42,9 +42,9 @@ class B2BDashboardService
     {
     }
 
-    public function sellerStats(int $userId): array
+    public function sellerStats(int $userId, ?B2BCompany $company = null): array
     {
-        $company = $this->b2bCompanyService->getCompanyByUser($userId);
+        $company ??= $this->b2bCompanyService->getCompanyByUser($userId);
         $companyId = $company?->id;
 
         return [
@@ -97,9 +97,9 @@ class B2BDashboardService
         ];
     }
 
-    public function buyerStats(int $userId): array
+    public function buyerStats(int $userId, ?B2BCompany $company = null): array
     {
-        $company = $this->b2bCompanyService->getCompanyByUser($userId);
+        $company ??= $this->b2bCompanyService->getCompanyByUser($userId);
         $companyId = $company?->id;
 
         return [
@@ -164,7 +164,7 @@ class B2BDashboardService
 
         return [
             'total_companies' => $totalCompanies,
-            'total_buyers' => B2BCompany::where('company_type', 'buyer')->count(),
+            'total_buyers' => B2BCompany::whereIn('company_type', B2BCompany::BUYER_TYPES)->count(),
             'total_suppliers' => B2BCompany::supplierSide()->count(),
             'b2b_products' => $b2bProducts,
             'pending_companies' => B2BCompany::where('verification_status', 'pending')->count(),

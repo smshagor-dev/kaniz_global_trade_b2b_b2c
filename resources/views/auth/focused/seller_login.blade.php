@@ -1,6 +1,14 @@
 @extends('auth.layouts.authentication')
 
 @section('content')
+    @php
+        $brandLogo = get_setting('header_logo')
+            ? uploaded_asset(get_setting('header_logo'))
+            : uploaded_asset(get_setting('site_icon'));
+        $loginHeading = $loginHeading ?? translate('Welcome Back !');
+        $loginSubtitle = $loginSubtitle ?? translate('Login To Your Seller Account');
+        $registerRoute = $registerRoute ?? route(get_setting('seller_registration_verify') === '1' ? 'shop-reg.verification' : 'shops.create');
+    @endphp
     <!-- aiz-main-wrapper -->
     <div class="aiz-main-wrapper d-flex flex-column justify-content-center bg-white">
         <section class="bg-white overflow-hidden" style="min-height:100vh;">
@@ -18,12 +26,12 @@
                         <div class="py-3 py-lg-4 px-3 px-xl-5 flex-grow-1">
                             <!-- Site Icon -->
                             <div class="size-48px mb-3 mx-auto mx-lg-0">
-                                <img src="{{ uploaded_asset(get_setting('site_icon')) }}" alt="{{ translate('Site Icon')}}" class="img-fit h-100">
+                                <img src="{{ $brandLogo }}" alt="{{ get_setting('site_name') }}" class="img-fit" style="max-height: 56px; width: auto; max-width: 220px;">
                             </div>
                             <!-- Titles -->
                             <div class="text-center text-lg-left">
-                                <h1 class="fs-20 fs-md-24 fw-700 text-primary" style="text-transform: uppercase;">{{ translate('Welcome Back !')}}</h1>
-                                <h5 class="fs-14 fw-400 text-dark">{{ translate('Login To Your Seller Account')}}</h5>
+                                    <h1 class="fs-20 fs-md-24 fw-700 text-primary" style="text-transform: uppercase;">{{ $loginHeading }}</h1>
+                                    <h5 class="fs-14 fw-400 text-dark">{{ $loginSubtitle }}</h5>
                             </div>
                             <!-- Login form -->
                             <div class="pt-3 pt-lg-4">
@@ -100,7 +108,7 @@
                                 <!-- Register Now -->
                                 <p class="fs-12 text-gray mb-0">
                                     {{ translate('Dont have an account?')}}
-                                    <a href="{{ route(get_setting('seller_registration_verify') === '1' ? 'shop-reg.verification' : 'shops.create') }}" class="ml-2 fs-14 fw-700 animate-underline-primary">{{ translate('Register Now')}}</a>
+                                        <a href="{{ $registerRoute }}" class="ml-2 fs-14 fw-700 animate-underline-primary">{{ translate('Register Now')}}</a>
                                 </p>
                                 <!-- Go Back -->
                                 <a href="{{ url()->previous() }}" class="mt-3 fs-14 fw-700 d-flex align-items-center text-primary" style="max-width: fit-content;">

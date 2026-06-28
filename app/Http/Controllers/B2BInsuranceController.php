@@ -192,11 +192,6 @@ class B2BInsuranceController extends Controller
         $provider = $this->insuranceService->createProvider($this->validatedProvider($request), Auth::id());
         $this->integrationService->ensureWebhookSecret($provider);
 
-        if (!request()->expectsJson()) {
-            flash(translate('Insurance provider created successfully.'))->success();
-            return back();
-        }
-
         return response()->json(['data' => $this->providerResponse($provider)], 201);
     }
 
@@ -575,7 +570,7 @@ class B2BInsuranceController extends Controller
             'currency' => 'required|string|max:20',
         ]);
 
-        if (in_array($company->company_type, ['supplier', 'manufacturer', 'distributor', 'wholesaler'], true)) {
+        if (in_array($company->company_type, \App\Models\B2BCompany::SUPPLIER_TYPES, true)) {
             $validated['supplier_company_id'] = $request->input('supplier_company_id', $company->id);
         } else {
             $validated['buyer_company_id'] = $request->input('buyer_company_id', $company->id);

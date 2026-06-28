@@ -8,7 +8,8 @@ use Illuminate\Support\Str;
 
 class B2BCompany extends Model
 {
-    public const SUPPLIER_TYPES = ['supplier', 'manufacturer', 'wholesaler', 'distributor'];
+    public const SUPPLIER_TYPES = ['supplier', 'manufacturer', 'wholesaler', 'distributor', 'exporter'];
+    public const BUYER_TYPES = ['buyer', 'retailer', 'importer'];
 
     protected $table = 'b2b_companies';
 
@@ -326,6 +327,11 @@ class B2BCompany extends Model
         return in_array($this->company_type, self::SUPPLIER_TYPES, true);
     }
 
+    public function isBuyerSide(): bool
+    {
+        return in_array($this->company_type, self::BUYER_TYPES, true);
+    }
+
     public function hasActiveFeaturedHomepagePlan(): bool
     {
         $hasDedicatedFeaturedPackage = $this->featuredB2bPackage
@@ -346,6 +352,29 @@ class B2BCompany extends Model
             && $this->public_profile_enabled
             && $this->verification_status === 'approved'
             && ($hasDedicatedFeaturedPackage || $hasFeaturedMembershipPackage);
+    }
+
+    public function fraudBadgeState(): string
+    {
+        $check = $this->user?->latestFraudCheck;
+
+        if (!$check) {
+            return 'under_review';
+        }
+
+        if ($check->status === 'blocked' || $check->risk_level === 'blocked') {
+            return 'blocked_supplier';
+        }
+
+        if (in_array($check->risk_level, ['high', 'critical'], true)) {
+            return 'high_risk_supplier';
+        }
+
+        if ($this->verified_supplier_badge && $this->verification_status === 'approved') {
+            return 'verified_supplier';
+        }
+
+        return $this->verification_status === 'pending' ? 'document_pending' : 'under_review';
     }
 
     protected static function booted()

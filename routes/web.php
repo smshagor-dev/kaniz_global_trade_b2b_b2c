@@ -128,7 +128,9 @@ Route::controller(HomeController::class)->group(function () {
     Route::post('/password/reset/email/submit', 'reset_password_with_code')->name('password.update');
 
     Route::get('/users/login', 'login')->name('user.login')->middleware('handle-demo-login');
+    Route::get('/buyer/login', 'login')->name('buyer.login')->middleware('handle-demo-login');
     Route::get('/seller/login', 'login')->name('seller.login')->middleware('handle-demo-login');
+    Route::get('/supplier/login', 'login')->name('supplier.login')->middleware('handle-demo-login');
     Route::get('/deliveryboy/login', 'login')->name('deliveryboy.login')->middleware('handle-demo-login');
     Route::get('/users/registration', 'registration')->name('user.registration')->middleware('handle-demo-login')->middleware('portfolio-view');
     Route::post('/users/login/cart', 'cart_login')->name('cart.login.submit')->middleware('handle-demo-login');
@@ -289,10 +291,15 @@ Route::controller(CompareController::class)->group(function () {
 // Subscribe
 Route::resource('subscribers', SubscriberController::class);
 
+Route::group(['middleware' => ['user:allow-admin', 'verified', 'unbanned']], function () {
+    Route::controller(HomeController::class)->group(function () {
+        Route::get('/dashboard', 'dashboard')->name('dashboard')->middleware(['prevent-back-history']);
+    });
+});
+
 Route::group(['middleware' => ['user', 'verified', 'unbanned']], function () {
 
     Route::controller(HomeController::class)->group(function () {
-        Route::get('/dashboard', 'dashboard')->name('dashboard')->middleware(['prevent-back-history']);
         Route::get('/wallet_recharge_success', 'wallet_recharge_success')->name('wallet_recharge_success')->middleware(['prevent-back-history']);
         Route::get('/profile', 'profile')->name('profile');
         Route::post('/new-user-verification', 'new_verify')->name('user.new.verify');

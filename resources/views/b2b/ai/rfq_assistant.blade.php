@@ -1,4 +1,4 @@
-@extends('frontend.layouts.user_panel')
+@extends('b2b.layouts.app')
 
 @section('panel_content')
     <div class="aiz-titlebar mb-4">
@@ -90,7 +90,7 @@
                     <div class="text-secondary small">{{ translate('Supplier Requirements') }}</div>
                     <div>{{ collect($suggestion['supplier_requirements'] ?? [])->implode(', ') ?: '-' }}</div>
                 </div>
-                <div class="text-muted small">{{ translate('Provider') }}: {{ data_get($suggestion, '_meta.provider') }} · {{ translate('Model') }}: {{ data_get($suggestion, '_meta.model') }}</div>
+                <div class="text-muted small">{{ translate('Provider') }}: {{ data_get($suggestion, '_meta.provider') }} Ã‚Â· {{ translate('Model') }}: {{ data_get($suggestion, '_meta.model') }}</div>
             </div>
         </div>
     @endif

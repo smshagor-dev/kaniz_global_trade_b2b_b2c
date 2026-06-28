@@ -1,11 +1,11 @@
-@extends('frontend.layouts.user_panel')
+@extends('b2b.layouts.app')
 
 @section('panel_content')
     <div class="aiz-titlebar mb-4">
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h1 class="fs-20 fw-700 text-dark mb-1">{{ translate('AI Trade Desk') }}</h1>
-                <p class="text-muted mb-0">{{ $company->company_name }} · {{ ucfirst($company->company_type) }}</p>
+                <p class="text-muted mb-0">{{ $company->company_name }} Ã‚Â· {{ ucfirst($company->company_type) }}</p>
             </div>
         </div>
     </div>

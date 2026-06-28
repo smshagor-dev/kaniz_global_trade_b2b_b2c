@@ -277,7 +277,7 @@ class B2BAIController extends Controller
         }
 
         $history = AIBuyerRisk::query()->where('company_id', $company->id)->latest()->paginate(10);
-        $buyers = B2BCompany::query()->where('company_type', 'buyer')->orderBy('company_name')->limit(100)->get(['id', 'company_name']);
+        $buyers = B2BCompany::query()->whereIn('company_type', B2BCompany::BUYER_TYPES)->orderBy('company_name')->limit(100)->get(['id', 'company_name']);
 
         return view('b2b.ai.buyer_risk', compact('company', 'assessment', 'history', 'buyers'));
     }

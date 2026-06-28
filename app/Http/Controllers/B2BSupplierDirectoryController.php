@@ -4,10 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\B2BCompany;
 use App\Models\Category;
+use App\Services\Fraud\FraudRestrictionService;
 use Illuminate\Http\Request;
 
 class B2BSupplierDirectoryController extends Controller
 {
+    public function __construct(
+        protected FraudRestrictionService $fraudRestrictionService
+    ) {
+    }
+
     public function index(Request $request)
     {
         $suppliers = B2BCompany::with(['categories', 'certifications', 'wholesaleProducts.thumbnail', 'b2bPackage'])
@@ -57,6 +63,8 @@ class B2BSupplierDirectoryController extends Controller
             ->where('public_slug', $slug)
             ->firstOrFail();
 
-        return view('b2b.suppliers.show', compact('supplier'));
+        $trustStatus = $this->fraudRestrictionService->userFacingStatus($supplier->user?->latestFraudCheck);
+
+        return view('b2b.suppliers.show', compact('supplier', 'trustStatus'));
     }
 }

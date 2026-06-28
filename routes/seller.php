@@ -18,11 +18,13 @@ Route::group(['prefix' => 'seller', 'middleware' => ['seller', 'verified', 'user
     });
 });
 
-Route::group(['namespace' => 'App\Http\Controllers\Seller', 'prefix' => 'seller', 'middleware' => ['seller', 'verified', 'user', 'prevent-back-history'], 'as' => 'seller.'], function () {
+Route::group(['namespace' => 'App\Http\Controllers\Seller', 'prefix' => 'seller', 'middleware' => ['seller:allow-admin', 'verified', 'user:allow-admin', 'prevent-back-history'], 'as' => 'seller.'], function () {
     Route::controller(DashboardController::class)->group(function () {
         Route::get('/dashboard', 'index')->name('dashboard');
     });
+});
 
+Route::group(['namespace' => 'App\Http\Controllers\Seller', 'prefix' => 'seller', 'middleware' => ['seller', 'verified', 'user', 'prevent-back-history'], 'as' => 'seller.'], function () {
     // Product
     Route::controller(ProductController::class)->group(function () {
         Route::get('/products', 'index')->name('products');

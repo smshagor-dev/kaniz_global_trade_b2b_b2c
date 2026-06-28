@@ -1,6 +1,14 @@
 @extends('auth.layouts.authentication')
 
 @section('content')
+@php
+    $brandLogo = get_setting('header_logo')
+        ? uploaded_asset(get_setting('header_logo'))
+        : uploaded_asset(get_setting('site_icon'));
+    $loginHeading = $loginHeading ?? translate('Welcome Back !');
+    $loginSubtitle = $loginSubtitle ?? translate('Login to your account');
+    $registerRoute = $registerRoute ?? route('user.registration');
+@endphp
 <!-- aiz-main-wrapper -->
 <div class="aiz-main-wrapper d-flex flex-column justify-content-center align-items-center" style="min-height: 100vh; background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%), url('https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'); background-size: cover; background-position: center; background-attachment: fixed; padding: 20px;">
     <div class="container">
@@ -85,7 +93,7 @@
                                     border: 2px solid rgba(255, 255, 255, 0.8);
                                     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
                                 ">
-                                <img src="{{ uploaded_asset(get_setting('site_icon')) }}" alt="{{ translate('Site Icon')}}" class="img-fit" style="height: 50px;">
+                                <img src="{{ $brandLogo }}" alt="{{ get_setting('site_name') }}" class="img-fit" style="max-height: 56px; width: auto; max-width: 220px;">
                             </div>
 
                             <!-- Titles -->
@@ -95,8 +103,8 @@
                                     -webkit-text-fill-color: transparent;
                                     text-transform: uppercase;
                                     letter-spacing: 1px;
-                                ">{{ translate('Welcome Back !')}}</h1>
-                            <p class="text-muted mb-4">{{ translate('Login to your account')}}</p>
+                                ">{{ $loginHeading }}</h1>
+                            <p class="text-muted mb-4">{{ $loginSubtitle }}</p>
                         </div>
 
                         <!-- Login form -->
@@ -381,7 +389,7 @@
                         <div class="text-center pt-3 border-top" style="border-color: rgba(0,0,0,0.1) !important;">
                             <p class="fs-12 text-gray mb-0">
                                 {{ translate('Dont have an account?')}}
-                                <a href="{{ route('user.registration') }}" class="ml-2 fs-14 fw-700" style="
+                                <a id="register-link" href="{{ $registerRoute }}" class="ml-2 fs-14 fw-700" style="
                                     background: linear-gradient(45deg, rgb(230, 46, 4), rgb(255, 153, 0));
                                     -webkit-background-clip: text;
                                     -webkit-text-fill-color: transparent;
@@ -538,7 +546,7 @@
         });
 
         // Add hover effect to register link
-        const registerLink = document.querySelector('a[href="{{ route("user.registration") }}"]');
+        const registerLink = document.getElementById('register-link');
         if (registerLink) {
             const underline = registerLink.querySelector('.water-underline');
             if (underline) {

@@ -5,6 +5,7 @@ namespace App\Services\AI;
 use App\Models\AIProviderSetting;
 use App\Services\AI\Contracts\AIProviderInterface;
 use App\Services\AI\Drivers\ClaudeDriver;
+use App\Services\AI\Drivers\CustomAIDriver;
 use App\Services\AI\Drivers\GeminiDriver;
 use App\Services\AI\Drivers\OpenAIDriver;
 use InvalidArgumentException;
@@ -17,6 +18,7 @@ class AIManager
             'gemini' => new GeminiDriver(),
             'openai' => new OpenAIDriver(),
             'claude' => new ClaudeDriver(),
+            'custom' => new CustomAIDriver(),
             default => throw new InvalidArgumentException('Unsupported AI provider: ' . $provider),
         };
     }

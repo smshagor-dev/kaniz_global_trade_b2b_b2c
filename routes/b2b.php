@@ -1,11 +1,13 @@
 <?php
 
 use App\Http\Controllers\B2BCompanyController;
+use App\Http\Controllers\FraudUserVerificationController;
 use App\Http\Controllers\B2BAuditLogController;
 use App\Http\Controllers\B2BAIController;
 use App\Http\Controllers\B2BNegotiationController;
 use App\Http\Controllers\B2BContainerShipmentController;
 use App\Http\Controllers\B2BCustomsDocumentController;
+use App\Http\Controllers\B2BBuyerDashboardController;
 use App\Http\Controllers\B2BFreightForwarderController;
 use App\Http\Controllers\B2BInsuranceController;
 use App\Http\Controllers\B2BFreightPricingRuleController;
@@ -18,6 +20,7 @@ use App\Http\Controllers\B2BVerificationRequirementController;
 use App\Http\Controllers\B2BPackageController;
 use App\Http\Controllers\B2BProductPromotionController;
 use App\Http\Controllers\B2BPremiumVerificationController;
+use App\Http\Controllers\B2BPortalController;
 use App\Http\Controllers\B2BLogisticsChargeSettingController;
 use App\Http\Controllers\B2BCompanyMemberController;
 use App\Http\Controllers\B2BRfqController;
@@ -27,10 +30,12 @@ use App\Http\Controllers\B2BShipmentController;
 use App\Http\Controllers\B2BShippingProviderController;
 use App\Http\Controllers\B2BShippingQuoteController;
 use App\Http\Controllers\B2BSupplierDirectoryController;
+use App\Http\Controllers\B2BSupplierDashboardController;
 use App\Http\Controllers\B2BSupplierProfileController;
 use App\Http\Controllers\B2BTradeDocumentController;
 use App\Http\Controllers\B2BTradeFinanceController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Admin\FraudCenterController;
 use Illuminate\Support\Facades\Route;
 
 Route::controller(B2BSupplierDirectoryController::class)->group(function () {
@@ -57,7 +62,33 @@ Route::controller(B2BInsuranceController::class)->group(function () {
     Route::post('/b2b/insurance-webhooks/{provider}', 'handleWebhook')->name('b2b.insurance-webhooks.handle');
 });
 
+Route::controller(B2BPortalController::class)->group(function () {
+    Route::get('/become-a-supplier', 'becomeSupplier')->name('b2b.portal.become-supplier');
+    Route::get('/buyer-portal', 'buyerPortal')->name('buyer.portal');
+    Route::get('/supplier-portal', 'supplierPortal')->name('supplier.portal');
+    Route::post('/become-a-supplier/register', 'registerSupplier')->name('b2b.portal.become-supplier.register');
+    Route::post('/buyer-portal/register', 'registerBuyer')->name('buyer.portal.register');
+});
+
+Route::group(['middleware' => ['auth', 'verified', 'unbanned', 'user']], function () {
+    Route::controller(B2BPortalController::class)->group(function () {
+        Route::get('/buyer/onboarding', 'buyerOnboarding')->name('buyer.onboarding');
+        Route::get('/supplier/onboarding', 'supplierOnboarding')->name('supplier.onboarding');
+        Route::get('/b2b/portal-status/{portal}', 'status')->name('b2b.portal.status');
+    });
+});
+
 Route::group(['middleware' => ['auth', 'verified', 'unbanned']], function () {
+    Route::controller(FraudUserVerificationController::class)->group(function () {
+        Route::get('/dashboard/verification', 'index')->name('dashboard.verification');
+        Route::post('/dashboard/verification/documents', 'uploadDocuments')->name('dashboard.verification.documents.store');
+        Route::get('/dashboard/trust-status', 'trustStatus')->name('dashboard.trust-status');
+        Route::post('/users/{id}/report', 'reportUser')->name('users.report');
+    });
+
+    Route::get('/buyer/dashboard', [B2BBuyerDashboardController::class, 'index'])->name('buyer.dashboard');
+    Route::get('/supplier/dashboard', [B2BSupplierDashboardController::class, 'index'])->name('supplier.dashboard');
+
     Route::controller(B2BCompanyController::class)->group(function () {
         Route::get('/b2b/company', 'show')->name('b2b.company.show');
         Route::get('/b2b/company/create', 'create')->name('b2b.company.create');
@@ -317,6 +348,27 @@ Route::group(['prefix' => 'seller', 'middleware' => ['auth', 'verified', 'unbann
 });
 
 Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin']], function () {
+    Route::controller(FraudCenterController::class)->group(function () {
+        Route::get('/fraud', 'dashboard')->name('admin.fraud.dashboard');
+        Route::get('/fraud/users', 'users')->name('admin.fraud.users');
+        Route::get('/fraud/users/{id}', 'show')->name('admin.fraud.users.show');
+        Route::post('/fraud/users/{id}/run-check', 'runCheck')->name('admin.fraud.users.run-check');
+        Route::post('/fraud/users/{id}/run-ai-check', 'runAiCheck')->name('admin.fraud.users.run-ai-check');
+        Route::post('/fraud/users/{id}/approve', 'approve')->name('admin.fraud.users.approve');
+        Route::post('/fraud/users/{id}/reject', 'reject')->name('admin.fraud.users.reject');
+        Route::post('/fraud/users/{id}/restrict', 'restrict')->name('admin.fraud.users.restrict');
+        Route::post('/fraud/users/{id}/block', 'block')->name('admin.fraud.users.block');
+        Route::post('/fraud/users/{id}/unblock', 'unblock')->name('admin.fraud.users.unblock');
+        Route::get('/fraud/documents', 'documents')->name('admin.fraud.documents');
+        Route::get('/fraud/documents/{id}/download', 'downloadDocument')->name('admin.fraud.documents.download');
+        Route::post('/fraud/documents/{id}/approve', 'approveDocument')->name('admin.fraud.documents.approve');
+        Route::post('/fraud/documents/{id}/reject', 'rejectDocument')->name('admin.fraud.documents.reject');
+        Route::get('/fraud/reports', 'reports')->name('admin.fraud.reports');
+        Route::post('/fraud/reports/{id}/resolve', 'resolveReport')->name('admin.fraud.reports.resolve');
+        Route::get('/fraud/settings', 'settings')->name('admin.fraud.settings');
+        Route::post('/fraud/settings', 'updateSettings')->name('admin.fraud.settings.update');
+    });
+
     Route::get('/b2b/dashboard', [AdminController::class, 'b2b_dashboard'])->name('admin.b2b.dashboard');
     Route::get('/b2b/trade-finance', [B2BTradeFinanceController::class, 'adminDashboard'])->name('admin.b2b.trade-finance.dashboard');
     Route::get('/b2b/insurance', [B2BInsuranceController::class, 'adminDashboard'])->name('admin.b2b.insurance.dashboard');

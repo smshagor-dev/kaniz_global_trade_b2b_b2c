@@ -1,7 +1,7 @@
 @extends('seller.layouts.app')
 
 @section('panel_content')
-    @if(addon_is_activated('gst_system') && !auth()->user()->shop->gst_verification)
+    @if(addon_is_activated('gst_system') && !empty($authUser?->shop) && !$authUser->shop->gst_verification)
         <div class="aiz-titlebar mt-2 mb-4">
             <div class="row align-items-center">
             
@@ -881,7 +881,7 @@
 
                     <form action="{{ route('seller.shop.update') }}" method="POST" enctype="multipart/form-data" id="seller-verification-form">
                         @csrf
-                        <input type="hidden" name="shop_id" value="{{ auth()->user()->shop->id }}">
+                        <input type="hidden" name="shop_id" value="{{ $authUser?->shop?->id }}">
                         <div class="form-group">
                             <label for="company-type" class="fs-13 fw-bold">{{ translate('Company Type (Dropdown Selection):') }}</label>
                             <select

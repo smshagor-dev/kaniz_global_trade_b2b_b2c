@@ -437,6 +437,14 @@
                                     <a href="{{ route(get_setting('seller_registration_verify') === '1' ? 'shop-reg.verification' : 'shops.create') }}"
                                         class="fs-13 text-soft-light text-sm-secondary  @if(get_setting('footer_text_color') == 'black' || get_setting('footer_text_color') == '#000000') animate-underline-black @else animate-underline-white @endif ">{{ translate('Become A Seller') }}</a>
                                 </li>
+                                <li class="mb-2 pb-2 {{ areActiveRoutes(['b2b.portal.become-supplier'], ' active') }}">
+                                    <a href="{{ route('b2b.portal.become-supplier') }}"
+                                        class="fs-13 text-soft-light text-sm-secondary  @if(get_setting('footer_text_color') == 'black' || get_setting('footer_text_color') == '#000000') animate-underline-black @else animate-underline-white @endif ">{{ translate('Become A Supplier') }}</a>
+                                </li>
+                                <li class="mb-2 pb-2 {{ areActiveRoutes(['buyer.portal'], ' active') }}">
+                                    <a href="{{ route('buyer.portal') }}"
+                                        class="fs-13 text-soft-light text-sm-secondary  @if(get_setting('footer_text_color') == 'black' || get_setting('footer_text_color') == '#000000') animate-underline-black @else animate-underline-white @endif ">{{ translate('Buyer Portal') }}</a>
+                                </li>
                                 @guest
                                     <li class="mb-2 pb-2 {{ areActiveRoutes(['deliveryboy.login'], ' active') }}">
                                         <a class="fs-13 text-soft-light text-sm-secondary  @if(get_setting('footer_text_color') == 'black' || get_setting('footer_text_color') == '#000000') animate-underline-black @else animate-underline-white @endif "

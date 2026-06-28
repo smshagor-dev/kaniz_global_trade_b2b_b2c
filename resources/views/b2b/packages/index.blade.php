@@ -1,4 +1,4 @@
-@extends('frontend.layouts.user_panel')
+@extends('b2b.layouts.app')
 
 @section('panel_content')
     <div class="card overflow-hidden mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, #0f172a, #1e293b 55%, #334155);">

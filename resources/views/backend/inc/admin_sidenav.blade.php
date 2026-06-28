@@ -3092,6 +3092,85 @@
                     </li>
                 @endcanany
 
+                @canany(['fraud.view', 'fraud.manage', 'fraud.review_documents', 'fraud.settings'])
+                    <li class="aiz-side-nav-item">
+                        <a href="#" class="aiz-side-nav-link">
+                            <div class="aiz-side-nav-icon">
+                                <i class="las la-shield-alt fs-16"></i>
+                            </div>
+                            <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Fraud Center') }}</span>
+                            <span class="aiz-side-nav-arrow" style="color: {{ get_setting('navbar_text_color') }}"></span>
+                        </a>
+                        <ul class="aiz-side-nav-list level-2">
+                            <li class="aiz-side-nav-item">
+                                <a href="{{ route('admin.fraud.dashboard') }}" class="aiz-side-nav-link {{ areActiveRoutes(['admin.fraud.dashboard']) ? 'active' : '' }}">
+                                    <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Fraud Dashboard') }}</span>
+                                </a>
+                            </li>
+                            <li class="aiz-side-nav-item">
+                                <a href="{{ route('admin.fraud.users', ['risk_level' => 'high']) }}" class="aiz-side-nav-link">
+                                    <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Risk Users') }}</span>
+                                </a>
+                            </li>
+                            <li class="aiz-side-nav-item">
+                                <a href="{{ route('admin.fraud.users', ['user_type' => 'supplier']) }}" class="aiz-side-nav-link">
+                                    <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Supplier Verification') }}</span>
+                                </a>
+                            </li>
+                            <li class="aiz-side-nav-item">
+                                <a href="{{ route('admin.fraud.users', ['user_type' => 'buyer']) }}" class="aiz-side-nav-link">
+                                    <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Buyer Verification') }}</span>
+                                </a>
+                            </li>
+                            <li class="aiz-side-nav-item">
+                                <a href="{{ route('admin.fraud.documents') }}" class="aiz-side-nav-link">
+                                    <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Document Review') }}</span>
+                                </a>
+                            </li>
+                            <li class="aiz-side-nav-item">
+                                <a href="{{ route('admin.fraud.users', ['status' => 'needs_review']) }}" class="aiz-side-nav-link">
+                                    <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('AI Fraud Reviews') }}</span>
+                                </a>
+                            </li>
+                            <li class="aiz-side-nav-item">
+                                <a href="{{ route('admin.fraud.users', ['status' => 'pending']) }}" class="aiz-side-nav-link">
+                                    <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Manual Reviews') }}</span>
+                                </a>
+                            </li>
+                            <li class="aiz-side-nav-item">
+                                <a href="{{ route('admin.fraud.users') }}" class="aiz-side-nav-link">
+                                    <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Duplicate Accounts') }}</span>
+                                </a>
+                            </li>
+                            <li class="aiz-side-nav-item">
+                                <a href="{{ route('admin.fraud.users') }}" class="aiz-side-nav-link">
+                                    <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('IP & Device Logs') }}</span>
+                                </a>
+                            </li>
+                            <li class="aiz-side-nav-item">
+                                <a href="{{ route('admin.fraud.reports') }}" class="aiz-side-nav-link">
+                                    <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Reported Users') }}</span>
+                                </a>
+                            </li>
+                            <li class="aiz-side-nav-item">
+                                <a href="{{ route('admin.fraud.users', ['status' => 'blocked']) }}" class="aiz-side-nav-link">
+                                    <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Blocked Users') }}</span>
+                                </a>
+                            </li>
+                            <li class="aiz-side-nav-item">
+                                <a href="{{ route('admin.fraud.settings') }}" class="aiz-side-nav-link">
+                                    <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Fraud Rules') }}</span>
+                                </a>
+                            </li>
+                            <li class="aiz-side-nav-item">
+                                <a href="{{ route('admin.fraud.settings') }}" class="aiz-side-nav-link {{ areActiveRoutes(['admin.fraud.settings']) ? 'active' : '' }}">
+                                    <span class="aiz-side-nav-text" style="color: {{ get_setting('navbar_text_color') }}">{{ translate('Fraud Settings') }}</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                @endcanany
+
                 @canany(['system_update', 'server_status'])
                     <li class="aiz-side-nav-item">
                         <a href="#" class="aiz-side-nav-link">

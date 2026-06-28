@@ -6,11 +6,13 @@
     $submissionMap = $company?->verificationSubmissions?->keyBy('b2b_verification_requirement_id') ?? collect();
     $companyTypes = [
         'buyer' => translate('Buyer'),
+        'importer' => translate('Importer'),
+        'retailer' => translate('Retailer'),
         'supplier' => translate('Supplier'),
         'manufacturer' => translate('Manufacturer'),
         'distributor' => translate('Distributor'),
         'wholesaler' => translate('Wholesaler'),
-        'retailer' => translate('Retailer'),
+        'exporter' => translate('Exporter'),
     ];
     $fieldTypeLabels = [
         'text' => 'text',
@@ -21,13 +23,17 @@
         'number' => 'number',
         'date' => 'date',
     ];
+    $allowedCompanyTypes = $allowedCompanyTypes ?? array_keys($companyTypes);
+    $lockedCompanyType = $lockedCompanyType ?? null;
+    $afterSubmitRoute = $afterSubmitRoute ?? 'b2b.company.show';
+    $introText = $introText ?? translate('Company legal profile, banking details, and verification documents stay together on one page for faster review.');
 @endphp
 
 @if ($renderCard)
-    <div class="card rounded-0 shadow-none border">
+        <div class="card rounded-0 shadow-none border">
         <div class="card-header pt-4 border-bottom-0">
             <h5 class="mb-0 fs-18 fw-700 text-dark">{{ $title }}</h5>
-            <p class="text-muted mb-0 mt-2">{{ translate('Company legal profile, banking details, and verification documents stay together on one page for faster review.') }}</p>
+            <p class="text-muted mb-0 mt-2">{{ $introText }}</p>
         </div>
         <div class="card-body">
 @endif
@@ -43,6 +49,7 @@
         @if ($renderForm)
         <form action="{{ $action }}" method="POST" enctype="multipart/form-data">
             @csrf
+            <input type="hidden" name="after_submit_route" value="{{ $afterSubmitRoute }}">
         @endif
             <div class="border rounded p-3 mb-4">
                 <h6 class="fw-700 mb-3">{{ translate('Company Identity') }}</h6>
@@ -55,12 +62,18 @@
                 <div class="form-group row">
                     <label class="col-md-3 col-form-label fs-14">{{ translate('Company Type') }} <span class="text-danger">*</span></label>
                     <div class="col-md-9">
-                        <select class="form-control aiz-selectpicker" name="company_type" data-live-search="true" required>
-                            <option value="">{{ translate('Select Company Type') }}</option>
-                            @foreach ($companyTypes as $value => $label)
-                                <option value="{{ $value }}" @selected(old('company_type', $company?->company_type) === $value)>{{ $label }}</option>
-                            @endforeach
-                        </select>
+                        @if ($lockedCompanyType)
+                            <input type="hidden" name="company_type" value="{{ $lockedCompanyType }}">
+                            <input type="text" class="form-control rounded-0" value="{{ $companyTypes[$lockedCompanyType] ?? ucfirst($lockedCompanyType) }}" disabled>
+                        @else
+                            <select class="form-control aiz-selectpicker" name="company_type" data-live-search="true" required>
+                                <option value="">{{ translate('Select Company Type') }}</option>
+                                @foreach ($companyTypes as $value => $label)
+                                    @continue(!in_array($value, $allowedCompanyTypes, true))
+                                    <option value="{{ $value }}" @selected(old('company_type', $company?->company_type) === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        @endif
                     </div>
                 </div>
                 <div class="form-group row">

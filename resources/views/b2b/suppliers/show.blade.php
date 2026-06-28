@@ -19,6 +19,11 @@
                             @if ($supplier->hasActiveFeaturedHomepagePlan())
                                 <span class="badge badge-inline badge-warning">{{ translate('Featured Supplier') }}</span>
                             @endif
+                            @if (!empty($trustStatus['label']))
+                                <div class="mt-2">
+                                    <span class="badge badge-inline badge-{{ $trustStatus['tone'] === 'success' ? 'success' : ($trustStatus['tone'] === 'danger' ? 'danger' : 'warning') }}">{{ $trustStatus['label'] }}</span>
+                                </div>
+                            @endif
                             <p class="mb-1 mt-2">{{ ucfirst($supplier->company_type) }} • {{ $supplier->country }}{{ $supplier->city ? ', ' . $supplier->city : '' }}</p>
                             <p class="mb-0 text-muted">{{ $supplier->business_scope ?: $supplier->description ?: '-' }}</p>
                         </div>
@@ -29,6 +34,13 @@
                                 <a href="{{ route('b2b.sample-orders.create', ['supplier_company_id' => $supplier->id]) }}" class="btn btn-soft-info btn-block">{{ translate('Request Sample') }}</a>
                             @else
                                 <a href="{{ route('user.login') }}" class="btn btn-primary btn-block">{{ translate('Request Quote') }}</a>
+                            @endauth
+                            @auth
+                                <form action="{{ route('users.report', $supplier->user_id) }}" method="POST" class="mt-2">
+                                    @csrf
+                                    <input type="hidden" name="report_type" value="fake_supplier">
+                                    <button type="submit" class="btn btn-soft-danger btn-block">{{ translate('Report Supplier') }}</button>
+                                </form>
                             @endauth
                         </div>
                     </div>
@@ -108,11 +120,14 @@
                         <div class="card-header bg-white"><h5 class="mb-0">{{ translate('Supplier Snapshot') }}</h5></div>
                         <div class="card-body">
                             <div class="d-flex justify-content-between mb-2"><span>{{ translate('Year Established') }}</span><strong>{{ $supplier->year_established ?: '-' }}</strong></div>
+                            <div class="d-flex justify-content-between mb-2"><span>{{ translate('Years on Platform') }}</span><strong>{{ optional($supplier->created_at)->diffInYears(now()) ?? 0 }}</strong></div>
                             <div class="d-flex justify-content-between mb-2"><span>{{ translate('Employees') }}</span><strong>{{ $supplier->employee_count ?: '-' }}</strong></div>
                             <div class="d-flex justify-content-between mb-2"><span>{{ translate('Annual Revenue') }}</span><strong>{{ $supplier->annual_revenue ?: '-' }}</strong></div>
                             <div class="d-flex justify-content-between mb-2"><span>{{ translate('Main Markets') }}</span><strong>{{ $supplier->main_markets ?: '-' }}</strong></div>
                             <div class="d-flex justify-content-between mb-2"><span>{{ translate('Export Percentage') }}</span><strong>{{ $supplier->export_percentage ? $supplier->export_percentage . '%' : '-' }}</strong></div>
                             <div class="d-flex justify-content-between mb-2"><span>{{ translate('Response Rate') }}</span><strong>{{ $supplier->response_rate ? $supplier->response_rate . '%' : '-' }}</strong></div>
+                            <div class="d-flex justify-content-between mb-2"><span>{{ translate('Completed Orders') }}</span><strong>{{ $supplier->supplierPurchaseOrders()->count() }}</strong></div>
+                            <div class="d-flex justify-content-between mb-2"><span>{{ translate('Reviews') }}</span><strong>{{ $supplier->wholesaleProducts()->withCount('reviews')->get()->sum('reviews_count') }}</strong></div>
                             <div class="d-flex justify-content-between"><span>{{ translate('Response Time') }}</span><strong>{{ $supplier->response_time_hours ? $supplier->response_time_hours . 'h' : '-' }}</strong></div>
                         </div>
                     </div>

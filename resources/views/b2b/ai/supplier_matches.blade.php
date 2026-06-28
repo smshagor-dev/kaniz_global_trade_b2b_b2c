@@ -1,4 +1,4 @@
-@extends('frontend.layouts.user_panel')
+@extends('b2b.layouts.app')
 
 @section('panel_content')
     <div class="aiz-titlebar mb-4">
@@ -26,7 +26,7 @@
                         <tr>
                             <td>
                                 <div>{{ $match['supplier']->company_name }}</div>
-                                <small class="text-muted">{{ ucfirst($match['supplier']->company_type) }} · {{ $match['supplier']->country }}</small>
+                                <small class="text-muted">{{ ucfirst($match['supplier']->company_type) }} Ã‚Â· {{ $match['supplier']->country }}</small>
                             </td>
                             <td>{{ $match['score'] }}</td>
                             <td>{{ collect($match['reasons'])->implode(', ') }}</td>

@@ -14,13 +14,23 @@ class IsSeller
      * @param  \Closure  $next
      * @return mixed
      */
-    public function handle($request, Closure $next)
+    public function handle($request, Closure $next, $allowAdmin = null)
     {
-        if (Auth::check() && Auth::user()->user_type == 'seller'  && !Auth::user()->banned) {
-            return $next($request);
-        }
-        else{
+        if (!Auth::check()) {
             abort(404);
         }
+
+        $user = Auth::user();
+        $adminAllowed = in_array($allowAdmin, ['allow-admin', '1', 1, true], true);
+
+        if ($adminAllowed && in_array($user->user_type, ['admin', 'staff'], true)) {
+            return $next($request);
+        }
+
+        if ($user->user_type == 'seller' && !$user->banned) {
+            return $next($request);
+        }
+
+        abort(404);
     }
 }

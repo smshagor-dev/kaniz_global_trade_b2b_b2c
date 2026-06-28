@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\RunFraudCheckJob;
 use App\Models\B2BCompany;
 use App\Models\B2BCompanyCertification;
 use App\Models\B2BCompanyVerificationSubmission;
 use App\Models\B2BVerificationRequirement;
 use App\Models\User;
+use App\Models\VerificationDocument;
 use App\Services\B2BCompanyService;
 use App\Services\B2BPermissionService;
 use Illuminate\Http\Request;
@@ -56,9 +58,14 @@ class B2BCompanyController extends Controller
 
         $company = B2BCompany::create($data);
         $this->syncVerificationSubmissions($request, $company);
+        $this->syncFraudDocuments($company);
+        RunFraudCheckJob::dispatch(Auth::id(), [
+            'event_type' => 'company_profile_created',
+            'reason' => 'Fraud check triggered after company profile creation.',
+        ]);
 
         flash(translate('Your B2B company profile has been submitted successfully.'))->success();
-        return redirect()->route('b2b.company.show');
+        return $this->redirectAfterSave($request);
     }
 
     public function edit()
@@ -103,9 +110,14 @@ class B2BCompanyController extends Controller
 
         $company->update($data);
         $this->syncVerificationSubmissions($request, $company);
+        $this->syncFraudDocuments($company);
+        RunFraudCheckJob::dispatch(Auth::id(), [
+            'event_type' => 'company_profile_updated',
+            'reason' => 'Fraud check triggered after company profile update.',
+        ]);
 
         flash(translate('Your B2B company profile has been updated successfully.'))->success();
-        return redirect()->route('b2b.company.show');
+        return $this->redirectAfterSave($request);
     }
 
     public function show()
@@ -285,6 +297,11 @@ class B2BCompanyController extends Controller
         $company->verified_at = now();
         $company->verified_by = Auth::id();
         $company->save();
+        RunFraudCheckJob::dispatch($company->user_id, [
+            'event_type' => 'company_approved',
+            'reason' => 'Company was approved by admin.',
+            'created_by' => Auth::id(),
+        ]);
 
         flash(translate('B2B company profile approved successfully.'))->success();
         return back();
@@ -302,6 +319,11 @@ class B2BCompanyController extends Controller
         $company->verified_at = now();
         $company->verified_by = Auth::id();
         $company->save();
+        RunFraudCheckJob::dispatch($company->user_id, [
+            'event_type' => 'company_rejected',
+            'reason' => 'Company verification was rejected by admin.',
+            'created_by' => Auth::id(),
+        ]);
 
         flash(translate('B2B company profile rejected successfully.'))->success();
         return back();
@@ -360,7 +382,7 @@ class B2BCompanyController extends Controller
     {
         $data = $request->validate([
             'company_name' => 'required|string|max:255',
-            'company_type' => ['required', Rule::in(['buyer', 'supplier', 'manufacturer', 'distributor', 'wholesaler', 'retailer'])],
+            'company_type' => ['required', Rule::in(['buyer', 'supplier', 'manufacturer', 'distributor', 'wholesaler', 'retailer', 'importer', 'exporter'])],
             'legal_name' => 'nullable|string|max:255',
             'registration_number' => 'nullable|string|max:255',
             'tax_number' => 'nullable|string|max:255',
@@ -371,9 +393,9 @@ class B2BCompanyController extends Controller
             'phone' => 'required|string|max:50',
             'business_email' => 'required|email|max:255',
             'description' => 'nullable|string',
-            'logo' => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
-            'trade_license_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
-            'tax_document_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'logo' => 'nullable|file|mimes:jpg,jpeg,png,webp|max:5120',
+            'trade_license_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:5120',
+            'tax_document_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:5120',
             'bank_account_name' => 'nullable|string|max:255',
             'bank_account_number' => 'nullable|string|max:255',
             'bank_name' => 'nullable|string|max:255',
@@ -382,7 +404,7 @@ class B2BCompanyController extends Controller
             'bank_country' => 'nullable|string|max:100',
             'swift_code' => 'nullable|string|max:100',
             'iban' => 'nullable|string|max:100',
-            'bank_check_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'bank_check_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:5120',
             'requirement_text' => 'nullable|array',
             'requirement_file' => 'nullable|array',
         ]);
@@ -395,7 +417,7 @@ class B2BCompanyController extends Controller
             $existingSubmission = $company?->verificationSubmissions()->where('b2b_verification_requirement_id', $requirement->id)->first();
 
             if ($requirement->field_type === 'file') {
-                $dynamicRules["requirement_file.$key"] = (($requirement->is_required && !$existingSubmission?->value_file) ? 'required' : 'nullable') . '|file|mimes:pdf,jpg,jpeg,png|max:5120';
+                $dynamicRules["requirement_file.$key"] = (($requirement->is_required && !$existingSubmission?->value_file) ? 'required' : 'nullable') . '|file|mimes:pdf,jpg,jpeg,png,webp|max:5120';
                 continue;
             }
 
@@ -416,6 +438,24 @@ class B2BCompanyController extends Controller
         }
 
         return $data;
+    }
+
+    protected function redirectAfterSave(Request $request)
+    {
+        $routeName = $request->input('after_submit_route');
+        $allowedRoutes = [
+            'b2b.company.show',
+            'buyer.dashboard',
+            'supplier.dashboard',
+            'buyer.portal',
+            'supplier.portal',
+        ];
+
+        if (is_string($routeName) && in_array($routeName, $allowedRoutes, true)) {
+            return redirect()->route($routeName);
+        }
+
+        return redirect()->route('b2b.company.show');
     }
 
     protected function activeVerificationRequirements(?string $companyType = null)
@@ -482,5 +522,34 @@ class B2BCompanyController extends Controller
         $file->move($directory, $fileName);
 
         return 'uploads/b2b_companies/' . $fileName;
+    }
+
+    protected function syncFraudDocuments(B2BCompany $company): void
+    {
+        $map = [
+            'trade_license_file' => 'business_license',
+            'tax_document_file' => 'tax_certificate',
+            'bank_check_file' => 'bank_statement',
+        ];
+
+        foreach ($map as $field => $documentType) {
+            if (!$company->{$field}) {
+                continue;
+            }
+
+            VerificationDocument::query()->updateOrCreate(
+                [
+                    'user_id' => $company->user_id,
+                    'document_type' => $documentType,
+                ],
+                [
+                    'user_type' => $company->isSupplierSide() ? 'supplier' : 'buyer',
+                    'file_path' => $company->{$field},
+                    'original_name' => basename($company->{$field}),
+                    'mime_type' => pathinfo($company->{$field}, PATHINFO_EXTENSION),
+                    'status' => 'pending',
+                ]
+            );
+        }
     }
 }

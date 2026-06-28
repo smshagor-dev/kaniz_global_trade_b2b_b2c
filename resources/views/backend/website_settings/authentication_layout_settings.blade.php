@@ -14,7 +14,7 @@
 		<form action="{{ route('business_settings.update') }}" method="POST" enctype="multipart/form-data">
 			@csrf
 			<input type="hidden" name="types[]" value="authentication_layout_select">
-			@php $authentication_layout = get_setting('authentication_layout_select'); @endphp
+			@php $authentication_layout = authentication_layout(); @endphp
 			<div class="row">
 
 				<!-- Boxed -->

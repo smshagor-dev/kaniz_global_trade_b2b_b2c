@@ -1,0 +1,5 @@
+[2026-06-28 10:28:50] testing.WARNING: AI fraud analysis failed {"user_id":383,"message":"Invalid AI fraud JSON payload."} 
+[2026-06-28 10:29:52] testing.WARNING: Invalid B2B carrier webhook signature. {"provider_id":25,"api_driver":"custom"} 
+[2026-06-28 10:30:14] testing.WARNING: AI fraud analysis failed {"user_id":528,"message":"Invalid AI fraud JSON payload."} 
+[2026-06-28 10:32:22] testing.WARNING: Invalid B2B carrier webhook signature. {"provider_id":38,"api_driver":"custom"} 
+[2026-06-28 10:32:46] testing.WARNING: AI fraud analysis failed {"user_id":689,"message":"Invalid AI fraud JSON payload."} 

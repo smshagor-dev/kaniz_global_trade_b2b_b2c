@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\SellerRegistrationRequest;
+use App\Jobs\RunFraudCheckJob;
 use App\Models\AffiliateConfig;
 use Illuminate\Http\Request;
 use App\Models\Shop;
@@ -10,6 +11,7 @@ use App\Models\User;
 use App\Models\BusinessSetting;
 use App\Models\RegistrationVerificationCode;
 use App\Models\SmsTemplate;
+use App\Models\VerificationDocument;
 use App\Services\SendSmsService;
 use Auth;
 use Hash;
@@ -18,6 +20,7 @@ use Illuminate\Support\Facades\Notification;
 use App\Http\Controllers\OTPVerificationController;
 use Cookie;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\File;
 
 class ShopController extends Controller
 {
@@ -65,7 +68,7 @@ class ShopController extends Controller
             }
         } else {
             
-            return view('auth.'.get_setting('authentication_layout_select').'.seller_registration', compact('email','phone'));
+              return view('auth.'.authentication_layout().'.seller_registration', compact('email','phone'));
         }
     }
 
@@ -100,7 +103,17 @@ class ShopController extends Controller
             }
             $shop->registration_approval= 0;
             $shop->slug = preg_replace('/\s+/', '-', str_replace("/", " ", $request->shop_name));
+            $shop->business_info = json_encode([
+                'certificate_number' => $request->certificate_number,
+                'certificate' => $this->storeSellerVerificationFile($request, 'certificate'),
+                'id_card' => $this->storeSellerVerificationFile($request, 'id_card'),
+            ]);
             $shop->save();
+            $this->syncSellerFraudDocuments($user, $shop);
+            RunFraudCheckJob::dispatch($user->id, [
+                'event_type' => 'seller_registration',
+                'reason' => 'Fraud check triggered after seller registration.',
+            ]);
 
             //auth()->login($user, true);
             // if (BusinessSetting::where('type', 'email_verification')->first()->value == 0) {
@@ -144,6 +157,54 @@ class ShopController extends Controller
         return back();
     }
 
+    protected function storeSellerVerificationFile(Request $request, string $field): ?string
+    {
+        if (!$request->hasFile($field)) {
+            return null;
+        }
+
+        $directory = public_path('uploads/verification_form');
+        if (!File::exists($directory)) {
+            File::makeDirectory($directory, 0755, true);
+        }
+
+        $file = $request->file($field);
+        $fileName = time() . '_' . $field . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $file->move($directory, $fileName);
+
+        return 'uploads/verification_form/' . $fileName;
+    }
+
+    protected function syncSellerFraudDocuments(User $user, Shop $shop): void
+    {
+        $businessInfo = json_decode((string) $shop->business_info, true) ?: [];
+        $map = [
+            'certificate' => 'business_license',
+            'id_card' => 'national_id',
+        ];
+
+        foreach ($map as $field => $documentType) {
+            $filePath = $businessInfo[$field] ?? null;
+            if (!$filePath) {
+                continue;
+            }
+
+            VerificationDocument::query()->updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'document_type' => $documentType,
+                ],
+                [
+                    'user_type' => 'supplier',
+                    'file_path' => $filePath,
+                    'original_name' => basename($filePath),
+                    'mime_type' => pathinfo($filePath, PATHINFO_EXTENSION),
+                    'status' => 'pending',
+                ]
+            );
+        }
+    }
+
     /**
      * Display the specified resource.
      *
@@ -183,7 +244,7 @@ class ShopController extends Controller
                 return back();
             }
         } else {
-            return view('auth.'.get_setting('authentication_layout_select').'.reg_verification', compact('type'));
+              return view('auth.'.authentication_layout().'.reg_verification', compact('type'));
         }
     }
 
@@ -240,7 +301,7 @@ class ShopController extends Controller
     public function regVerifyCode($id){
         // $sellerVerification = $id;
         $sellerVerification = RegistrationVerificationCode::whereId(decrypt($id))->first();
-        return view('auth.'.get_setting('authentication_layout_select').'.seller_verify_confirmation', compact('sellerVerification'));
+        return view('auth.'.authentication_layout().'.seller_verify_confirmation', compact('sellerVerification'));
     }
 
     public function regVerifyCodeConfirmation(Request $request){
@@ -259,7 +320,7 @@ class ShopController extends Controller
         else {
             $sellerVerification->is_verified = 1;
             $sellerVerification->save();
-                return view('auth.'.get_setting('authentication_layout_select').'.seller_registration', compact('sellerVerification','email','phone'));
+                return view('auth.'.authentication_layout().'.seller_registration', compact('sellerVerification','email','phone'));
         }
     }
 }

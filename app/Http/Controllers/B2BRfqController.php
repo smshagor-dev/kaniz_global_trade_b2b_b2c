@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\RecalculateUserRiskJob;
 use App\Models\B2BRfq;
 use App\Models\Category;
 use App\Models\Product;
@@ -44,11 +45,7 @@ class B2BRfqController extends Controller
             return $this->buyerApprovalRedirect();
         }
 
-        if (!$this->b2bCompanyService->hasActiveBuyerPackage(Auth::id(), $company->id)) {
-            return $this->buyerApprovalRedirect();
-        }
-
-        if (!$this->b2bPermissionService->canCreateRfq(Auth::id(), $company->id)) {
+        if (!$this->b2bCompanyService->canCreateRfq(Auth::id(), $company->id)) {
             return $this->buyerPermissionRedirect();
         }
 
@@ -77,11 +74,7 @@ class B2BRfqController extends Controller
             return $this->buyerApprovalRedirect();
         }
 
-        if (!$this->b2bCompanyService->hasActiveBuyerPackage(Auth::id(), $company->id)) {
-            return $this->buyerApprovalRedirect();
-        }
-
-        if (!$this->b2bPermissionService->canCreateRfq(Auth::id(), $company->id)) {
+        if (!$this->b2bCompanyService->canCreateRfq(Auth::id(), $company->id)) {
             return $this->buyerPermissionRedirect();
         }
 
@@ -101,6 +94,7 @@ class B2BRfqController extends Controller
             'quantity' => $rfq->quantity,
         ]);
         $this->b2bNotificationService->notifySuppliersAboutNewRfq($rfq);
+        RecalculateUserRiskJob::dispatch(Auth::id(), 'rfq_created', 'Buyer created a new RFQ.');
 
         flash(translate('RFQ submitted successfully.'))->success();
 
@@ -131,11 +125,7 @@ class B2BRfqController extends Controller
             return $this->buyerApprovalRedirect();
         }
 
-        if (!$this->b2bCompanyService->hasActiveBuyerPackage(Auth::id(), $company->id)) {
-            return $this->buyerApprovalRedirect();
-        }
-
-        if (!$this->b2bPermissionService->canCreateRfq(Auth::id(), $company->id)) {
+        if (!$this->b2bCompanyService->canCreateRfq(Auth::id(), $company->id)) {
             return $this->buyerPermissionRedirect();
         }
 
@@ -159,11 +149,7 @@ class B2BRfqController extends Controller
             return $this->buyerApprovalRedirect();
         }
 
-        if (!$this->b2bCompanyService->hasActiveBuyerPackage(Auth::id(), $company->id)) {
-            return $this->buyerApprovalRedirect();
-        }
-
-        if (!$this->b2bPermissionService->canCreateRfq(Auth::id(), $company->id)) {
+        if (!$this->b2bCompanyService->canCreateRfq(Auth::id(), $company->id)) {
             return $this->buyerPermissionRedirect();
         }
 
@@ -185,6 +171,7 @@ class B2BRfqController extends Controller
         $this->b2bAuditService->log(Auth::id(), $company->id, 'rfq_updated', $rfq, 'RFQ updated by buyer.', [
             'status' => $rfq->status,
         ]);
+        RecalculateUserRiskJob::dispatch(Auth::id(), 'rfq_updated', 'Buyer updated an RFQ.');
 
         flash(translate('RFQ updated successfully.'))->success();
 
@@ -198,11 +185,7 @@ class B2BRfqController extends Controller
             return $this->buyerApprovalRedirect();
         }
 
-        if (!$this->b2bCompanyService->hasActiveBuyerPackage(Auth::id(), $company->id)) {
-            return $this->buyerApprovalRedirect();
-        }
-
-        if (!$this->b2bPermissionService->canCreateRfq(Auth::id(), $company->id)) {
+        if (!$this->b2bCompanyService->canCreateRfq(Auth::id(), $company->id)) {
             return $this->buyerPermissionRedirect();
         }
 
@@ -215,6 +198,7 @@ class B2BRfqController extends Controller
 
         $rfq->update(['status' => 'cancelled']);
         $this->b2bAuditService->log(Auth::id(), $rfq->b2b_company_id, 'rfq_cancelled', $rfq, 'RFQ cancelled by buyer.', []);
+        RecalculateUserRiskJob::dispatch(Auth::id(), 'rfq_cancelled', 'Buyer cancelled an RFQ.');
 
         flash(translate('RFQ cancelled successfully.'))->success();
 
@@ -336,13 +320,13 @@ class B2BRfqController extends Controller
 
     protected function buyerApprovalRedirect()
     {
-        flash(translate('An approved buyer company and active buyer package are required to create RFQs.'))->error();
+        flash(translate('An approved buyer company, active package, and clean trust status are required to create RFQs.'))->error();
         return redirect()->route('b2b.packages.index');
     }
 
     protected function buyerPermissionRedirect()
     {
-        flash(translate('You do not have permission to create or manage RFQs for this company.'))->warning();
+        flash(translate('You do not have permission to create or manage RFQs for this company, or your account is currently restricted.'))->warning();
         return redirect()->route('b2b.company.show');
     }
 

@@ -109,7 +109,17 @@ abstract class B2BFeatureTestCase extends TestCase
             'b2b_insurance_api_logs',
         ];
 
-        $missingTables = collect(array_merge($requiredCoreTables, $requiredFreightTables))
+        $requiredFraudTables = [
+            'fraud_checks',
+            'fraud_check_logs',
+            'fraud_rules',
+            'verification_documents',
+            'user_device_logs',
+            'user_risk_events',
+            'user_reports',
+        ];
+
+        $missingTables = collect(array_merge($requiredCoreTables, $requiredFreightTables, $requiredFraudTables))
             ->reject(fn ($table) => Schema::hasTable($table))
             ->values();
 

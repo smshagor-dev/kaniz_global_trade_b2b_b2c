@@ -37,6 +37,9 @@ class SellerRegistrationRequest extends FormRequest
         $rules['password' ]     = 'required|string|min:6|confirmed';
         $rules['shop_name' ]    = 'required|max:255';
         $rules['address']       = 'required';
+        $rules['certificate_number'] = 'required|string|max:255';
+        $rules['certificate']   = 'required|file|mimes:pdf,jpg,jpeg,png|max:5120';
+        $rules['id_card']       = 'required|file|mimes:pdf,jpg,jpeg,png|max:5120';
         $rules['g-recaptcha-response'] = [
                 Rule::when(get_setting('google_recaptcha') == 1 && 
                 get_setting('recaptcha_seller_register') == 1 , 
@@ -64,6 +67,9 @@ class SellerRegistrationRequest extends FormRequest
             'shop_name.required'    => translate('Shop name is required'),
             'shop_name.max'         => translate('Max 255 characters'),
             'address.required'      => translate('Address is required'),
+            'certificate_number.required' => translate('Registration number is required'),
+            'certificate.required'  => translate('Registration document is required'),
+            'id_card.required'      => translate('ID card document is required'),
         ];
     }
 

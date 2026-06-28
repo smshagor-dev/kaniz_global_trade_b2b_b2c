@@ -54,7 +54,7 @@ class VerificationController extends Controller
         if ($request->user()->email != null) {
             return $request->user()->hasVerifiedEmail()
                             ? redirect($this->redirectPath())
-                            : view('auth.'.get_setting('authentication_layout_select').'.verify_email');
+                            : view('auth.'.authentication_layout().'.verify_email');
         }
         else {
             $otpController = new OTPVerificationController;

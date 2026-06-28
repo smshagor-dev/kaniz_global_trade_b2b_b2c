@@ -233,12 +233,33 @@ class HomeController extends Controller
             return redirect()->route('home');
         }
 
-        if (Route::currentRouteName() == 'seller.login' && get_setting('vendor_system_activation') == 1) {
-            return view('auth.' . get_setting('authentication_layout_select') . '.seller_login');
-        } else if (Route::currentRouteName() == 'deliveryboy.login' && addon_is_activated('delivery_boy')) {
-            return view('auth.' . get_setting('authentication_layout_select') . '.deliveryboy_login');
+        $routeName = Route::currentRouteName();
+
+        if (in_array($routeName, ['seller.login', 'supplier.login'], true) && get_setting('vendor_system_activation') == 1) {
+            $isSupplierLogin = $routeName === 'supplier.login';
+
+            return view('auth.' . authentication_layout() . '.seller_login', [
+                'loginHeading' => $isSupplierLogin ? translate('Supplier Login') : translate('Seller Login'),
+                'loginSubtitle' => $isSupplierLogin
+                    ? translate('Login to your supplier account')
+                    : translate('Login to your seller account'),
+                'registerRoute' => $isSupplierLogin
+                    ? route('b2b.portal.become-supplier')
+                    : route(get_setting('seller_registration_verify') === '1' ? 'shop-reg.verification' : 'shops.create'),
+            ]);
+        } elseif ($routeName == 'deliveryboy.login' && addon_is_activated('delivery_boy')) {
+            return view('auth.' . authentication_layout() . '.deliveryboy_login');
         }
-        return view('auth.' . get_setting('authentication_layout_select') . '.user_login');
+
+        $isBuyerLogin = $routeName === 'buyer.login';
+
+        return view('auth.' . authentication_layout() . '.user_login', [
+            'loginHeading' => $isBuyerLogin ? translate('Buyer Login') : translate('Welcome Back !'),
+            'loginSubtitle' => $isBuyerLogin
+                ? translate('Login to your buyer account')
+                : translate('Login to your account'),
+            'registerRoute' => $isBuyerLogin ? route('buyer.portal') : route('user.registration'),
+        ]);
     }
 
 
@@ -287,7 +308,7 @@ class HomeController extends Controller
         }
         $email = null;
         $phone = null;
-        return view('auth.' . get_setting('authentication_layout_select') . '.user_registration', compact('email','phone'));
+        return view('auth.' . authentication_layout() . '.user_registration', compact('email','phone'));
     }
 
     public function cart_login(Request $request)
@@ -332,7 +353,9 @@ class HomeController extends Controller
      */
     public function dashboard()
     {
-        if (Auth::user()->user_type == 'seller') {
+        if (in_array(Auth::user()->user_type, ['admin', 'staff'], true)) {
+            return redirect()->route('admin.dashboard');
+        } elseif (Auth::user()->user_type == 'seller') {
             return redirect()->route('seller.dashboard');
         } elseif (Auth::user()->user_type == 'customer') {
             $users_cart = Cart::where('user_id', auth()->user()->id)->first();
@@ -1008,12 +1031,12 @@ class HomeController extends Controller
             } else {
                 flash(translate("Password and confirm password didn't match"))->warning();
                 $email = $user->email;
-                return view('auth.'.get_setting('authentication_layout_select').'.reset_password', compact('email'));
+                return view('auth.'.authentication_layout().'.reset_password', compact('email'));
             }
         } else {
             flash(translate("Verification code mismatch"))->error();
             $email = $request->email;
-            return view('auth.'.get_setting('authentication_layout_select').'.reset_password', compact('email'));
+            return view('auth.'.authentication_layout().'.reset_password', compact('email'));
         }
     }
 
@@ -1184,7 +1207,7 @@ class HomeController extends Controller
     {
         // $customerVerification = $id;
         $customerVerification = RegistrationVerificationCode::whereId(decrypt($id))->first();
-        return view('auth.' . get_setting('authentication_layout_select') . '.customer_verify_confirmation', compact('customerVerification'));
+        return view('auth.' . authentication_layout() . '.customer_verify_confirmation', compact('customerVerification'));
     }
 
 
