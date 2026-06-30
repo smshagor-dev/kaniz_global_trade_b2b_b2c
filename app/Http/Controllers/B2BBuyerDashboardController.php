@@ -29,7 +29,17 @@ class B2BBuyerDashboardController extends Controller
     ) {
     }
 
+    public function index()
+    {
+        return $this->renderDashboard();
+    }
+
     public function __invoke()
+    {
+        return $this->renderDashboard();
+    }
+
+    protected function renderDashboard()
     {
         $company = $this->resolveCompany();
 
