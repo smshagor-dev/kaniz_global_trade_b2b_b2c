@@ -8,255 +8,762 @@
     $messageUrlTemplate = $portal === 'buyer'
         ? route('b2b.negotiations.messages.store', ['id' => '__ID__'])
         : route('seller.b2b.negotiations.messages.store', ['id' => '__ID__']);
+    $currentUser = auth()->user();
+    $currentUserName = $currentUser?->name ?: translate('Portal User');
+    $currentUserRole = $portal === 'supplier' ? translate('Supplier Manager') : translate('Buyer Manager');
+    $currentUserInitial = strtoupper(mb_substr($currentUserName, 0, 1));
 @endphp
 
-<style>
-    .neg-board { display: grid; grid-template-columns: 320px minmax(0, 1fr) 300px; gap: 18px; min-height: 72vh; }
-    .neg-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 18px; box-shadow: 0 18px 45px -40px rgba(15, 23, 42, 0.25); }
-    .neg-list-head, .neg-thread-head, .neg-profile-head { padding: 18px 18px 14px; border-bottom: 1px solid #eef2f7; }
-    .neg-title { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0; }
-    .neg-subtitle { font-size: 13px; color: #64748b; margin-top: 6px; }
-    .neg-list { max-height: 72vh; overflow: auto; }
-    .neg-item { display: block; padding: 16px 18px; border-top: 1px solid #f1f5f9; color: inherit; text-decoration: none; cursor: pointer; }
-    .neg-item:hover, .neg-item.is-active { background: #fff7ed; text-decoration: none; }
-    .neg-item-title { font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 6px; }
-    .neg-item-meta, .neg-item-copy { font-size: 12px; color: #64748b; }
-    .neg-item-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
-    .neg-pill { display: inline-flex; align-items: center; border-radius: 999px; background: #f1f5f9; color: #334155; padding: 5px 9px; font-size: 11px; font-weight: 700; }
-    .neg-badge { min-width: 22px; height: 22px; border-radius: 999px; background: #f97316; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
-    .neg-thread-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-    .neg-thread-messages { padding: 18px; height: calc(72vh - 208px); overflow: auto; background: linear-gradient(180deg, #f8fafc 0%, #fff 100%); }
-    .neg-message { max-width: 78%; margin-bottom: 14px; }
-    .neg-message.is-mine { margin-left: auto; }
-    .neg-bubble { border-radius: 18px; padding: 12px 14px; background: #fff; border: 1px solid #e5e7eb; }
-    .neg-message.is-mine .neg-bubble { background: #ffedd5; border-color: #fdba74; }
-    .neg-message-meta { font-size: 11px; color: #64748b; margin-top: 6px; }
-    .neg-thread-form { padding: 16px 18px; border-top: 1px solid #eef2f7; }
-    .neg-thread-actions { display: flex; gap: 10px; align-items: center; }
-    .neg-thread-actions .form-control { min-height: 48px; }
-    .neg-empty { padding: 26px 20px; color: #64748b; text-align: center; }
-    .neg-profile-body { padding: 18px; }
-    .neg-profile-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
-    .neg-profile-value { font-size: 14px; color: #0f172a; margin-bottom: 14px; word-break: break-word; }
-    .neg-profile-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
-    .neg-profile-link { color: #ea580c; text-decoration: none; font-weight: 700; }
-    .neg-profile-doc { display: flex; align-items: center; justify-content: space-between; gap: 10px; border-top: 1px solid #f1f5f9; padding: 12px 0; }
-    @media (max-width: 1199px) { .neg-board { grid-template-columns: 280px minmax(0, 1fr); } .neg-profile { grid-column: 1 / -1; } }
-    @media (max-width: 767px) { .neg-board { grid-template-columns: 1fr; } .neg-list, .neg-thread-messages { max-height: none; height: auto; } }
-</style>
+@push('styles')
+    <style>
+        .neg-shell {
+            position: relative;
+        }
+        .neg-board {
+            display: grid;
+            grid-template-columns: 330px minmax(0, 1fr);
+            gap: 22px;
+            min-height: calc(100vh - 246px);
+        }
+        .neg-panel {
+            background: #ffffff;
+            border: 1px solid #e7edf6;
+            border-radius: 30px;
+            box-shadow: 0 28px 70px -58px rgba(15, 23, 42, 0.45);
+            overflow: hidden;
+        }
+        .neg-sidebar {
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - 246px);
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        }
+        .neg-sidebar-top {
+            padding: 28px 28px 22px;
+            border-bottom: 1px solid #edf2f8;
+        }
+        .neg-user-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .neg-avatar {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #cfe0ff 0%, #7aa8ff 100%);
+            color: #1d4ed8;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .neg-user-meta {
+            min-width: 0;
+            flex: 1;
+        }
+        .neg-user-name-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .neg-user-name,
+        .neg-thread-name {
+            font-size: 24px;
+            line-height: 1.1;
+            font-weight: 700;
+            color: #1e40af;
+            margin: 0;
+        }
+        .neg-user-role,
+        .neg-thread-subtitle,
+        .neg-user-search-icon,
+        .neg-empty-copy,
+        .neg-item-preview,
+        .neg-item-time,
+        .neg-thread-reference,
+        .neg-profile-copy,
+        .neg-attachment-meta {
+            color: #7c8aa5;
+        }
+        .neg-user-role {
+            font-size: 13px;
+            margin-top: 4px;
+        }
+        .neg-badge-dot {
+            min-width: 22px;
+            height: 22px;
+            padding: 0 7px;
+            border-radius: 999px;
+            background: #3b82f6;
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .neg-search {
+            position: relative;
+        }
+        .neg-search-input {
+            width: 100%;
+            height: 48px;
+            border: 0;
+            border-radius: 999px;
+            background: #f3f7fd;
+            padding: 0 18px 0 48px;
+            font-size: 14px;
+            color: #223548;
+            outline: none;
+        }
+        .neg-search-icon {
+            position: absolute;
+            top: 50%;
+            left: 18px;
+            transform: translateY(-50%);
+            font-size: 18px;
+            color: #a7b3c7;
+            pointer-events: none;
+        }
+        .neg-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0 16px;
+        }
+        .neg-list-item {
+            display: block;
+            padding: 18px 28px;
+            color: inherit;
+            text-decoration: none;
+            border-top: 1px solid #f1f5fb;
+            transition: background-color .18s ease, transform .18s ease;
+        }
+        .neg-list-item:hover,
+        .neg-list-item.is-active {
+            background: #edf4ff;
+            text-decoration: none;
+        }
+        .neg-list-item.is-active {
+            box-shadow: inset 3px 0 0 #3b82f6;
+        }
+        .neg-item-top,
+        .neg-item-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .neg-item-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #2563eb;
+            margin: 0 0 4px;
+        }
+        .neg-item-subtitle {
+            font-size: 13px;
+            color: #1f2937;
+        }
+        .neg-item-preview {
+            margin-top: 10px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .neg-item-time {
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        .neg-status-pill,
+        .neg-header-chip,
+        .neg-profile-tag {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 26px;
+            padding: 5px 12px;
+            border-radius: 999px;
+            background: #e9f1ff;
+            color: #2563eb;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .neg-main {
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - 246px);
+            background:
+                radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 24%),
+                linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        }
+        .neg-main-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 18px 34px;
+            border-bottom: 1px solid #edf2f8;
+        }
+        .neg-thread-trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+            border: 0;
+            background: transparent;
+            padding: 0;
+            text-align: left;
+            cursor: pointer;
+        }
+        .neg-thread-trigger:focus {
+            outline: none;
+        }
+        .neg-thread-name {
+            font-size: 22px;
+        }
+        .neg-thread-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #39d353;
+            box-shadow: 0 0 0 4px rgba(57, 211, 83, 0.16);
+        }
+        .neg-thread-subtitle {
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .neg-thread-reference {
+            margin-top: 6px;
+            font-size: 12px;
+        }
+        .neg-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .neg-icon-button {
+            width: 38px;
+            height: 38px;
+            border: 0;
+            border-radius: 50%;
+            background: #f3f7fd;
+            color: #94a3b8;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        .neg-thread-stream {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px 34px 20px;
+            min-height: 0;
+            height: calc(100vh - 430px);
+        }
+        .neg-thread-date {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: #c0cad9;
+            font-size: 13px;
+            margin: 12px 0 22px;
+        }
+        .neg-thread-date::before,
+        .neg-thread-date::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #e7edf6;
+        }
+        .neg-message {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            margin-bottom: 18px;
+            max-width: 84%;
+        }
+        .neg-message.is-mine {
+            margin-left: auto;
+            flex-direction: row-reverse;
+        }
+        .neg-message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #dbe8ff;
+            color: #1d4ed8;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .neg-message-body {
+            min-width: 0;
+        }
+        .neg-message-bubble {
+            border-radius: 22px;
+            padding: 14px 16px;
+            background: #dfeafe;
+            color: #111827;
+            font-size: 15px;
+            line-height: 1.45;
+            box-shadow: 0 18px 38px -34px rgba(37, 99, 235, 0.55);
+        }
+        .neg-message.is-mine .neg-message-bubble {
+            background: #4294ff;
+            color: #ffffff;
+        }
+        .neg-message-meta {
+            margin-top: 7px;
+            font-size: 11px;
+            color: #8fa0b9;
+        }
+        .neg-message-attachment {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 220px;
+            margin-top: 10px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.72);
+            padding: 10px 12px;
+        }
+        .neg-message.is-mine .neg-message-attachment {
+            background: rgba(255, 255, 255, 0.18);
+        }
+        .neg-attachment-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            background: rgba(59, 130, 246, 0.12);
+            color: #2563eb;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .neg-message.is-mine .neg-attachment-icon {
+            background: rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+        }
+        .neg-attachment-name {
+            display: block;
+            font-size: 14px;
+            font-weight: 700;
+            color: inherit;
+            word-break: break-word;
+        }
+        .neg-attachment-link {
+            display: inline-block;
+            margin-top: 4px;
+            font-size: 12px;
+            color: inherit;
+            text-decoration: underline;
+        }
+        .neg-composer {
+            padding: 18px 34px 24px;
+            border-top: 1px solid #edf2f8;
+            background: rgba(225, 237, 255, 0.92);
+        }
+        .neg-composer-shell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 8px 8px 16px;
+            border-radius: 999px;
+            background: #ffffff;
+            box-shadow: inset 0 0 0 1px #dbe6f5;
+        }
+        .neg-composer-input {
+            flex: 1;
+            border: 0;
+            outline: none;
+            font-size: 15px;
+            color: #223548;
+            background: transparent;
+        }
+        .neg-composer-tools {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .neg-attach-label,
+        .neg-send-button {
+            width: 48px;
+            height: 48px;
+            border: 0;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform .18s ease, opacity .18s ease;
+        }
+        .neg-attach-label {
+            background: #eff5ff;
+            color: #3b82f6;
+            margin: 0;
+        }
+        .neg-send-button {
+            background: #3b82f6;
+            color: #ffffff;
+            box-shadow: 0 20px 34px -18px rgba(59, 130, 246, 0.8);
+        }
+        .neg-attach-label:hover,
+        .neg-send-button:hover {
+            transform: translateY(-1px);
+        }
+        .neg-file-input {
+            display: none;
+        }
+        .neg-file-name {
+            font-size: 12px;
+            color: #6b7280;
+            max-width: 180px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .neg-empty {
+            min-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 30px;
+        }
+        .neg-empty-title {
+            font-size: 20px;
+            color: #223548;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .neg-empty-copy {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .neg-drawer-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.28);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity .22s ease, visibility .22s ease;
+            z-index: 1040;
+        }
+        .neg-shell.is-profile-open .neg-drawer-backdrop {
+            opacity: 1;
+            visibility: visible;
+        }
+        .neg-drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: min(360px, 100%);
+            height: 100vh;
+            background: #ffffff;
+            box-shadow: -22px 0 60px -34px rgba(15, 23, 42, 0.45);
+            transform: translateX(100%);
+            transition: transform .24s ease;
+            z-index: 1041;
+            display: flex;
+            flex-direction: column;
+        }
+        .neg-shell.is-profile-open .neg-drawer {
+            transform: translateX(0);
+        }
+        .neg-drawer-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 24px 24px 18px;
+            border-bottom: 1px solid #edf2f8;
+        }
+        .neg-drawer-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #223548;
+            margin: 0;
+        }
+        .neg-close-button {
+            border: 0;
+            background: #f3f7fd;
+            color: #64748b;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            font-size: 18px;
+        }
+        .neg-drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px 24px;
+        }
+        .neg-profile-hero {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .neg-profile-avatar {
+            width: 116px;
+            height: 116px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #d7e5ff 0%, #8eb6ff 100%);
+            color: #1d4ed8;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 38px;
+            font-weight: 700;
+            margin-bottom: 18px;
+        }
+        .neg-profile-name {
+            font-size: 28px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0 0 6px;
+        }
+        .neg-profile-copy {
+            font-size: 14px;
+        }
+        .neg-profile-tags {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .neg-profile-grid {
+            display: grid;
+            gap: 16px;
+        }
+        .neg-profile-card {
+            border: 1px solid #edf2f8;
+            border-radius: 18px;
+            padding: 16px;
+            background: #fbfdff;
+        }
+        .neg-profile-label {
+            font-size: 11px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            margin-bottom: 6px;
+        }
+        .neg-profile-value {
+            font-size: 14px;
+            color: #1f2937;
+            line-height: 1.6;
+            word-break: break-word;
+        }
+        .neg-profile-value a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+        .neg-doc-list {
+            display: grid;
+            gap: 12px;
+        }
+        .neg-doc-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            border: 1px solid #edf2f8;
+            border-radius: 16px;
+            padding: 14px 16px;
+            background: #ffffff;
+        }
+        .neg-doc-name {
+            font-size: 13px;
+            color: #223548;
+            font-weight: 600;
+            word-break: break-word;
+        }
+        .neg-doc-link {
+            font-size: 12px;
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 700;
+        }
+        @media (max-width: 1199px) {
+            .neg-board {
+                grid-template-columns: 300px minmax(0, 1fr);
+            }
+            .neg-user-name,
+            .neg-thread-name {
+                font-size: 20px;
+            }
+        }
+        @media (max-width: 991px) {
+            .neg-board {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+            .neg-sidebar,
+            .neg-main {
+                min-height: auto;
+            }
+            .neg-thread-stream {
+                height: 420px;
+            }
+        }
+        @media (max-width: 767px) {
+            .neg-main-header,
+            .neg-thread-stream,
+            .neg-composer,
+            .neg-sidebar-top,
+            .neg-list-item {
+                padding-left: 18px;
+                padding-right: 18px;
+            }
+            .neg-composer-shell {
+                flex-wrap: wrap;
+                border-radius: 26px;
+            }
+            .neg-composer-tools {
+                width: 100%;
+                justify-content: flex-end;
+            }
+            .neg-thread-stream {
+                height: 360px;
+            }
+            .neg-drawer {
+                width: 100%;
+            }
+        }
+    </style>
+@endpush
 
 <div
     id="negotiation-board"
-    class="neg-board"
+    class="neg-shell"
     data-list-url="{{ $listUrl }}"
     data-show-url-template="{{ $showUrlTemplate }}"
     data-message-url-template="{{ $messageUrlTemplate }}"
     data-initial-id="{{ $initialNegotiationId }}"
-    data-csrf="{{ csrf_token() }}"
+    data-loading-list="{{ translate('Loading conversations...') }}"
+    data-no-conversations="{{ translate('No conversations found yet.') }}"
+    data-select-title="{{ translate('Select a conversation') }}"
+    data-select-copy="{{ translate('Choose a conversation from the left to start reading or replying.') }}"
+    data-no-messages="{{ translate('No messages yet.') }}"
+    data-no-profile="{{ translate('No company profile data available.') }}"
+    data-download-attachment="{{ translate('Open file') }}"
+    data-view-document="{{ translate('View') }}"
+    data-open-profile="{{ translate('Open profile') }}"
+    data-message-required="{{ translate('Write a message or attach a file before sending.') }}"
+    data-send-failed="{{ translate('Unable to send the message right now.') }}"
+    data-load-failed="{{ translate('Unable to load conversations right now.') }}"
+    data-verified-supplier="{{ translate('Verified Supplier') }}"
+    data-premium-verified="{{ translate('Premium Verified') }}"
+    data-featured-supplier="{{ translate('Featured Supplier') }}"
+    data-close="{{ translate('Close') }}"
+    data-company-profile="{{ translate('Company Profile') }}"
 >
-    <div class="neg-card">
-        <div class="neg-list-head">
-            <h2 class="neg-title">{{ translate('Negotiations') }}</h2>
-            <div class="neg-subtitle">{{ translate('Review discussions, quotations, and supplier documents in one workspace.') }}</div>
-        </div>
-        <div class="neg-list" id="negotiation-list">
-            <div class="neg-empty">{{ translate('Loading conversations...') }}</div>
-        </div>
+    <div class="neg-board">
+        <aside class="neg-panel neg-sidebar">
+            <div class="neg-sidebar-top">
+                <div class="neg-user-card">
+                    <div class="neg-avatar">{{ $currentUserInitial }}</div>
+                    <div class="neg-user-meta">
+                        <div class="neg-user-name-row">
+                            <h2 class="neg-user-name">{{ $currentUserName }}</h2>
+                            <span class="neg-badge-dot js-neg-total-unread d-none">0</span>
+                        </div>
+                        <div class="neg-user-role">{{ $currentUserRole }}</div>
+                    </div>
+                </div>
+                <div class="neg-search">
+                    <span class="neg-search-icon"><i class="las la-search"></i></span>
+                    <input type="search" class="neg-search-input js-neg-search" placeholder="{{ translate('Search here...') }}">
+                </div>
+            </div>
+
+            <div class="neg-list js-neg-list">
+                <div class="neg-empty">
+                    <div>
+                        <div class="neg-empty-title">{{ translate('Loading') }}</div>
+                        <div class="neg-empty-copy">{{ translate('Conversation list is loading.') }}</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <section class="neg-panel neg-main">
+            <div class="neg-main-header">
+                <button type="button" class="neg-thread-trigger js-neg-open-profile" disabled>
+                    <span class="neg-avatar js-neg-thread-avatar">C</span>
+                    <span>
+                        <span class="d-flex align-items-center flex-wrap" style="gap:10px;">
+                            <span class="neg-thread-name js-neg-thread-name">{{ translate('Select a conversation') }}</span>
+                            <span class="neg-header-chip js-neg-active-unread d-none">0</span>
+                            <span class="neg-thread-dot d-none js-neg-thread-dot"></span>
+                        </span>
+                        <span class="neg-thread-subtitle js-neg-thread-subtitle">{{ translate('The latest messages will appear here.') }}</span>
+                        <span class="neg-thread-reference js-neg-thread-reference"></span>
+                    </span>
+                </button>
+
+                <div class="neg-header-actions">
+                    <span class="neg-status-pill js-neg-thread-status d-none"></span>
+                    <button type="button" class="neg-icon-button" tabindex="-1" aria-hidden="true">
+                        <i class="las la-search"></i>
+                    </button>
+                    <button type="button" class="neg-icon-button" tabindex="-1" aria-hidden="true">
+                        <i class="lar la-heart"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="neg-thread-stream js-neg-messages">
+                <div class="neg-empty">
+                    <div>
+                        <div class="neg-empty-title">{{ translate('Select a conversation') }}</div>
+                        <div class="neg-empty-copy">{{ translate('The latest messages will appear here.') }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <form class="neg-composer js-neg-form" enctype="multipart/form-data">
+                <div class="neg-composer-shell">
+                    <i class="lar la-comment-dots text-primary fs-20"></i>
+                    <input type="text" name="message" class="neg-composer-input js-neg-message-input" placeholder="{{ translate('Write something...') }}" autocomplete="off">
+                    <span class="neg-file-name js-neg-file-name"></span>
+                    <div class="neg-composer-tools">
+                        <label class="neg-attach-label" title="{{ translate('Attach file') }}">
+                            <i class="las la-paperclip fs-18"></i>
+                            <input type="file" name="attachment" class="neg-file-input js-neg-file-input">
+                        </label>
+                        <button type="submit" class="neg-send-button js-neg-send-button" title="{{ translate('Send') }}">
+                            <i class="las la-paper-plane fs-18"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </section>
     </div>
 
-    <div class="neg-card">
-        <div class="neg-thread-head">
-            <div>
-                <h3 class="neg-title" id="negotiation-thread-title">{{ translate('Select a conversation') }}</h3>
-                <div class="neg-subtitle" id="negotiation-thread-subtitle">{{ translate('The latest messages will appear here.') }}</div>
-            </div>
-            <span class="neg-pill" id="negotiation-thread-status" style="display:none;"></span>
-        </div>
-        <div class="neg-thread-messages" id="negotiation-thread-messages">
-            <div class="neg-empty">{{ translate('No conversation selected.') }}</div>
-        </div>
-        <form class="neg-thread-form" id="negotiation-thread-form" enctype="multipart/form-data">
-            <div class="neg-thread-actions">
-                <input type="text" name="message" class="form-control" placeholder="{{ translate('Write your message...') }}" autocomplete="off">
-                <input type="file" name="attachment" class="form-control-file">
-                <button type="submit" class="btn btn-primary">{{ translate('Send') }}</button>
-            </div>
-        </form>
-    </div>
+    <div class="neg-drawer-backdrop js-neg-drawer-backdrop"></div>
 
-    <div class="neg-card neg-profile">
-        <div class="neg-profile-head">
-            <h3 class="neg-title">{{ translate('Company Profile') }}</h3>
-            <div class="neg-subtitle">{{ translate('Verification and document details for the counterparty.') }}</div>
+    <aside class="neg-drawer" aria-hidden="true">
+        <div class="neg-drawer-head">
+            <h3 class="neg-drawer-title">{{ translate('Company Profile') }}</h3>
+            <button type="button" class="neg-close-button js-neg-close-profile" aria-label="{{ translate('Close') }}">
+                <i class="las la-times"></i>
+            </button>
         </div>
-        <div class="neg-profile-body" id="negotiation-profile-body">
-            <div class="neg-empty">{{ translate('Select a conversation to view company details.') }}</div>
+        <div class="neg-drawer-body js-neg-profile">
+            <div class="neg-empty">
+                <div>
+                    <div class="neg-empty-title">{{ translate('No profile selected') }}</div>
+                    <div class="neg-empty-copy">{{ translate('Open a conversation and click the name above to view company details.') }}</div>
+                </div>
+            </div>
         </div>
-    </div>
+    </aside>
 </div>
-
-<script>
-    (function () {
-        var root = document.getElementById('negotiation-board');
-        if (!root) return;
-
-        var listUrl = root.dataset.listUrl;
-        var showUrlTemplate = root.dataset.showUrlTemplate;
-        var messageUrlTemplate = root.dataset.messageUrlTemplate;
-        var initialId = root.dataset.initialId || '';
-        var csrf = root.dataset.csrf;
-        var listEl = document.getElementById('negotiation-list');
-        var titleEl = document.getElementById('negotiation-thread-title');
-        var subtitleEl = document.getElementById('negotiation-thread-subtitle');
-        var statusEl = document.getElementById('negotiation-thread-status');
-        var messagesEl = document.getElementById('negotiation-thread-messages');
-        var profileEl = document.getElementById('negotiation-profile-body');
-        var formEl = document.getElementById('negotiation-thread-form');
-        var activeId = null;
-
-        function escapeHtml(value) {
-            return (value || '').replace(/[&<>"']/g, function (char) {
-                return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char];
-            });
-        }
-
-        function threadUrl(id) { return showUrlTemplate.replace('__ID__', id); }
-        function messageUrl(id) { return messageUrlTemplate.replace('__ID__', id); }
-
-        function renderList(items) {
-            if (!items.length) {
-                listEl.innerHTML = '<div class="neg-empty">{{ translate('No negotiations found.') }}</div>';
-                return;
-            }
-
-            listEl.innerHTML = items.map(function (item) {
-                var unread = item.unread_messages_count > 0 ? '<span class="neg-badge">' + item.unread_messages_count + '</span>' : '';
-                var status = item.status ? '<span class="neg-pill">' + escapeHtml(item.status) + '</span>' : '';
-                return '' +
-                    '<a href="' + escapeHtml(item.url || '#') + '" class="neg-item' + (String(item.id) === String(activeId) ? ' is-active' : '') + '" data-id="' + item.id + '">' +
-                        '<div class="neg-item-row"><div class="neg-item-title">' + escapeHtml(item.title) + '</div>' + unread + '</div>' +
-                        '<div class="neg-item-meta">' + escapeHtml(item.subtitle || '') + '</div>' +
-                        '<div class="neg-item-copy mt-2">' + escapeHtml(item.latest_message || '') + '</div>' +
-                        '<div class="neg-item-row mt-2">' + status + '<div class="neg-item-meta">' + escapeHtml(item.latest_message_human || '') + '</div></div>' +
-                    '</a>';
-            }).join('');
-
-            Array.prototype.forEach.call(listEl.querySelectorAll('.neg-item'), function (itemEl) {
-                itemEl.addEventListener('click', function (event) {
-                    event.preventDefault();
-                    loadThread(itemEl.getAttribute('data-id'));
-                });
-            });
-        }
-
-        function renderMessages(items) {
-            if (!items.length) {
-                messagesEl.innerHTML = '<div class="neg-empty">{{ translate('No messages yet.') }}</div>';
-                return;
-            }
-
-            messagesEl.innerHTML = items.map(function (item) {
-                var attachment = item.attachment ? '<div class="mt-2"><a class="neg-profile-link" href="' + escapeHtml(item.attachment) + '" target="_blank" rel="noopener">' + escapeHtml(item.attachment_name || '{{ translate('Download attachment') }}') + '</a></div>' : '';
-                return '' +
-                    '<div class="neg-message' + (item.is_mine ? ' is-mine' : '') + '">' +
-                        '<div class="neg-bubble">' +
-                            (item.message ? '<div>' + escapeHtml(item.message) + '</div>' : '') +
-                            attachment +
-                        '</div>' +
-                        '<div class="neg-message-meta">' + escapeHtml(item.sender_name || '') + (item.sender_company ? ' · ' + escapeHtml(item.sender_company) : '') + ' · ' + escapeHtml(item.created_at_human || item.created_at || '') + '</div>' +
-                    '</div>';
-            }).join('');
-
-            messagesEl.scrollTop = messagesEl.scrollHeight;
-        }
-
-        function renderProfile(profile) {
-            if (!profile) {
-                profileEl.innerHTML = '<div class="neg-empty">{{ translate('No company profile data available.') }}</div>';
-                return;
-            }
-
-            var tags = [];
-            if (profile.verified_supplier_badge) tags.push('<span class="neg-pill">{{ translate('Verified Supplier') }}</span>');
-            if (profile.premium_verified) tags.push('<span class="neg-pill">{{ translate('Premium Verified') }}</span>');
-            if (profile.featured_supplier) tags.push('<span class="neg-pill">{{ translate('Featured Supplier') }}</span>');
-
-            var docs = (profile.documents || []).map(function (doc) {
-                return '' +
-                    '<div class="neg-profile-doc">' +
-                        '<div><div class="neg-profile-label">' + escapeHtml(doc.label || '') + '</div><div class="neg-profile-value mb-0">' + escapeHtml(doc.name || '') + '</div></div>' +
-                        '<a href="' + escapeHtml(doc.url || '#') + '" class="neg-profile-link" target="_blank" rel="noopener">{{ translate('View') }}</a>' +
-                    '</div>';
-            }).join('');
-
-            var publicLink = profile.public_profile_url ? '<a href="' + escapeHtml(profile.public_profile_url) + '" class="neg-profile-link">{{ translate('Open public profile') }}</a>' : '';
-
-            profileEl.innerHTML = '' +
-                '<div class="neg-profile-label">{{ translate('Company') }}</div><div class="neg-profile-value">' + escapeHtml(profile.name || '') + '</div>' +
-                '<div class="neg-profile-tags">' + tags.join('') + '</div>' +
-                '<div class="neg-profile-label">{{ translate('Type / Status') }}</div><div class="neg-profile-value">' + escapeHtml((profile.company_type || '-') + ' / ' + (profile.verification_status || '-')) + '</div>' +
-                '<div class="neg-profile-label">{{ translate('Location') }}</div><div class="neg-profile-value">' + escapeHtml(profile.location || '-') + '</div>' +
-                '<div class="neg-profile-label">{{ translate('Contact') }}</div><div class="neg-profile-value">' + escapeHtml(profile.business_email || '-') + (profile.phone ? '<br>' + escapeHtml(profile.phone) : '') + '</div>' +
-                (profile.website ? '<div class="neg-profile-label">{{ translate('Website') }}</div><div class="neg-profile-value"><a href="' + escapeHtml(profile.website) + '" class="neg-profile-link" target="_blank" rel="noopener">' + escapeHtml(profile.website) + '</a></div>' : '') +
-                publicLink +
-                (docs ? '<div class="mt-3">' + docs + '</div>' : '');
-        }
-
-        function loadThread(id) {
-            activeId = id;
-            fetch(threadUrl(id), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                .then(function (response) { return response.json(); })
-                .then(function (payload) {
-                    var data = payload.data || {};
-                    titleEl.textContent = data.title || '{{ translate('Conversation') }}';
-                    subtitleEl.textContent = data.subtitle || '';
-                    if (data.status) {
-                        statusEl.style.display = 'inline-flex';
-                        statusEl.textContent = data.status;
-                    } else {
-                        statusEl.style.display = 'none';
-                        statusEl.textContent = '';
-                    }
-                    renderMessages(data.messages || []);
-                    renderProfile(data.company_profile || null);
-                    refreshList();
-                });
-        }
-
-        function refreshList() {
-            fetch(listUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                .then(function (response) { return response.json(); })
-                .then(function (payload) {
-                    var items = payload.data || [];
-                    renderList(items);
-                    if (!activeId && items.length) {
-                        activeId = initialId || items[0].id;
-                        loadThread(activeId);
-                    }
-                });
-        }
-
-        formEl.addEventListener('submit', function (event) {
-            event.preventDefault();
-            if (!activeId) return;
-
-            var formData = new FormData(formEl);
-            fetch(messageUrl(activeId), {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': csrf,
-                    'Accept': 'application/json'
-                }
-            })
-                .then(function (response) { return response.json(); })
-                .then(function () {
-                    formEl.reset();
-                    loadThread(activeId);
-                });
-        });
-
-        refreshList();
-    })();
-</script>

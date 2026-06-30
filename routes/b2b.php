@@ -342,6 +342,12 @@ Route::group(['prefix' => 'seller', 'middleware' => ['auth', 'verified', 'unbann
         Route::post('/b2b/letters-of-credit/{lcId}/status', 'updateLetterOfCreditStatus')->name('seller.b2b.trade-finance.letters-of-credit.status');
     });
 
+    Route::controller(B2BSupplierFinanceAccountController::class)->middleware('approved_b2b_company:supplier,package')->group(function () {
+        Route::get('/b2b/finance/earnings', 'earnings')->name('seller.b2b.finance.earnings');
+        Route::get('/b2b/finance/payouts', 'payouts')->name('seller.b2b.finance.payouts');
+        Route::post('/b2b/finance/payouts/escrows/{escrowId}/request', 'requestPayout')->name('seller.b2b.finance.payouts.request');
+    });
+
     Route::controller(B2BInsuranceController::class)->middleware('approved_b2b_company:supplier,package')->group(function () {
         Route::get('/b2b/insurance', 'supplierDashboard')->name('seller.b2b.insurance.dashboard');
         Route::post('/b2b/insurance/quotes', 'requestQuote')->name('seller.b2b.insurance.quotes.store');

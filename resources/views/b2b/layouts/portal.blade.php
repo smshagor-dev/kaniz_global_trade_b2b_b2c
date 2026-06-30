@@ -189,6 +189,8 @@
 
     <script src="{{ static_asset('assets/js/vendors.js') }}"></script>
     <script src="{{ static_asset('assets/js/aiz-core.js') }}"></script>
+    <script src="{{ asset('js/app.js') }}" defer></script>
+    <script src="{{ asset('js/negotiation-board.js') }}" defer></script>
     @yield('modal')
     @yield('script')
     @stack('scripts')

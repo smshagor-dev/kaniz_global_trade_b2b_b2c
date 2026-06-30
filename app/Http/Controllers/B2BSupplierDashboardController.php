@@ -32,6 +32,11 @@ class B2BSupplierDashboardController extends Controller
     ) {
     }
 
+    public function index()
+    {
+        return $this->__invoke();
+    }
+
     public function __invoke()
     {
         $company = $this->resolveCompany();
