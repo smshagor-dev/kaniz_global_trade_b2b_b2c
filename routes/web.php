@@ -225,7 +225,11 @@ Route::controller(SearchController::class)->group(function () {
 Route::controller(EnterpriseSearchController::class)->group(function () {
     Route::get('/global-search', 'index')->name('global.search');
     Route::get('/global-search/json', 'json')->name('global.search.json');
+    Route::get('/global-search/suggestions', 'suggestions')->name('global.search.suggestions');
     Route::get('/global-search/autocomplete', 'autocomplete')->name('global.search.autocomplete');
+    Route::post('/global-search/image', 'imageSearch')->middleware('throttle:10,1')->name('global.search.image');
+    Route::get('/global-search/trending', 'trending')->name('global.search.trending');
+    Route::get('/global-search/recent', 'recent')->name('global.search.recent');
     Route::get('/global-search/click/{documentId}', 'click')->name('global.search.click');
 });
 

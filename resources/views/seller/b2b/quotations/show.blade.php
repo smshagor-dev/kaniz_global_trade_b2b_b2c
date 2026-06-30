@@ -1,6 +1,14 @@
 @extends('b2b.layouts.supplier')
 
 @section('panel_content')
+    @php
+        $offerProductLabel = $quotation->product?->getTranslation('name')
+            ?: $quotation->rfq?->product?->getTranslation('name')
+            ?: $quotation->rfq?->title
+            ?: $quotation->rfq?->category?->getTranslation('name')
+            ?: '-';
+    @endphp
+
     <div class="aiz-titlebar mt-2 mb-4">
         <div class="row align-items-center">
             <div class="col-md-6">
@@ -9,6 +17,9 @@
             <div class="col-md-6 text-md-right">
                 @if ($quotation->status === 'pending')
                     <a href="{{ route('seller.b2b.quotations.edit', $quotation->id) }}" class="btn btn-soft-primary rounded-0">{{ translate('Edit Quotation') }}</a>
+                @endif
+                @if ($quotation->negotiation)
+                    <a href="{{ route('seller.b2b.negotiations.show', $quotation->negotiation->id) }}" class="btn btn-soft-info rounded-0">{{ translate('Open Conversation') }}</a>
                 @endif
             </div>
         </div>
@@ -19,7 +30,7 @@
             <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('RFQ') }}</div><div class="col-md-9">{{ $quotation->rfq?->title }}</div></div>
             <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Buyer Company') }}</div><div class="col-md-9">{{ $quotation->rfq?->company?->company_name }}</div></div>
             <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Supplier Company') }}</div><div class="col-md-9">{{ $quotation->supplierCompany?->company_name }}</div></div>
-            <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Offer Product') }}</div><div class="col-md-9">{{ $quotation->product?->getTranslation('name') ?? '-' }}</div></div>
+            <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Offer Product') }}</div><div class="col-md-9">{{ $offerProductLabel }}</div></div>
             <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Price') }}</div><div class="col-md-9">{{ $quotation->price }} {{ $quotation->currency }}</div></div>
             <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('MOQ') }}</div><div class="col-md-9">{{ $quotation->moq ?: '-' }}</div></div>
             <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Lead Time Days') }}</div><div class="col-md-9">{{ $quotation->lead_time_days ?: '-' }}</div></div>

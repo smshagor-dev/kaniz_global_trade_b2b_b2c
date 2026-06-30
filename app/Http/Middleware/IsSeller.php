@@ -2,11 +2,16 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\B2BCompanyService;
 use Closure;
 use Auth;
 
 class IsSeller
 {
+    public function __construct(protected B2BCompanyService $b2bCompanyService)
+    {
+    }
+
     /**
      * Handle an incoming request.
      *
@@ -28,6 +33,10 @@ class IsSeller
         }
 
         if ($user->user_type == 'seller' && !$user->banned) {
+            if ($this->b2bCompanyService->isSupplierPortalUser($user->id) || $this->b2bCompanyService->isBuyerPortalUser($user->id)) {
+                return redirect()->to($this->b2bCompanyService->getPortalHomeUrl($user->id));
+            }
+
             return $next($request);
         }
 

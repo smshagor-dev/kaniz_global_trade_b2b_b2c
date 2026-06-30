@@ -213,6 +213,7 @@ class B2BTradeFinanceService
         ]);
 
         $this->auditService->log($actorUserId, $actorCompanyId, 'settlement_requested', $settlement, 'Settlement requested.');
+        $this->notificationService->notifySupplierPayoutRequested($settlement);
 
         return $settlement;
     }
@@ -234,6 +235,7 @@ class B2BTradeFinanceService
         ]);
 
         $this->auditService->log($actorUserId, $actorCompanyId, 'settlement_approved', $settlement, 'Settlement approved.');
+        $this->notificationService->notifySupplierPayoutApproved($settlement);
 
         return $settlement->fresh();
     }
@@ -254,6 +256,7 @@ class B2BTradeFinanceService
         ]);
 
         $this->auditService->log($actorUserId, $actorCompanyId, 'settlement_completed', $settlement, 'Settlement completed.');
+        $this->notificationService->notifySupplierPayoutCompleted($settlement);
 
         return $settlement->fresh();
     }

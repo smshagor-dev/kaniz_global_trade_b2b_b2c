@@ -52,4 +52,14 @@ class B2BPaymentTransaction extends Model
     {
         return $this->hasOne(B2BEscrow::class, 'payment_transaction_id');
     }
+
+    public function buyerCompany()
+    {
+        return $this->belongsTo(B2BCompany::class, 'buyer_company_id');
+    }
+
+    public function supplierCompany()
+    {
+        return $this->belongsTo(B2BCompany::class, 'supplier_company_id');
+    }
 }

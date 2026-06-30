@@ -9,6 +9,7 @@ use App\Services\B2BCompanyService;
 use App\Services\B2BPackageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
 
 class B2BPackageController extends Controller
@@ -239,6 +240,89 @@ class B2BPackageController extends Controller
         flash(translate('Package activated successfully.'))->success();
 
         return back();
+    }
+
+    public function purchasePackage(Request $request, $id)
+    {
+        $company = $this->getCompany();
+        $package = B2BPackage::active()->findOrFail($id);
+
+        abort_unless($package->package_for === $this->b2bPackageService->getPackageRoleForCompany($company), 403);
+
+        if ((float) $package->amount <= 0) {
+            $this->b2bPackageService->activatePackage($company, $package);
+            flash(translate('Package activated successfully.'))->success();
+
+            return back();
+        }
+
+        $request->validate([
+            'payment_option' => 'required|string|max:100',
+        ]);
+
+        if ($package->isSupplierFeaturedPackage() && $this->b2bPackageService->getActiveFeaturedPackageForCompany($company)?->id === $package->id) {
+            flash(translate('This featured package is already active.'))->warning();
+
+            return back();
+        }
+
+        if (!$package->isSupplierFeaturedPackage() && $this->b2bPackageService->getActivePackageForCompany($company)?->id === $package->id) {
+            flash(translate('This membership package is already active.'))->warning();
+
+            return back();
+        }
+
+        $paymentData = [
+            'seller_package_id' => 0,
+            'b2b_package_id' => $package->id,
+            'b2b_company_id' => $company->id,
+            'b2b_user_id' => Auth::id(),
+            'payment_method' => $request->payment_option,
+        ];
+
+        $request->session()->put('payment_type', 'seller_package_payment');
+        $request->session()->put('payment_data', $paymentData);
+
+        $decorator = 'App\\Http\\Controllers\\Payment\\' . str_replace(' ', '', ucwords(str_replace('_', ' ', $request->payment_option))) . 'Controller';
+
+        if (class_exists($decorator)) {
+            return (new $decorator())->pay($request);
+        }
+
+        Session::forget('payment_type');
+        Session::forget('payment_data');
+        flash(translate('Selected payment method is not available right now.'))->warning();
+
+        return back();
+    }
+
+    public function purchasePaymentDone(array $paymentData, ?string $payment = null)
+    {
+        $package = B2BPackage::active()->findOrFail($paymentData['b2b_package_id']);
+        $company = B2BCompany::findOrFail($paymentData['b2b_company_id']);
+        $userId = (int) ($paymentData['b2b_user_id'] ?? Auth::id());
+
+        abort_unless($package->package_for === $this->b2bPackageService->getPackageRoleForCompany($company), 403);
+
+        if ($userId && Auth::id() !== $userId) {
+            Auth::loginUsingId($userId);
+        }
+
+        $this->b2bPackageService->activatePackage($company, $package);
+        $this->b2bPackageService->recordAutomatedPurchase(
+            $company,
+            $package,
+            $userId ?: Auth::id(),
+            (string) ($paymentData['payment_method'] ?? 'online_payment'),
+            $payment
+        );
+
+        Session::forget('payment_type');
+        Session::forget('payment_data');
+
+        flash(translate('Package purchasing successful.'))->success();
+
+        return redirect()->route('b2b.packages.index');
     }
 
     public function requestPaid(Request $request, $id)

@@ -26,16 +26,59 @@ class B2BContainerShipmentController extends Controller
     public function createFromQuote(Request $request, $quoteId)
     {
         $company = $this->companyService->getCompanyByUser(Auth::id());
-        abort_unless($company && $this->permissionService->canAccessCompany(Auth::id(), $company->id), 403);
+        abort_unless(
+            $company &&
+            $this->permissionService->canAccessCompany(Auth::id(), $company->id) &&
+            $this->permissionService->canManageFreight(Auth::id(), $company->id),
+            403
+        );
 
         $quote = B2BFreightQuote::with(['forwarder', 'originPort', 'destinationPort'])
-            ->where('buyer_company_id', $company->id)
-            ->orWhere('supplier_company_id', $company->id)
+            ->where(function ($query) use ($company) {
+                $query->where('buyer_company_id', $company->id)
+                    ->orWhere('supplier_company_id', $company->id);
+            })
             ->findOrFail($quoteId);
+
+        if ($quote->freight_mode !== 'sea_freight') {
+            $result = [
+                'success' => false,
+                'message' => translate('Container booking is available only for sea freight quotes.'),
+            ];
+
+            if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
+                return response()->json($result, 422);
+            }
+
+            flash($result['message'])->warning();
+
+            return back();
+        }
+
+        if ($quote->status !== 'selected') {
+            $result = [
+                'success' => false,
+                'message' => translate('Please select the freight quote before creating a container booking.'),
+            ];
+
+            if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
+                return response()->json($result, 422);
+            }
+
+            flash($result['message'])->warning();
+
+            return back();
+        }
 
         $result = $this->freightService->createContainerShipment($quote, $request->all());
 
-        return response()->json($result, ($result['success'] ?? false) ? 200 : 422);
+        if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
+            return response()->json($result, ($result['success'] ?? false) ? 200 : 422);
+        }
+
+        flash(translate($result['message'] ?? 'Container booking request completed.'))->{($result['success'] ?? false) ? 'success' : 'warning'}();
+
+        return back();
     }
 
     public function track(Request $request)
@@ -62,13 +105,32 @@ class B2BContainerShipmentController extends Controller
 
     public function sync($id)
     {
-        $shipment = B2BContainerShipment::with('forwarder')->findOrFail($id);
+        $company = $this->companyService->getCompanyByUser(Auth::id());
+        abort_unless(
+            $company &&
+            $this->permissionService->canAccessCompany(Auth::id(), $company->id) &&
+            $this->permissionService->canManageFreight(Auth::id(), $company->id),
+            403
+        );
+
+        $shipment = B2BContainerShipment::with(['forwarder', 'freightQuote'])->findOrFail($id);
+        abort_unless(
+            (int) ($shipment->freightQuote?->buyer_company_id ?? 0) === (int) $company->id
+            || (int) ($shipment->freightQuote?->supplier_company_id ?? 0) === (int) $company->id,
+            403
+        );
         $result = $this->freightService->syncContainerShipment($shipment);
         if ($shipment->forwarder) {
             $this->integrationService->touchLastSync($shipment->forwarder);
         }
 
-        return response()->json($result, ($result['success'] ?? false) ? 200 : 422);
+        if (request()->expectsJson() || request()->wantsJson() || request()->ajax()) {
+            return response()->json($result, ($result['success'] ?? false) ? 200 : 422);
+        }
+
+        flash(translate($result['message'] ?? 'Container shipment sync completed.'))->{($result['success'] ?? false) ? 'success' : 'warning'}();
+
+        return back();
     }
 
     public function handleWebhook(Request $request, $forwarder, ?string $channel = null)

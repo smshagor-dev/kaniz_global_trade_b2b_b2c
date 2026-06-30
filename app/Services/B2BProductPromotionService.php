@@ -8,6 +8,7 @@ use App\Models\B2BProductPromotionPackage;
 use App\Models\B2BProductPromotionRequest;
 use App\Models\Product;
 use RuntimeException;
+use Illuminate\Support\Str;
 
 class B2BProductPromotionService
 {
@@ -137,6 +138,38 @@ class B2BProductPromotionService
             'payment_submitted_at' => !empty($payload['payment_reference']) ? now() : null,
             'requested_at' => now(),
         ]);
+    }
+
+    public function recordAutomatedPurchase(
+        B2BCompany $company,
+        B2BProductPromotionPackage $package,
+        int $userId,
+        string $paymentMethod,
+        ?string $paymentDetails = null
+    ): B2BProductPromotionRequest {
+        $paymentReference = strtoupper(Str::slug($paymentMethod ?: 'online_payment', '_'))
+            . '-' . substr(sha1((string) $paymentDetails), 0, 16);
+
+        return B2BProductPromotionRequest::updateOrCreate(
+            [
+                'b2b_company_id' => $company->id,
+                'b2b_product_promotion_package_id' => $package->id,
+                'payment_reference' => $paymentReference,
+            ],
+            [
+                'requested_by' => $userId,
+                'amount' => $package->amount,
+                'billing_cycle' => $package->duration >= 30 ? 'monthly' : 'custom',
+                'status' => 'approved',
+                'note' => 'Automatic online payment completed.',
+                'payment_notes' => $paymentDetails,
+                'payment_submitted_at' => now(),
+                'requested_at' => now(),
+                'approved_at' => now(),
+                'approved_by' => null,
+                'rejection_note' => null,
+            ]
+        );
     }
 
     public function promoteProduct(B2BCompany $company, Product $product): B2BProductPromotion

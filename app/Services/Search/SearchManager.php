@@ -14,7 +14,7 @@ class SearchManager
     public function driver(?string $provider = null): SearchEngineInterface
     {
         $provider ??= $this->activeProvider();
-        $config = (array) config('search.providers.' . $provider, []);
+        $config = $this->providerConfig($provider);
 
         return match ($provider) {
             'database' => new DatabaseSearchDriver(),
@@ -55,6 +55,67 @@ class SearchManager
 
             return $this->driver($this->fallbackProvider());
         }
+    }
+
+    public function providerConfig(string $provider): array
+    {
+        $config = (array) config('search.providers.' . $provider, []);
+
+        $overrides = [
+            'base_url' => get_setting('search_' . $provider . '_base_url', ''),
+            'username' => get_setting('search_' . $provider . '_username', ''),
+            'password' => get_setting('search_' . $provider . '_password', ''),
+            'api_key' => get_setting('search_' . $provider . '_api_key', ''),
+        ];
+
+        foreach ($overrides as $key => $value) {
+            if ($value !== null && $value !== '') {
+                $config[$key] = $value;
+            }
+        }
+
+        return $config;
+    }
+
+    public function healthReport(?string $provider = null): array
+    {
+        $provider ??= $this->activeProvider();
+        $indexName = $this->indexName();
+
+        try {
+            $primary = $this->driver($provider)->health($indexName);
+        } catch (Throwable $throwable) {
+            $primary = [
+                'ok' => false,
+                'provider' => $provider,
+                'index' => $indexName,
+                'message' => $throwable->getMessage(),
+            ];
+        }
+
+        $fallbackProvider = $this->fallbackProvider();
+        $usingFallback = !($primary['ok'] ?? false) && $provider !== $fallbackProvider;
+
+        return [
+            'provider' => $provider,
+            'index' => $indexName,
+            'primary' => $primary,
+            'fallback_provider' => $fallbackProvider,
+            'using_fallback' => $usingFallback,
+            'fallback' => $usingFallback ? $this->driver($fallbackProvider)->health($indexName) : null,
+        ];
+    }
+
+    public function createIndex(?string $provider = null): void
+    {
+        $provider ??= $this->activeProvider();
+        $this->driver($provider)->createIndex($this->indexName());
+    }
+
+    public function deleteIndex(?string $provider = null): void
+    {
+        $provider ??= $this->activeProvider();
+        $this->driver($provider)->deleteIndex($this->indexName());
     }
 
     public function indexName(): string

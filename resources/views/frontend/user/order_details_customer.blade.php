@@ -469,6 +469,7 @@
 @section('script')
 <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
     <script type="text/javascript">
+        const hasOfflineOrderRepaymentRoute = @json(Route::has('offline_order_re_payment_modal'));
 
         function select_payment_type(id) {
             $('#payment_type_select_modal').modal('show');
@@ -480,7 +481,12 @@
                 online_payment();
             } else if (type == 'offline') {
                 $("#payment_select_type_modal_cancel").click();
-                $.post('{{ route('offline_order_re_payment_modal') }}', {
+                if (!hasOfflineOrderRepaymentRoute) {
+                    AIZ.plugins.notify('warning', '{{ translate('Offline payment is not available right now.') }}');
+                    return;
+                }
+
+                $.post('{{ Route::has('offline_order_re_payment_modal') ? route('offline_order_re_payment_modal') : '' }}', {
                     _token: '{{ csrf_token() }}',
                     order_id: '{{ $order->id }}'
                 }, function(data) {

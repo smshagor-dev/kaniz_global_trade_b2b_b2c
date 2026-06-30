@@ -52,9 +52,8 @@ class SslcommerzController extends Controller
                 $post_data['total_amount'] = $customer_package->amount; # You cant not pay less than 10
                 $post_data['value_b'] = $paymentData['customer_package_id'];
             } elseif ($paymentType == 'seller_package_payment') {
-                $seller_package = SellerPackage::findOrFail($paymentData['seller_package_id']);
-                $post_data['total_amount'] = $seller_package->amount; # You cant not pay less than 10
-                $post_data['value_b'] = $paymentData['seller_package_id'];
+                $post_data['value_b'] = json_encode(\App\Support\B2BPaymentResolver::sellerPackagePayload($paymentData, $userID));
+                $post_data['total_amount'] = \App\Support\B2BPaymentResolver::resolveSellerPackageAmount($paymentData); # You cant not pay less than 10
             }
             
             $post_data['value_c'] = $paymentType;
@@ -133,11 +132,16 @@ class SslcommerzController extends Controller
 
                 return (new CustomerPackageController)->purchase_payment_done($data, $payment);
             } elseif ($request->value_c == 'seller_package_payment') {
-                $data['seller_package_id'] = $request->value_b;
+                $decodedValue = json_decode($request->value_b, true);
+                if (is_array($decodedValue)) {
+                    $data = $decodedValue;
+                } else {
+                    $data['seller_package_id'] = $request->value_b;
+                }
                 $data['payment_method'] = 'sslcommerz';
                 Auth::login(User::find($request->value_d));
 
-                return (new SellerPackageController)->purchase_payment_done(json_decode($request->value_b), $payment);
+                return (new SellerPackageController)->purchase_payment_done($data, $payment);
             }
         }
     }

@@ -1,4 +1,4 @@
-@extends('seller.layouts.app')
+@extends(($routeContext ?? 'seller') === 'supplier_b2b' ? 'b2b.layouts.app' : 'seller.layouts.app')
 @section('panel_content')
 
 <div class="aiz-titlebar text-left mt-2 mb-3">
@@ -15,7 +15,7 @@
             </ul>
         </div>
     @endif
-    <form class="form form-horizontal mar-top" action="{{route('wholesale_product_update.seller', $product->id)}}" method="POST" enctype="multipart/form-data" id="choice_form">
+    <form class="form form-horizontal mar-top" action="{{ route($routeNames['update'], $product->id) }}" method="POST" enctype="multipart/form-data" id="choice_form">
         <div class="row gutters-5">
             <div class="col-lg-8">
                 <input name="_method" type="hidden" value="POST">
@@ -26,7 +26,7 @@
                     <ul class="nav nav-tabs nav-fill border-light language-bar">
                         @foreach (get_all_active_language() as $key => $language)
                         <li class="nav-item">
-                            <a class="nav-link text-reset @if ($language->code == $lang) active @endif py-3" href="{{ route('wholesale_product_edit.seller', ['id'=>$product->id, 'lang'=> $language->code] ) }}">
+                            <a class="nav-link text-reset @if ($language->code == $lang) active @endif py-3" href="{{ route($routeNames['edit'], ['id' => $product->id, 'lang' => $language->code]) }}">
                                 <img src="{{ static_asset('assets/img/flags/'.$language->code.'.png') }}" height="11" class="mr-1">
                                 <span>{{$language->name}}</span>
                             </a>
@@ -163,7 +163,14 @@
                                     {{translate('SKU')}}
                                 </label>
                                 <div class="col-md-6">
-                                    <input type="text" placeholder="{{ translate('SKU') }}" value="{{ optional($product->stocks->first())->sku }}" name="sku" class="form-control">
+                                    <div class="input-group">
+                                        <input type="text" placeholder="{{ translate('SKU') }}" id="sku" value="{{ optional($product->stocks->first())->sku }}" name="sku" class="form-control">
+                                        <div class="input-group-prepend">
+                                            <button type="button" id="generateSKUBtn"
+                                                class="btn btn-success border-0 rounded-right px-3"
+                                                onclick="generateSKU()">{{ translate('Generate') }}</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -244,6 +251,73 @@
                         </div>
                     </div>
                 </div>
+                @if (isset($availableCatalogs))
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0 h6">{{ translate('Catalog') }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group row">
+                                <label class="col-md-3 col-form-label">{{ translate('Existing Catalog') }}</label>
+                                <div class="col-md-8">
+                                    <select name="catalog_id" class="form-control aiz-selectpicker" data-live-search="true">
+                                        <option value="">{{ translate('Select Catalog') }}</option>
+                                        @foreach ($availableCatalogs as $catalog)
+                                            <option value="{{ $catalog->id }}" @selected((int) $product->b2b_company_catalog_id === (int) $catalog->id)>{{ $catalog->title }}</option>
+                                        @endforeach
+                                    </select>
+                                    <small class="text-muted">{{ translate('Choose an existing catalog or create a new one below.') }}</small>
+                                </div>
+                            </div>
+                            @if ($product->b2bCatalog)
+                                <div class="form-group row">
+                                    <label class="col-md-3 col-form-label">{{ translate('Current Catalog') }}</label>
+                                    <div class="col-md-8 pt-2">
+                                        <span class="badge badge-inline badge-soft-info">{{ $product->b2bCatalog->title }}</span>
+                                    </div>
+                                </div>
+                            @endif
+                            <div class="form-group row">
+                                <label class="col-md-3 col-form-label">{{ translate('New Catalog Title') }}</label>
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control" name="catalog_title" placeholder="{{ translate('Catalog Title') }}">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-md-3 col-form-label">{{ translate('Catalog Description') }}</label>
+                                <div class="col-md-8">
+                                    <textarea class="form-control" rows="4" name="catalog_description" placeholder="{{ translate('Catalog Description') }}"></textarea>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-md-3 col-form-label">{{ translate('Catalog Cover Image') }}</label>
+                                <div class="col-md-8">
+                                    <div class="input-group wholesale-aizuploader-trigger" data-toggle="aizuploader" data-type="image" onclick="return triggerWholesaleUploader(event, this)">
+                                        <div class="input-group-prepend">
+                                            <div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse') }}</div>
+                                        </div>
+                                        <div class="form-control file-amount">{{ translate('Choose File') }}</div>
+                                        <input type="hidden" name="catalog_cover_image" class="selected-files">
+                                    </div>
+                                    <div class="file-preview box sm"></div>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-md-3 col-form-label">{{ translate('Catalog PDF') }}</label>
+                                <div class="col-md-8">
+                                    <div class="input-group wholesale-aizuploader-trigger" data-toggle="aizuploader" data-type="document" onclick="return triggerWholesaleUploader(event, this)">
+                                        <div class="input-group-prepend">
+                                            <div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse') }}</div>
+                                        </div>
+                                        <div class="form-control file-amount">{{ translate('Choose File') }}</div>
+                                        <input type="hidden" name="catalog_pdf_file" class="selected-files">
+                                    </div>
+                                    <div class="file-preview box sm"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
 
                 <div class="card">
                     <div class="card-header">
@@ -927,6 +1001,30 @@
         $('#'+noteType+'_note').html(noteDescription);
         $('#'+noteType+'_note').addClass('border border-gray my-2 p-2');
         $('#note_modal').modal('hide');
+    }
+
+    function generateSKU() {
+        const btn = document.getElementById('generateSKUBtn');
+        const skuInput = document.getElementById('sku');
+
+        if (!btn || !skuInput) {
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="las la-spinner la-spin"></i>';
+
+        setTimeout(() => {
+            const now = Date.now();
+            const randomSuffix = Math.floor(Math.random() * 100);
+            skuInput.value = now.toString() + randomSuffix.toString().padStart(2, '0');
+
+            btn.innerHTML = '<i class="las la-check-circle text-success"></i>';
+            setTimeout(() => {
+                btn.innerHTML = "{{ translate('Regenerate') }}";
+                btn.disabled = false;
+            }, 1200);
+        }, 300);
     }
 
     AIZ.plugins.tagify();

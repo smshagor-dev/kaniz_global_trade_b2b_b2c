@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\B2BCompanyInvitation;
 use App\Models\B2BCompany;
 use App\Models\B2BCompanyMember;
+use App\Models\B2BCompanyRole;
 use App\Models\NotificationType;
 use App\Models\User;
 use App\Notifications\CustomNotification;
@@ -34,13 +35,14 @@ class B2BCompanyMemberController extends Controller
     {
         $company = $this->getAccessibleCompany();
 
-        $members = $company->members()->with(['user', 'inviter'])->orderByRaw("FIELD(role, 'owner', 'admin', 'procurement_manager', 'sales_manager', 'finance_manager', 'logistics_manager', 'viewer')")->get();
-        $invitations = $company->invitations()->with('inviter')->latest()->get();
+        $members = $company->members()->with(['user', 'inviter', 'customRole'])->orderByRaw("CASE role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 WHEN 'procurement_manager' THEN 2 WHEN 'sales_manager' THEN 3 WHEN 'finance_manager' THEN 4 WHEN 'logistics_manager' THEN 5 WHEN 'viewer' THEN 6 ELSE 7 END")->get();
+        $invitations = $company->invitations()->with(['inviter', 'customRole'])->latest()->get();
         $canInvite = $this->b2bPermissionService->canInviteMembers(Auth::id(), $company->id)
             && $this->b2bCompanyService->hasActivePackage(Auth::id(), $company->id)
             && $this->b2bPackageService->canInviteMoreMembers($company);
+        $assignableRoles = $this->b2bPermissionService->getAssignableRoles($company->id);
 
-        return view('b2b.company.members.index', compact('company', 'members', 'invitations', 'canInvite'));
+        return view('b2b.company.members.index', compact('company', 'members', 'invitations', 'canInvite', 'assignableRoles'));
     }
 
     public function invite()
@@ -48,7 +50,98 @@ class B2BCompanyMemberController extends Controller
         $company = $this->getAccessibleCompany();
         $this->ensureCanInvite($company->id);
 
-        return view('b2b.company.members.invite', compact('company'));
+        $assignableRoles = $this->b2bPermissionService->getAssignableRoles($company->id);
+
+        return view('b2b.company.members.invite', compact('company', 'assignableRoles'));
+    }
+
+    public function rolePermissions()
+    {
+        $company = $this->getAccessibleCompany();
+        $roleMatrix = $this->b2bPermissionService->getRolePermissionMatrix($company->id);
+        $permissionOptions = $this->b2bPermissionService->getPermissionOptions();
+        $canManageRoles = $this->canManageCustomRoles($company);
+        $canEditOrDeleteRoles = $this->canEditOrDeleteCustomRoles($company);
+        $members = $company->members()->with(['user', 'customRole'])->orderByRaw("CASE role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 WHEN 'procurement_manager' THEN 2 WHEN 'sales_manager' THEN 3 WHEN 'finance_manager' THEN 4 WHEN 'logistics_manager' THEN 5 WHEN 'viewer' THEN 6 ELSE 7 END")->get();
+        $customRoles = $company->customRoles()->latest()->get();
+
+        return view('b2b.company.roles.index', compact('company', 'roleMatrix', 'permissionOptions', 'canManageRoles', 'canEditOrDeleteRoles', 'members', 'customRoles'));
+    }
+
+    public function storeRolePermission(Request $request)
+    {
+        $company = $this->getAccessibleCompany();
+        $this->ensureCanManageCustomRoles($company);
+
+        $data = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:100',
+                Rule::unique('b2b_company_roles', 'name')->where(fn ($query) => $query->where('b2b_company_id', $company->id)),
+            ],
+            'permissions' => 'nullable|array',
+            'permissions.*' => ['string', Rule::in(array_keys($this->b2bPermissionService->getPermissionOptions()))],
+        ]);
+
+        $company->customRoles()->create([
+            'name' => $data['name'],
+            'slug' => $this->generateRoleSlug($company->id, $data['name']),
+            'permissions' => collect($data['permissions'] ?? [])->mapWithKeys(fn ($permission) => [$permission => true])->all(),
+            'created_by' => Auth::id(),
+        ]);
+
+        flash(translate('Custom role created successfully.'))->success();
+
+        return back();
+    }
+
+    public function updateRolePermission(Request $request, $id)
+    {
+        $company = $this->getAccessibleCompany();
+        $this->ensureCanEditOrDeleteCustomRoles($company);
+
+        $role = $company->customRoles()->findOrFail($id);
+        $data = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:100',
+                Rule::unique('b2b_company_roles', 'name')
+                    ->where(fn ($query) => $query->where('b2b_company_id', $company->id))
+                    ->ignore($role->id),
+            ],
+            'permissions' => 'nullable|array',
+            'permissions.*' => ['string', Rule::in(array_keys($this->b2bPermissionService->getPermissionOptions()))],
+        ]);
+
+        $role->update([
+            'name' => $data['name'],
+            'slug' => $this->generateRoleSlug($company->id, $data['name'], $role->id),
+            'permissions' => collect($data['permissions'] ?? [])->mapWithKeys(fn ($permission) => [$permission => true])->all(),
+        ]);
+
+        flash(translate('Custom role updated successfully.'))->success();
+
+        return back();
+    }
+
+    public function deleteRolePermission($id)
+    {
+        $company = $this->getAccessibleCompany();
+        $this->ensureCanEditOrDeleteCustomRoles($company);
+
+        $role = $company->customRoles()->withCount(['members', 'invitations'])->findOrFail($id);
+        if ($role->members_count > 0 || $role->invitations_count > 0) {
+            flash(translate('This custom role is already assigned to team members or invitations and cannot be deleted.'))->warning();
+            return back();
+        }
+
+        $role->delete();
+
+        flash(translate('Custom role deleted successfully.'))->success();
+
+        return back();
     }
 
     public function sendInvite(Request $request)
@@ -58,8 +151,9 @@ class B2BCompanyMemberController extends Controller
 
         $data = $request->validate([
             'email' => 'required|email|max:255',
-            'role' => ['required', Rule::in(['admin', 'procurement_manager', 'sales_manager', 'finance_manager', 'logistics_manager', 'viewer'])],
+            'role_selection' => 'required|string|max:100',
         ]);
+        $roleSelection = $this->b2bPermissionService->resolveRoleSelection($company->id, $data['role_selection']);
 
         $existingMember = User::where('email', $data['email'])->first();
         if ($existingMember && B2BCompanyMember::where('b2b_company_id', $company->id)->where('user_id', $existingMember->id)->whereIn('status', ['invited', 'active', 'suspended'])->exists()) {
@@ -74,7 +168,8 @@ class B2BCompanyMemberController extends Controller
                 'status' => 'pending',
             ],
             [
-                'role' => $data['role'],
+                'role' => $roleSelection['role'],
+                'custom_role_id' => $roleSelection['custom_role_id'],
                 'token' => Str::random(64),
                 'invited_by' => Auth::id(),
                 'expires_at' => now()->addDays(7),
@@ -89,7 +184,8 @@ class B2BCompanyMemberController extends Controller
                     'user_id' => $existingMember->id,
                 ],
                 [
-                    'role' => $data['role'],
+                    'role' => $roleSelection['role'],
+                    'custom_role_id' => $roleSelection['custom_role_id'],
                     'status' => 'invited',
                     'invited_by' => Auth::id(),
                     'joined_at' => null,
@@ -98,12 +194,12 @@ class B2BCompanyMemberController extends Controller
         }
 
         $inviteUrl = route('b2b.company.invitations.accept', $invitation->token);
-        $mailSent = $this->sendInvitationEmail($company->company_name, $data['email'], $data['role'], $inviteUrl);
+        $mailSent = $this->sendInvitationEmail($company->company_name, $data['email'], $roleSelection['label'], $inviteUrl);
         $this->sendInvitationNotification($existingMember, $inviteUrl);
 
         $this->b2bAuditService->log(Auth::id(), $company->id, 'member_invited', $company, 'Company member invited.', [
             'email' => $data['email'],
-            'role' => $data['role'],
+            'role' => $roleSelection['label'],
             'invitation_id' => $invitation->id,
         ]);
 
@@ -151,6 +247,7 @@ class B2BCompanyMemberController extends Controller
                 ],
                 [
                     'role' => $invitation->role,
+                    'custom_role_id' => $invitation->custom_role_id,
                     'status' => 'active',
                     'invited_by' => $invitation->invited_by,
                     'joined_at' => now(),
@@ -161,6 +258,9 @@ class B2BCompanyMemberController extends Controller
                 'status' => 'accepted',
                 'accepted_at' => now(),
             ]);
+
+            // Make the invited company the active workspace immediately after acceptance.
+            $this->b2bCompanyService->setActiveCompanyForUser(Auth::id(), $invitation->b2b_company_id, true);
 
             $this->b2bAuditService->log(Auth::id(), $invitation->b2b_company_id, 'invitation_accepted', $member, 'Company invitation accepted.', [
                 'invitation_id' => $invitation->id,
@@ -183,20 +283,27 @@ class B2BCompanyMemberController extends Controller
         }
 
         $data = $request->validate([
-            'role' => ['required', Rule::in(['admin', 'procurement_manager', 'sales_manager', 'finance_manager', 'logistics_manager', 'viewer'])],
+            'role_selection' => 'required|string|max:100',
         ]);
+        $roleSelection = $this->b2bPermissionService->resolveRoleSelection($company->id, $data['role_selection']);
 
-        $oldRole = $member->role;
-        $member->update(['role' => $data['role']]);
+        $oldRole = $member->role_label;
+        $member->update([
+            'role' => $roleSelection['role'],
+            'custom_role_id' => $roleSelection['custom_role_id'],
+        ]);
 
         B2BCompanyInvitation::where('b2b_company_id', $company->id)
             ->where('email', $member->user?->email)
             ->where('status', 'pending')
-            ->update(['role' => $data['role']]);
+            ->update([
+                'role' => $roleSelection['role'],
+                'custom_role_id' => $roleSelection['custom_role_id'],
+            ]);
 
         $this->b2bAuditService->log(Auth::id(), $company->id, 'member_role_changed', $member, 'Company member role updated.', [
             'old_role' => $oldRole,
-            'new_role' => $data['role'],
+            'new_role' => $roleSelection['label'],
             'member_user_id' => $member->user_id,
         ]);
 
@@ -275,6 +382,47 @@ class B2BCompanyMemberController extends Controller
             $this->b2bPackageService->canInviteMoreMembers($company),
             403
         );
+    }
+
+    protected function canManageCustomRoles(B2BCompany $company): bool
+    {
+        return $this->b2bPermissionService->canInviteMembers(Auth::id(), $company->id);
+    }
+
+    protected function ensureCanManageCustomRoles(B2BCompany $company): void
+    {
+        abort_unless($this->canManageCustomRoles($company), 403);
+    }
+
+    protected function canEditOrDeleteCustomRoles(B2BCompany $company): bool
+    {
+        return $this->b2bPermissionService->isCompanyOwner(Auth::id(), $company->id);
+    }
+
+    protected function ensureCanEditOrDeleteCustomRoles(B2BCompany $company): void
+    {
+        abort_unless($this->canEditOrDeleteCustomRoles($company), 403);
+    }
+
+    protected function generateRoleSlug(int $companyId, string $name, ?int $ignoreId = null): string
+    {
+        $baseSlug = Str::slug($name);
+        $baseSlug = $baseSlug !== '' ? $baseSlug : 'custom-role';
+        $slug = $baseSlug;
+        $counter = 2;
+
+        while (
+            B2BCompanyRole::query()
+                ->where('b2b_company_id', $companyId)
+                ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
+                ->where('slug', $slug)
+                ->exists()
+        ) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
     }
 
     protected function sendInvitationEmail(string $companyName, string $email, string $role, string $inviteUrl): bool

@@ -7,7 +7,6 @@
                 <div class="col-lg-8">
                     <span class="badge badge-inline badge-warning mb-3">{{ translate('PREMIUM VERIFICATION') }}</span>
                     <h2 class="fw-700 mb-3">{{ translate('Company Premium Verification') }}</h2>
-                    <p class="opacity-80 mb-0">{{ translate('This is a fully separate paid verification flow for companies. It does not replace your membership, featured supplier package, or sponsored product package.') }}</p>
                 </div>
                 <div class="col-lg-4 mt-4 mt-lg-0">
                     <div class="bg-white text-dark rounded p-4">
@@ -19,14 +18,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div class="card mb-4">
-        <div class="card-body">
-            <h5 class="mb-2">{{ translate('Revenue Projection') }}</h5>
-            <div class="fs-16 text-muted">{{ translate('Premium Verification') }}: <strong>{{ single_price($projection['price'] ?? 0) }}</strong></div>
-            <div class="fs-20 fw-700 mt-2">{{ $projection['company_count'] ?? 0 }} x {{ single_price($projection['price'] ?? 0) }} = {{ single_price($projection['projected_revenue'] ?? 0) }}</div>
         </div>
     </div>
 
@@ -51,12 +42,13 @@
                             <div class="fs-28 fw-700">{{ $package->amount > 0 ? single_price($package->amount) : translate('Free') }}</div>
                         </div>
 
-                        <div class="text-muted mb-3">{{ $package->description ?: translate('Premium company verification package.') }}</div>
+                        @if ($package->description)
+                            <div class="text-muted mb-3">{{ $package->description }}</div>
+                        @endif
 
                         <ul class="list-unstyled fs-13 mb-4">
                             <li class="mb-2">{{ translate('One-time premium verification fee') }}</li>
                             <li class="mb-2">{{ translate('Premium verified company status') }}</li>
-                            <li class="mb-2">{{ translate('Projection') }}: {{ number_format($projection['company_count'] ?? 0) }} {{ translate('approved companies') }} x {{ single_price($package->amount) }} = {{ single_price($package->amount * ($projection['company_count'] ?? 0)) }}</li>
                         </ul>
 
                         @if ($currentPackage?->id === $package->id)
@@ -67,13 +59,7 @@
                                 <button type="submit" class="btn btn-success btn-block">{{ translate('Activate Premium Verification') }}</button>
                             </form>
                         @else
-                            <form action="{{ route('b2b.premium-verifications.request', $package->id) }}" method="POST">
-                                @csrf
-                                <input type="text" class="form-control mb-3" name="payment_reference" placeholder="{{ translate('Payment reference or transaction ID') }}" required>
-                                <textarea class="form-control mb-3" name="payment_notes" rows="2" placeholder="{{ translate('Optional payment note or proof details') }}"></textarea>
-                                <textarea class="form-control mb-3" name="note" rows="3" placeholder="{{ translate('Optional note for admin approval') }}"></textarea>
-                                <button type="submit" class="btn btn-success btn-block">{{ translate('Request Premium Verification') }}</button>
-                            </form>
+                            <button type="button" class="btn btn-success btn-block" onclick="openPremiumVerificationPurchaseModal({{ $package->id }})">{{ translate('Purchase Premium Verification') }}</button>
                         @endif
                     </div>
                 </div>
@@ -118,4 +104,48 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('modal')
+    <div class="modal fade" id="premium_verification_payment_modal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ translate('Purchase Premium Verification') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="premium_verification_payment_form" method="POST">
+                    @csrf
+                    <div class="modal-body" style="overflow-y: unset;">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label>{{ translate('Payment Method') }}</label>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="mb-3">
+                                    <select class="form-control aiz-selectpicker" data-live-search="true" name="payment_option" required>
+                                        @include('partials.online_payment_options')
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group text-right mb-0">
+                            <button type="button" class="btn btn-sm btn-secondary mr-1" data-dismiss="modal">{{ translate('Cancel') }}</button>
+                            <button type="submit" class="btn btn-sm btn-success">{{ translate('Confirm Payment') }}</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@section('script')
+    <script type="text/javascript">
+        function openPremiumVerificationPurchaseModal(id) {
+            var actionTemplate = @json(url('/b2b/premium-verification/packages/__ID__/purchase'));
+            document.getElementById('premium_verification_payment_form').setAttribute('action', actionTemplate.replace('__ID__', id));
+            $('#premium_verification_payment_modal').modal('show');
+        }
+    </script>
 @endsection

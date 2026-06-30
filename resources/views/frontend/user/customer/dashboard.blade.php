@@ -4,6 +4,7 @@
 
     @php
         $welcomeCoupon = ifUserHasWelcomeCouponAndNotUsed();
+        $hasOfflineRechargeRoute = addon_is_activated('offline_payment') && Route::has('offline_wallet_recharge_modal');
     @endphp
     @if(!empty($activeB2bCompany))
         <div class="aiz-titlebar mb-4">
@@ -137,9 +138,11 @@
                         <i class="la la-plus fs-18 fw-700 mr-2"></i>
                         {{ translate('Recharge Wallet') }}
                     </button>
-                    <a href="javascript:void(0);" class="fs-14 fw-400 text-white mb-3" onclick="show_make_wallet_recharge_modal()">
-                        {{ translate('Offline Recharge Wallet') }}
-                    </a>
+                    @if ($hasOfflineRechargeRoute)
+                        <a href="javascript:void(0);" class="fs-14 fw-400 text-white mb-3" onclick="show_make_wallet_recharge_modal()">
+                            {{ translate('Offline Recharge Wallet') }}
+                        </a>
+                    @endif
 
                 </div>
             </div>
@@ -628,14 +631,16 @@
             $('#wallet_modal').modal('show');
         }
 
-        function show_make_wallet_recharge_modal() {
-            $.post('{{ route('offline_wallet_recharge_modal') }}', {
-                _token: '{{ csrf_token() }}'
-            }, function(data) {
-                $('#offline_wallet_recharge_modal_body').html(data);
-                $('#offline_wallet_recharge_modal').modal('show');
-            });
-        }
+        @if ($hasOfflineRechargeRoute)
+            function show_make_wallet_recharge_modal() {
+                $.post('{{ route('offline_wallet_recharge_modal') }}', {
+                    _token: '{{ csrf_token() }}'
+                }, function(data) {
+                    $('#offline_wallet_recharge_modal_body').html(data);
+                    $('#offline_wallet_recharge_modal').modal('show');
+                });
+            }
+        @endif
     </script>
 
 @if(addon_is_activated('portfolio_system') && auth()->user()->verification_status == 0 && get_setting('customer_verification') == 1)

@@ -48,9 +48,8 @@ class RazorpayController extends Controller
 
                 return view('frontend.razor_wallet.customer_package_payment_Razorpay', compact('res'));
             } elseif ($paymentType == 'seller_package_payment') {
-
-                $seller_package = \App\Models\SellerPackage::findOrFail($paymentData['seller_package_id']);
-                $res = $api->order->create(array('receipt' => '123', 'amount' => $seller_package->amount * 100, 'currency' => 'INR', 'notes' => array('key1' => 'value3', 'key2' => 'value2')));
+                $amount = \App\Support\B2BPaymentResolver::resolveSellerPackageAmount($paymentData);
+                $res = $api->order->create(array('receipt' => '123', 'amount' => $amount * 100, 'currency' => 'INR', 'notes' => array('key1' => 'value3', 'key2' => 'value2')));
 
                 return view('frontend.razor_wallet.seller_package_payment_Razorpay', compact('res'));
             }

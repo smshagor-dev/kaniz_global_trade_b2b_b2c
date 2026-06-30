@@ -7,7 +7,6 @@
                 <div class="col-lg-8">
                     <span class="badge badge-inline badge-warning mb-3">{{ translate('SPONSORED PRODUCT SYSTEM') }}</span>
                     <h2 class="fw-700 mb-3">{{ translate('Sponsored Product Packages') }}</h2>
-                    <p class="opacity-80 mb-0">{{ translate('This is a completely separate paid flow for promoting wholesale products. It does not replace your company membership or featured supplier package.') }}</p>
                 </div>
                 <div class="col-lg-4 mt-4 mt-lg-0">
                     <div class="bg-white text-dark rounded p-4">
@@ -19,14 +18,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div class="card mb-4">
-        <div class="card-body">
-            <h5 class="mb-2">{{ translate('Revenue Projection') }}</h5>
-            <div class="fs-16 text-muted">{{ $projection['plan_name'] ?: translate('Sponsored Product') }}: <strong>{{ single_price($projection['monthly_unit_price'] ?? 0) }}/{{ translate('month') }}</strong></div>
-            <div class="fs-20 fw-700 mt-2">{{ $projection['product_count'] ?? 0 }} x {{ single_price($projection['monthly_unit_price'] ?? 0) }} = {{ single_price($projection['projected_monthly_revenue'] ?? 0) }}/{{ translate('month') }}</div>
         </div>
     </div>
 
@@ -52,7 +43,9 @@
                             <div class="text-muted ml-2">{{ translate('per') }} {{ $package->duration }} {{ translate('days') }}</div>
                         </div>
 
-                        <div class="text-muted mb-3">{{ $package->description ?: translate('Sponsored wholesale product promotion package.') }}</div>
+                        @if ($package->description)
+                            <div class="text-muted mb-3">{{ $package->description }}</div>
+                        @endif
 
                         <ul class="list-unstyled fs-13 mb-4">
                             <li class="mb-2">{{ number_format($package->product_limit) }} {{ translate('sponsored product slots') }}</li>
@@ -68,13 +61,7 @@
                                 <button type="submit" class="btn btn-primary btn-block">{{ translate('Activate Free Sponsored Plan') }}</button>
                             </form>
                         @else
-                            <form action="{{ route('seller.b2b.product-promotions.request', $package->id) }}" method="POST">
-                                @csrf
-                                <input type="text" class="form-control mb-3" name="payment_reference" placeholder="{{ translate('Payment reference or transaction ID') }}" required>
-                                <textarea class="form-control mb-3" name="payment_notes" rows="2" placeholder="{{ translate('Optional payment note or proof details') }}"></textarea>
-                                <textarea class="form-control mb-3" name="note" rows="3" placeholder="{{ translate('Optional note for admin approval') }}"></textarea>
-                                <button type="submit" class="btn btn-primary btn-block">{{ translate('Request Sponsored Product Package') }}</button>
-                            </form>
+                            <button type="button" class="btn btn-primary btn-block" onclick="openSponsoredProductPurchaseModal({{ $package->id }})">{{ translate('Purchase Sponsored Product Package') }}</button>
                         @endif
                     </div>
                 </div>
@@ -152,4 +139,48 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('modal')
+    <div class="modal fade" id="sponsored_product_payment_modal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ translate('Purchase Sponsored Product Package') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="sponsored_product_payment_form" method="POST">
+                    @csrf
+                    <div class="modal-body" style="overflow-y: unset;">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label>{{ translate('Payment Method') }}</label>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="mb-3">
+                                    <select class="form-control aiz-selectpicker" data-live-search="true" name="payment_option" required>
+                                        @include('partials.online_payment_options')
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group text-right mb-0">
+                            <button type="button" class="btn btn-sm btn-secondary mr-1" data-dismiss="modal">{{ translate('Cancel') }}</button>
+                            <button type="submit" class="btn btn-sm btn-primary">{{ translate('Confirm Payment') }}</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@section('script')
+    <script type="text/javascript">
+        function openSponsoredProductPurchaseModal(id) {
+            var actionTemplate = @json(url('/b2b/sponsored-products/packages/__ID__/purchase'));
+            document.getElementById('sponsored_product_payment_form').setAttribute('action', actionTemplate.replace('__ID__', id));
+            $('#sponsored_product_payment_modal').modal('show');
+        }
+    </script>
 @endsection

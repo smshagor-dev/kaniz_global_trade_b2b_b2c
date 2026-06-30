@@ -19,7 +19,7 @@
     <input type="hidden" id="merchant_id" name="v_merchant_id" value="{{ env('VOGUE_MERCHANT_ID') }}">
 @endif
 @php
-    $seller_package = get_single_seller_package(Session::get('payment_data')['seller_package_id']);
+    $sellerPackageAmount = \App\Support\B2BPaymentResolver::resolveSellerPackageAmount(Session::get('payment_data', []));
     $user = Auth::user();
 @endphp
 
@@ -32,7 +32,7 @@
         function pay3() {
          Voguepay.init({
              v_merchant_id: document.getElementById("merchant_id").value,
-             total: '{{ $seller_package->amount }}',
+             total: '{{ $sellerPackageAmount }}',
              cur: '{{ get_system_default_currency()->code }}',
              merchant_ref: 'ref123',
              loadText:'Custom load text',

@@ -407,7 +407,14 @@
                                 {{translate('SKU')}}
                             </label>
                             <div class="col-md-6">
-                                <input type="text" placeholder="{{ translate('SKU') }}" value="{{ optional($product->stocks->first())->sku ?? '' }}" name="sku" class="form-control">
+                                <div class="input-group">
+                                    <input type="text" placeholder="{{ translate('SKU') }}" id="sku" value="{{ optional($product->stocks->first())->sku ?? '' }}" name="sku" class="form-control">
+                                    <div class="input-group-prepend">
+                                        <button type="button" id="generateSKUBtn"
+                                            class="btn btn-success border-0 rounded-right px-3"
+                                            onclick="generateSKU()">{{ translate('Generate') }}</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1344,6 +1351,30 @@
         $('#'+noteType+'_note').html(noteDescription);
         $('#'+noteType+'_note').addClass('border border-gray my-2 p-2');
         $('#note_modal').modal('hide');
+    }
+
+    function generateSKU() {
+        const btn = document.getElementById('generateSKUBtn');
+        const skuInput = document.getElementById('sku');
+
+        if (!btn || !skuInput) {
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="las la-spinner la-spin"></i>';
+
+        setTimeout(() => {
+            const now = Date.now();
+            const randomSuffix = Math.floor(Math.random() * 100);
+            skuInput.value = now.toString() + randomSuffix.toString().padStart(2, '0');
+
+            btn.innerHTML = '<i class="las la-check-circle text-success"></i>';
+            setTimeout(() => {
+                btn.innerHTML = "{{ translate('Regenerate') }}";
+                btn.disabled = false;
+            }, 1200);
+        }, 300);
     }
 
 </script>

@@ -47,12 +47,58 @@ class B2BTradeFinanceController extends Controller
     {
         $company = $this->getSupplierCompany();
         $stats = $this->dashboardService->sellerStats(Auth::id());
-        $purchaseOrders = B2BPurchaseOrder::with(['milestones', 'lettersOfCredit', 'financeDisputes', 'proformaInvoices'])
+        $purchaseOrders = B2BPurchaseOrder::with(['buyerCompany', 'milestones', 'lettersOfCredit', 'financeDisputes', 'proformaInvoices'])
             ->where('supplier_company_id', $company->id)
             ->latest()
-            ->paginate(10);
+            ->paginate(10, ['*'], 'orders_page');
+        $recentSettlements = B2BSettlement::with(['escrow.reference'])
+            ->where('supplier_company_id', $company->id)
+            ->latest()
+            ->limit(8)
+            ->get();
+        $releasedEscrows = B2BEscrow::with(['reference', 'settlements'])
+            ->where('supplier_company_id', $company->id)
+            ->where('status', 'released')
+            ->latest('released_at')
+            ->limit(8)
+            ->get();
+        $lettersOfCredit = B2BLetterOfCredit::query()
+            ->where('supplier_company_id', $company->id)
+            ->latest()
+            ->limit(8)
+            ->get();
+        $openDisputes = B2BFinanceDispute::with('messages')
+            ->where('supplier_company_id', $company->id)
+            ->where('status', 'open')
+            ->latest()
+            ->limit(8)
+            ->get();
+        $refunds = B2BFinanceRefund::query()
+            ->where('reference_type', B2BProformaInvoice::class)
+            ->whereIn('reference_id', B2BProformaInvoice::where('supplier_company_id', $company->id)->pluck('id'))
+            ->latest()
+            ->limit(8)
+            ->get();
+        $canManageTradeFinance = $this->permissionService->canManageTradeFinance(Auth::id(), $company->id);
+        $stats['finance_released_escrow_value'] = (float) B2BEscrow::where('supplier_company_id', $company->id)
+            ->where('status', 'released')
+            ->sum('released_amount');
+        $stats['finance_active_lcs'] = B2BLetterOfCredit::where('supplier_company_id', $company->id)
+            ->whereNotIn('status', ['completed', 'rejected'])
+            ->count();
+        $stats['finance_refunds'] = $refunds->count();
 
-        return view('seller.b2b.trade_finance.dashboard', compact('company', 'stats', 'purchaseOrders'));
+        return view('seller.b2b.trade_finance.dashboard', compact(
+            'company',
+            'stats',
+            'purchaseOrders',
+            'recentSettlements',
+            'releasedEscrows',
+            'lettersOfCredit',
+            'openDisputes',
+            'refunds',
+            'canManageTradeFinance'
+        ));
     }
 
     public function adminDashboard()
@@ -64,6 +110,38 @@ class B2BTradeFinanceController extends Controller
         $refunds = B2BFinanceRefund::latest()->limit(8)->get();
 
         return view('backend.b2b.trade_finance.dashboard', compact('stats', 'milestones', 'disputes', 'settlements', 'refunds'));
+    }
+
+    public function adminPayouts()
+    {
+        $releasedEscrows = B2BEscrow::query()
+            ->with(['reference', 'settlements', 'paymentTransaction'])
+            ->where('status', 'released')
+            ->latest('released_at')
+            ->paginate(12, ['*'], 'released_page');
+
+        $settlements = B2BSettlement::query()
+            ->with(['escrow.reference', 'escrow.paymentTransaction'])
+            ->latest()
+            ->paginate(12, ['*'], 'settlements_page');
+
+        $summary = [
+            'available_payout' => (float) B2BEscrow::query()
+                ->where('status', 'released')
+                ->whereDoesntHave('settlements')
+                ->sum('released_amount'),
+            'pending_requests' => (int) B2BSettlement::query()
+                ->where('status', 'pending_approval')
+                ->count(),
+            'approved_requests' => (int) B2BSettlement::query()
+                ->where('status', 'approved')
+                ->count(),
+            'completed_payouts' => (float) B2BSettlement::query()
+                ->where('status', 'completed')
+                ->sum('net_amount'),
+        ];
+
+        return view('backend.b2b.trade_finance.payouts', compact('releasedEscrows', 'settlements', 'summary'));
     }
 
     public function configureMilestones(Request $request, $purchaseOrderId)
@@ -156,7 +234,7 @@ class B2BTradeFinanceController extends Controller
             'review_notes' => 'nullable|string',
         ]);
 
-        $actorCompanyId = $lc->buyer_company_id ?: $lc->supplier_company_id;
+        $actorCompanyId = $this->resolveActorCompanyIdForLetterOfCredit($lc);
         abort_unless($this->permissionService->canManageTradeFinance(Auth::id(), $actorCompanyId), 403);
 
         $this->tradeFinanceService->updateLetterOfCreditStatus($lc, $validated['status'], Auth::id(), $actorCompanyId, $validated['review_notes'] ?? null);
@@ -237,6 +315,18 @@ class B2BTradeFinanceController extends Controller
         $company = $this->getSupplierCompany();
         abort_unless((int) $escrow->supplier_company_id === (int) $company->id, 403);
         abort_unless($this->permissionService->canManageTradeFinance(Auth::id(), $company->id), 403);
+
+        if ($escrow->status !== 'released') {
+            flash(translate('This escrow is not ready for settlement yet.'))->warning();
+
+            return back();
+        }
+
+        if ($escrow->settlements()->exists()) {
+            flash(translate('A settlement request already exists for this escrow.'))->warning();
+
+            return back();
+        }
 
         $validated = $request->validate([
             'settlement_method' => 'required|in:wallet,bank_transfer,wise,payoneer,manual',
@@ -379,10 +469,24 @@ class B2BTradeFinanceController extends Controller
         return $company->id;
     }
 
+    protected function resolveActorCompanyIdForLetterOfCredit(B2BLetterOfCredit $lc): int
+    {
+        $company = $this->b2bCompanyService->getCompanyByUser(Auth::id());
+        abort_unless($company, 403);
+        abort_unless(in_array($company->id, [$lc->buyer_company_id, $lc->supplier_company_id]), 403);
+
+        return $company->id;
+    }
+
     protected function getBuyerCompany()
     {
         $company = $this->b2bCompanyService->getCompanyByUser(Auth::id());
-        abort_unless($company && $this->b2bCompanyService->isApprovedBuyer(Auth::id(), $company->id), 403);
+        abort_unless(
+            $company &&
+            $this->b2bCompanyService->isApprovedBuyer(Auth::id(), $company->id) &&
+            $this->permissionService->canAccessCompany(Auth::id(), $company->id),
+            403
+        );
 
         return $company;
     }
@@ -390,7 +494,12 @@ class B2BTradeFinanceController extends Controller
     protected function getSupplierCompany()
     {
         $company = $this->b2bCompanyService->getCompanyByUser(Auth::id());
-        abort_unless($company && $this->b2bCompanyService->isApprovedSupplier(Auth::id(), $company->id), 403);
+        abort_unless(
+            $company &&
+            $this->b2bCompanyService->isApprovedSupplier(Auth::id(), $company->id) &&
+            $this->permissionService->canAccessCompany(Auth::id(), $company->id),
+            403
+        );
 
         return $company;
     }

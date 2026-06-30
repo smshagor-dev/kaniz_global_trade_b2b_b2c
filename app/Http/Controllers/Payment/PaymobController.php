@@ -48,8 +48,7 @@ class PaymobController extends Controller
                 $amount = $customer_package->amount;
             }
             elseif ($paymentType == 'seller_package_payment') {
-                $seller_package = SellerPackage::findOrFail($paymentData['seller_package_id']);
-                $amount = $seller_package->amount;
+                $amount = \App\Support\B2BPaymentResolver::resolveSellerPackageAmount($paymentData);
             }
         }
     

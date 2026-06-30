@@ -15,22 +15,28 @@
 
     <div class="card rounded-0 shadow-none border">
         <div class="card-body">
-            <form action="{{ route('b2b.company.members.send-invite') }}" method="POST">
-                @csrf
-                <div class="form-group">
-                    <label>{{ translate('Email Address') }}</label>
-                    <input type="email" name="email" class="form-control rounded-0" value="{{ old('email') }}" required>
+            @if ($assignableRoles)
+                <form action="{{ route('b2b.company.members.send-invite') }}" method="POST">
+                    @csrf
+                    <div class="form-group">
+                        <label>{{ translate('Email Address') }}</label>
+                        <input type="email" name="email" class="form-control rounded-0" value="{{ old('email') }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>{{ translate('Role') }}</label>
+                        <select name="role_selection" class="form-control aiz-selectpicker rounded-0" required>
+                            @foreach ($assignableRoles as $role)
+                                <option value="{{ $role['value'] }}">{{ translate($role['label']) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary rounded-0">{{ translate('Send Invitation') }}</button>
+                </form>
+            @else
+                <div class="alert alert-soft-warning mb-0">
+                    {{ translate('Create a custom team role first before inviting members.') }}
                 </div>
-                <div class="form-group">
-                    <label>{{ translate('Role') }}</label>
-                    <select name="role" class="form-control aiz-selectpicker rounded-0" required>
-                        @foreach (['admin', 'procurement_manager', 'sales_manager', 'finance_manager', 'logistics_manager', 'viewer'] as $role)
-                            <option value="{{ $role }}">{{ ucwords(str_replace('_', ' ', $role)) }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary rounded-0">{{ translate('Send Invitation') }}</button>
-            </form>
+            @endif
         </div>
     </div>
 @endsection

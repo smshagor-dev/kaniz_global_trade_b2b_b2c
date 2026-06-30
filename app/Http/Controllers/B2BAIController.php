@@ -35,9 +35,12 @@ use App\Services\AI\AISupplierRiskService;
 use App\Services\AI\AITradeFinanceRecommendationService;
 use App\Services\AI\AITradeOpportunityService;
 use App\Services\B2BGlobalConfigService;
+use App\Support\B2BPaymentResolver;
 use Illuminate\Http\Request;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 
 class B2BAIController extends Controller
 {
@@ -75,27 +78,118 @@ class B2BAIController extends Controller
             return redirect()->route('b2b.company.show');
         }
 
-        $recentRequests = AIRequest::query()
-            ->where('company_id', $company->id)
-            ->where('module', 'like', 'b2b_%')
-            ->latest()
-            ->limit(10)
-            ->get();
-
+        $aiSettings = $this->globalConfigService->aiSettings();
+        $hasAiAccess = (bool) $company->ai_trade_desk_active;
+        $recentRequests = collect();
         $latest = [
-            'price' => AIPriceRecommendation::query()->where('company_id', $company->id)->latest()->first(),
-            'supplier_risk' => AISupplierRisk::query()->where('company_id', $company->id)->latest()->first(),
-            'buyer_risk' => AIBuyerRisk::query()->where('company_id', $company->id)->latest()->first(),
-            'freight' => AIFreightRecommendation::query()->where('company_id', $company->id)->latest()->first(),
-            'currency' => AICurrencyAnalysis::query()->where('company_id', $company->id)->latest()->first(),
-            'finance' => AITradeFinanceRecommendation::query()->where('company_id', $company->id)->latest()->first(),
-            'opportunity' => AITradeOpportunity::query()->where('company_id', $company->id)->latest()->first(),
-            'insight' => AIDashboardInsight::query()->where('company_id', $company->id)->latest()->first(),
+            'price' => null,
+            'supplier_risk' => null,
+            'buyer_risk' => null,
+            'freight' => null,
+            'currency' => null,
+            'finance' => null,
+            'opportunity' => null,
+            'insight' => null,
         ];
 
-        $aiSettings = $this->globalConfigService->aiSettings();
+        if ($hasAiAccess) {
+            $recentRequests = AIRequest::query()
+                ->where('company_id', $company->id)
+                ->where('module', 'like', 'b2b_%')
+                ->latest()
+                ->limit(10)
+                ->get();
 
-        return view('b2b.ai.dashboard', compact('company', 'recentRequests', 'latest', 'aiSettings'));
+            $latest = [
+                'price' => AIPriceRecommendation::query()->where('company_id', $company->id)->latest()->first(),
+                'supplier_risk' => AISupplierRisk::query()->where('company_id', $company->id)->latest()->first(),
+                'buyer_risk' => AIBuyerRisk::query()->where('company_id', $company->id)->latest()->first(),
+                'freight' => AIFreightRecommendation::query()->where('company_id', $company->id)->latest()->first(),
+                'currency' => AICurrencyAnalysis::query()->where('company_id', $company->id)->latest()->first(),
+                'finance' => AITradeFinanceRecommendation::query()->where('company_id', $company->id)->latest()->first(),
+                'opportunity' => AITradeOpportunity::query()->where('company_id', $company->id)->latest()->first(),
+                'insight' => AIDashboardInsight::query()->where('company_id', $company->id)->latest()->first(),
+            ];
+        }
+
+        return view('b2b.ai.dashboard', compact('company', 'recentRequests', 'latest', 'aiSettings', 'hasAiAccess'));
+    }
+
+    public function purchaseAccess(Request $request)
+    {
+        $company = $this->requiredActiveCompany();
+
+        if (!$this->globalConfigService->aiEnabled()) {
+            flash(translate('B2B AI tools are currently disabled by the administrator.'))->warning();
+
+            return back();
+        }
+
+        if ($company->ai_trade_desk_active) {
+            flash(translate('AI Trade Desk access is already active for this company.'))->warning();
+
+            return back();
+        }
+
+        $request->validate([
+            'payment_option' => ['required', 'string', 'max:100'],
+        ]);
+
+        $price = (float) ($this->globalConfigService->aiSettings()['global_price'] ?? 0);
+
+        $paymentData = [
+            'seller_package_id' => 0,
+            'b2b_package_id' => 0,
+            'b2b_premium_verification_package_id' => 0,
+            'b2b_product_promotion_package_id' => 0,
+            'b2b_ai_trade_desk_access' => 1,
+            'b2b_ai_access_price' => $price,
+            'b2b_company_id' => $company->id,
+            'b2b_user_id' => Auth::id(),
+            'payment_method' => $request->payment_option,
+        ];
+
+        $request->session()->put('payment_type', 'seller_package_payment');
+        $request->session()->put('payment_data', $paymentData);
+
+        if ($price <= 0) {
+            return $this->purchasePaymentDone($paymentData, null);
+        }
+
+        $decorator = 'App\\Http\\Controllers\\Payment\\' . str_replace(' ', '', ucwords(str_replace('_', ' ', $request->payment_option))) . 'Controller';
+
+        if (class_exists($decorator)) {
+            return (new $decorator())->pay($request);
+        }
+
+        Session::forget('payment_type');
+        Session::forget('payment_data');
+        flash(translate('Selected payment method is not available right now.'))->warning();
+
+        return back();
+    }
+
+    public function purchasePaymentDone(array $paymentData, ?string $payment = null)
+    {
+        $company = B2BCompany::findOrFail($paymentData['b2b_company_id']);
+        $userId = (int) ($paymentData['b2b_user_id'] ?? Auth::id());
+
+        if ($userId && Auth::id() !== $userId) {
+            Auth::loginUsingId($userId);
+        }
+
+        $company->forceFill([
+            'ai_trade_desk_active' => true,
+            'ai_trade_desk_paid_at' => now(),
+            'ai_trade_desk_price' => B2BPaymentResolver::resolveSellerPackageAmount($paymentData),
+        ])->save();
+
+        Session::forget('payment_type');
+        Session::forget('payment_data');
+
+        flash(translate('AI Trade Desk access activated successfully.'))->success();
+
+        return redirect()->route('b2b.ai.dashboard');
     }
 
     public function rfqAssistant(Request $request)
@@ -241,45 +335,12 @@ class B2BAIController extends Controller
 
     public function supplierRisk(Request $request)
     {
-        $company = $this->requireAiAccess();
-        $assessment = null;
-
-        if ($request->isMethod('post')) {
-            $validated = $request->validate([
-                'supplier_company_id' => ['required', 'integer'],
-            ]);
-
-            $supplier = B2BCompany::query()
-                ->publicSuppliers()
-                ->findOrFail($validated['supplier_company_id']);
-
-            $assessment = $this->supplierRiskService->assess($supplier, Auth::user(), $company->id);
-        }
-
-        $history = AISupplierRisk::query()->where('company_id', $company->id)->latest()->paginate(10);
-        $suppliers = B2BCompany::query()->publicSuppliers()->orderBy('company_name')->limit(100)->get(['id', 'company_name']);
-
-        return view('b2b.ai.supplier_risk', compact('company', 'assessment', 'history', 'suppliers'));
+        abort(403, 'Risk management is available only to administrators.');
     }
 
     public function buyerRisk(Request $request)
     {
-        $company = $this->requireAiAccess();
-        $assessment = null;
-
-        if ($request->isMethod('post')) {
-            $validated = $request->validate([
-                'buyer_company_id' => ['required', 'integer'],
-            ]);
-
-            $buyer = B2BCompany::query()->findOrFail($validated['buyer_company_id']);
-            $assessment = $this->buyerRiskService->assess($buyer, Auth::user(), $company->id);
-        }
-
-        $history = AIBuyerRisk::query()->where('company_id', $company->id)->latest()->paginate(10);
-        $buyers = B2BCompany::query()->whereIn('company_type', B2BCompany::BUYER_TYPES)->orderBy('company_name')->limit(100)->get(['id', 'company_name']);
-
-        return view('b2b.ai.buyer_risk', compact('company', 'assessment', 'history', 'buyers'));
+        abort(403, 'Risk management is available only to administrators.');
     }
 
     public function freightRecommendation(Request $request)
@@ -487,20 +548,33 @@ class B2BAIController extends Controller
     {
         $company = $this->requiredActiveCompany();
 
-        abort_unless($this->globalConfigService->aiEnabled(), 403, 'B2B AI tools are disabled in Global B2B Config.');
+        if (!$company->ai_trade_desk_active) {
+            throw new HttpResponseException(
+                redirect()->route('b2b.ai.dashboard')
+                    ->with('warning', translate('AI Trade Desk payment is required before using this page.'))
+            );
+        }
+
+        if (!$this->globalConfigService->aiEnabled()) {
+            throw new HttpResponseException(
+                redirect()->route('b2b.company.show')
+                    ->with('warning', translate('B2B AI tools are currently disabled in Global B2B Config.'))
+            );
+        }
 
         return $company;
     }
 
     protected function requireAiToolAccess(string $field, string $toolName): B2BCompany
     {
-        $company = $this->requiredActiveCompany();
+        $company = $this->requireAiAccess();
 
-        abort_unless(
-            $this->globalConfigService->aiEnabled() && $this->globalConfigService->aiToolEnabled($field),
-            403,
-            $toolName . ' is disabled in Global B2B Config.'
-        );
+        if (!$this->globalConfigService->aiToolEnabled($field)) {
+            throw new HttpResponseException(
+                redirect()->route('b2b.ai.dashboard')
+                    ->with('warning', $toolName . ' ' . translate('is disabled in Global B2B Config.'))
+            );
+        }
 
         return $company;
     }

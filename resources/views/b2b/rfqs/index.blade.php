@@ -7,7 +7,9 @@
                 <h1 class="fs-20 fw-700 text-dark">{{ translate('My RFQs') }}</h1>
             </div>
             <div class="col-md-6 text-md-right">
-                <a href="{{ route('b2b.rfqs.create') }}" class="btn btn-primary rounded-0">{{ translate('Create RFQ') }}</a>
+                @if ($canCreateRfq ?? false)
+                    <a href="{{ route('b2b.rfqs.create') }}" class="btn btn-primary rounded-0">{{ translate('Create RFQ') }}</a>
+                @endif
             </div>
         </div>
     </div>
@@ -37,7 +39,7 @@
                                 <a href="{{ route('b2b.rfqs.show', $rfq->id) }}" class="btn btn-soft-primary btn-icon btn-circle btn-sm" title="{{ translate('View') }}">
                                     <i class="las la-eye"></i>
                                 </a>
-                                @if (!in_array($rfq->status, ['closed', 'cancelled']))
+                                @if (($canCreateRfq ?? false) && !in_array($rfq->status, ['closed', 'cancelled']))
                                     <a href="{{ route('b2b.rfqs.edit', $rfq->id) }}" class="btn btn-soft-info btn-icon btn-circle btn-sm" title="{{ translate('Edit') }}">
                                         <i class="las la-edit"></i>
                                     </a>

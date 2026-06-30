@@ -73,6 +73,11 @@ class WholesaleProductRequest extends FormRequest
         $rules['wholesale_max_qty.*'] = 'required';
         $rules['wholesale_price.*']   = 'required';
         $rules['current_stock']       = 'required|numeric';
+        $rules['catalog_id']          = 'nullable|integer|exists:b2b_company_catalogs,id';
+        $rules['catalog_title']       = 'nullable|string|max:255';
+        $rules['catalog_description'] = 'nullable|string';
+        $rules['catalog_cover_image'] = 'nullable|integer|exists:uploads,id';
+        $rules['catalog_pdf_file']    = 'nullable|integer|exists:uploads,id';
 
         return $rules;
     }

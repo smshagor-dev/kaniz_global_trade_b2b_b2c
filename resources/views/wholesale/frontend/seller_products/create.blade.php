@@ -1,10 +1,10 @@
-@extends('seller.layouts.app')
+@extends(($routeContext ?? 'seller') === 'supplier_b2b' ? 'b2b.layouts.app' : 'seller.layouts.app')
 @section('panel_content')
 <div class="page-content mx-0">
     <div class="aiz-titlebar text-left mt-2 mb-3">
         <div class="row align-items-center">
             <div class="col-md-6">
-                <h1 class="h3">{{ translate('Add New Wholesale Product') }}</h1>
+                <h1 class="h3">{{ translate('Add New Product') }}</h1>
             </div>
             <div class="col text-right">
                 <a class="btn btn-xs btn-soft-primary" href="javascript:void(0);" onclick="clearTempdata()">
@@ -27,7 +27,7 @@
         <!-- Data type -->
         <input type="hidden" id="data_type" value="wholesale">
         
-        <form class="form form-horizontal mar-top" action="{{route('wholesale_product_store.seller')}}" method="POST" enctype="multipart/form-data" id="choice_form">
+        <form class="form form-horizontal mar-top" action="{{ route($routeNames['store']) }}" method="POST" enctype="multipart/form-data" id="choice_form">
             <div class="row gutters-5">
                 <div class="col-lg-8">
                     @csrf
@@ -169,7 +169,14 @@
                                         {{translate('SKU')}}
                                     </label>
                                     <div class="col-md-6">
-                                        <input type="text" placeholder="{{ translate('SKU') }}" name="sku" class="form-control">
+                                        <div class="input-group">
+                                            <input type="text" placeholder="{{ translate('SKU') }}" id="sku" name="sku" class="form-control">
+                                            <div class="input-group-prepend">
+                                                <button type="button" id="generateSKUBtn"
+                                                    class="btn btn-success border-0 rounded-right px-3"
+                                                    onclick="generateSKU()">{{ translate('Generate') }}</button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -248,6 +255,65 @@
                             </div>
                         </div>
                     </div>
+                    @if (isset($availableCatalogs))
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0 h6">{{ translate('Catalog') }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    <label class="col-md-3 col-form-label">{{ translate('Existing Catalog') }}</label>
+                                    <div class="col-md-8">
+                                        <select name="catalog_id" class="form-control aiz-selectpicker" data-live-search="true">
+                                            <option value="">{{ translate('Select Catalog') }}</option>
+                                            @foreach ($availableCatalogs as $catalog)
+                                                <option value="{{ $catalog->id }}">{{ $catalog->title }}</option>
+                                            @endforeach
+                                        </select>
+                                        <small class="text-muted">{{ translate('Or create a new catalog below for this product.') }}</small>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-md-3 col-form-label">{{ translate('New Catalog Title') }}</label>
+                                    <div class="col-md-8">
+                                        <input type="text" class="form-control" name="catalog_title" placeholder="{{ translate('Catalog Title') }}">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-md-3 col-form-label">{{ translate('Catalog Description') }}</label>
+                                    <div class="col-md-8">
+                                        <textarea class="form-control" rows="4" name="catalog_description" placeholder="{{ translate('Catalog Description') }}"></textarea>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-md-3 col-form-label">{{ translate('Catalog Cover Image') }}</label>
+                                    <div class="col-md-8">
+                                        <div class="input-group wholesale-aizuploader-trigger" data-toggle="aizuploader" data-type="image" onclick="return triggerWholesaleUploader(event, this)">
+                                            <div class="input-group-prepend">
+                                                <div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse') }}</div>
+                                            </div>
+                                            <div class="form-control file-amount">{{ translate('Choose File') }}</div>
+                                            <input type="hidden" name="catalog_cover_image" class="selected-files">
+                                        </div>
+                                        <div class="file-preview box sm"></div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-md-3 col-form-label">{{ translate('Catalog PDF') }}</label>
+                                    <div class="col-md-8">
+                                        <div class="input-group wholesale-aizuploader-trigger" data-toggle="aizuploader" data-type="document" onclick="return triggerWholesaleUploader(event, this)">
+                                            <div class="input-group-prepend">
+                                                <div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse') }}</div>
+                                            </div>
+                                            <div class="form-control file-amount">{{ translate('Choose File') }}</div>
+                                            <input type="hidden" name="catalog_pdf_file" class="selected-files">
+                                        </div>
+                                        <div class="file-preview box sm"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
     
                     <div class="card">
                         <div class="card-header">
@@ -825,6 +891,30 @@
         $('#'+noteType+'_note').html(noteDescription);
         $('#'+noteType+'_note').addClass('border border-gray my-2 p-2');
         $('#note_modal').modal('hide');
+    }
+
+    function generateSKU() {
+        const btn = document.getElementById('generateSKUBtn');
+        const skuInput = document.getElementById('sku');
+
+        if (!btn || !skuInput) {
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="las la-spinner la-spin"></i>';
+
+        setTimeout(() => {
+            const now = Date.now();
+            const randomSuffix = Math.floor(Math.random() * 100);
+            skuInput.value = now.toString() + randomSuffix.toString().padStart(2, '0');
+
+            btn.innerHTML = '<i class="las la-check-circle text-success"></i>';
+            setTimeout(() => {
+                btn.innerHTML = "{{ translate('Regenerate') }}";
+                btn.disabled = false;
+            }, 1200);
+        }, 300);
     }
 
 </script>

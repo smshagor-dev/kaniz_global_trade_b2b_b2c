@@ -220,6 +220,7 @@ class B2BCompanyController extends Controller
             'invitations.inviter',
             'categories',
             'certifications.verifier',
+            'catalogs' => fn ($query) => $query->latest(),
             'b2bPackage',
             'verificationSubmissions.requirement',
             'wholesaleProducts.thumbnail',

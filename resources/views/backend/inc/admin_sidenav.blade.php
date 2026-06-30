@@ -2495,6 +2495,7 @@
                                         </a>
                                         <ul class="aiz-side-nav-list level-3">
                                             @can('view_all_manual_payment_methods')
+                                                @if (Route::has('manual_payment_methods.index'))
                                                 <li class="aiz-side-nav-item">
                                                     <a href="{{ route('manual_payment_methods.index') }}"
                                                         class="aiz-side-nav-link {{ areActiveRoutes(['manual_payment_methods.index', 'manual_payment_methods.create', 'manual_payment_methods.edit'])}}">
@@ -2502,16 +2503,20 @@
                                                             style="color: {{ get_setting('navbar_text_color') }}">{{translate('Manual Payment Methods')}}</span>
                                                     </a>
                                                 </li>
+                                                @endif
                                             @endcan
                                             @can('view_all_offline_payment_orders')
+                                                @if (Route::has('offline_payment_orders.index'))
                                                 <li class="aiz-side-nav-item">
                                                     <a href="{{ route('offline_payment_orders.index') }}" class="aiz-side-nav-link">
                                                         <span class="aiz-side-nav-text"
                                                             style="color: {{ get_setting('navbar_text_color') }}">{{translate('Offline Payment Orders')}}</span>
                                                     </a>
                                                 </li>
+                                                @endif
                                             @endcan
                                             @can('view_all_offline_wallet_recharges')
+                                                @if (Route::has('offline_wallet_recharge_request.index'))
                                                 <li class="aiz-side-nav-item">
                                                     <a href="{{ route('offline_wallet_recharge_request.index') }}"
                                                         class="aiz-side-nav-link">
@@ -2519,9 +2524,10 @@
                                                             style="color: {{ get_setting('navbar_text_color') }}">{{translate('Offline Wallet Recharge')}}</span>
                                                     </a>
                                                 </li>
+                                                @endif
                                             @endcan
-
-                                            @if(get_setting('classified_product') == 1 && auth()->user()->can('view_all_offline_customer_package_payments'))
+ 
+                                            @if(get_setting('classified_product') == 1 && auth()->user()->can('view_all_offline_customer_package_payments') && Route::has('offline_customer_package_payment_request.index'))
                                                 <li class="aiz-side-nav-item">
                                                     <a href="{{ route('offline_customer_package_payment_request.index') }}"
                                                         class="aiz-side-nav-link">
@@ -2531,7 +2537,7 @@
                                                     </a>
                                                 </li>
                                             @endif
-                                            @if (addon_is_activated('seller_subscription') && auth()->user()->can('view_all_offline_seller_package_payments'))
+                                            @if (addon_is_activated('seller_subscription') && auth()->user()->can('view_all_offline_seller_package_payments') && Route::has('offline_seller_package_payment_request.index'))
                                                 <li class="aiz-side-nav-item">
                                                     <a href="{{ route('offline_seller_package_payment_request.index') }}"
                                                         class="aiz-side-nav-link">
@@ -2540,7 +2546,7 @@
                                                     </a>
                                                 </li>
                                             @endif
-                                            @if (addon_is_activated('refund_request') && auth()->user()->can('view_all_payout_method_for_customer'))
+                                            @if (addon_is_activated('refund_request') && auth()->user()->can('view_all_payout_method_for_customer') && Route::has('payout_method_for_customer_index'))
                                                 <li class="aiz-side-nav-item">
                                                     <a href="{{ route('payout_method_for_customer_index') }}"
                                                         class="aiz-side-nav-link {{ areActiveRoutes(['payout_method_for_customer_index', 'payout_method_for_customer_create', 'payout_method_for_customer_edit'])}}">

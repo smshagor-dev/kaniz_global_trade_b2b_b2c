@@ -121,12 +121,12 @@ class InstamojoController extends Controller
                     return redirect()->route('profile');
                 }
             } elseif ($paymentType == 'seller_package_payment') {
-                $seller_package = SellerPackage::findOrFail($paymentData['seller_package_id']);
+                $amount = round(\App\Support\B2BPaymentResolver::resolveSellerPackageAmount($paymentData));
                 if (preg_match_all('/^(?:(?:\+|0{0,2})91(\s*[\ -]\s*)?|[0]?)?[789]\d{9}|(\d[ -]?){10}\d$/im', $user->phone)) {
                     try {
                         $response = $api->paymentRequestCreate(array(
                             "purpose" => ucfirst(str_replace('_', ' ', $paymentType)),
-                            "amount" => round($seller_package->amount),
+                            "amount" => $amount,
                             "send_email" => false,
                             "email" => $user->email,
                             "phone" => $user->phone,

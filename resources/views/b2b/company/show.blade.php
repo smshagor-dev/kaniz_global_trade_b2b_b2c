@@ -28,6 +28,7 @@
                 <a href="{{ route('b2b.premium-verifications.index') }}" class="btn btn-soft-success rounded-0 ml-2">{{ translate('Premium Verification') }}</a>
                 @if (!empty($canManageSupplierProfile))
                     <a href="{{ route('seller.b2b.company.public-profile') }}" class="btn btn-soft-primary rounded-0 ml-2">{{ translate('Supplier Public Profile') }}</a>
+                    <a href="{{ route('seller.b2b.company.catalogs') }}" class="btn btn-soft-info rounded-0 ml-2">{{ translate('Catalogs') }}</a>
                 @endif
             </div>
         </div>
@@ -104,6 +105,12 @@
                         <span class="badge badge-inline badge-warning">{{ translate('Featured Supplier') }}</span>
                     @endif
                 </div></div>
+                <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Catalogs') }}</div><div class="col-md-9">
+                    <span class="badge badge-inline badge-info">{{ $company->catalogs()->count() }}</span>
+                    @if ($company->catalogs()->where('is_active', true)->exists())
+                        <span class="ml-2 text-muted">{{ translate('Active catalogs are available on your supplier profile.') }}</span>
+                    @endif
+                </div></div>
             @endif
             <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Premium Verification') }}</div><div class="col-md-9">
                 @if ($company->premium_verified)
@@ -131,3 +138,4 @@
         </div>
     </div>
 @endsection
+

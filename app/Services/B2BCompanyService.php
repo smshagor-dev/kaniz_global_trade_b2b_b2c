@@ -26,21 +26,42 @@ class B2BCompanyService
         return B2BCompany::where('user_id', $userId)->first();
     }
 
-    public function getAvailableCompaniesByUser($userId)
+    protected function getActiveMembershipCompaniesByUser($userId): Collection
     {
-        $memberships = B2BCompanyMember::with('company')
+        return B2BCompanyMember::with('company')
             ->where('user_id', $userId)
             ->where('status', 'active')
-            ->orderByRaw("FIELD(role, 'owner', 'admin', 'procurement_manager', 'sales_manager', 'finance_manager', 'logistics_manager', 'viewer')")
+            ->orderByRaw("CASE role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 WHEN 'procurement_manager' THEN 2 WHEN 'sales_manager' THEN 3 WHEN 'finance_manager' THEN 4 WHEN 'logistics_manager' THEN 5 WHEN 'viewer' THEN 6 ELSE 7 END")
             ->orderBy('joined_at')
             ->orderBy('id')
-            ->get();
-
-        $companies = $memberships
+            ->get()
             ->pluck('company')
             ->filter()
             ->unique('id')
             ->values();
+    }
+
+    public function isRestrictedTeamMember($userId): bool
+    {
+        return !$this->getOwnedCompanyByUser($userId)
+            && $this->getActiveMembershipCompaniesByUser($userId)->isNotEmpty();
+    }
+
+    public function getAvailableCompaniesByUser($userId)
+    {
+        $companies = $this->getActiveMembershipCompaniesByUser($userId);
+
+        if ($this->isRestrictedTeamMember($userId)) {
+            $activeCompanyId = $this->getActiveCompanyId();
+            if ($activeCompanyId) {
+                $activeCompany = $companies->first(fn ($company) => (int) $company->id === (int) $activeCompanyId);
+                if ($activeCompany) {
+                    return collect([$activeCompany]);
+                }
+            }
+
+            return $companies->take(1)->values();
+        }
 
         if ($companies->isNotEmpty()) {
             return $companies;
@@ -88,10 +109,19 @@ class B2BCompanyService
         return $this->getSwitchableCompaniesByUser($userId)->count() > 1;
     }
 
-    public function setActiveCompanyForUser($userId, $companyId): bool
+    public function setActiveCompanyForUser($userId, $companyId, bool $bypassRestriction = false): bool
     {
         if (!$this->b2bPermissionService->canAccessCompany($userId, $companyId)) {
             return false;
+        }
+
+        if (!$bypassRestriction && $this->isRestrictedTeamMember($userId)) {
+            $availableCompany = $this->getAvailableCompaniesByUser($userId)
+                ->first(fn ($company) => (int) $company->id === (int) $companyId);
+
+            if (!$availableCompany) {
+                return false;
+            }
         }
 
         $this->setActiveCompanyId($companyId);
@@ -219,5 +249,64 @@ class B2BCompanyService
     public function getSupplierTypes(): array
     {
         return $this->supplierTypes;
+    }
+
+    public function getPortalByUser($userId): ?string
+    {
+        $company = $this->getCompanyByUser($userId) ?: $this->getOwnedCompanyByUser($userId);
+
+        if (!$company) {
+            return null;
+        }
+
+        if ($company->isSupplierSide()) {
+            return 'supplier';
+        }
+
+        if ($company->isBuyerSide()) {
+            return 'buyer';
+        }
+
+        return null;
+    }
+
+    public function isSupplierPortalUser($userId): bool
+    {
+        return $this->getPortalByUser($userId) === 'supplier';
+    }
+
+    public function isBuyerPortalUser($userId): bool
+    {
+        return $this->getPortalByUser($userId) === 'buyer';
+    }
+
+    public function getPortalHomeUrl($userId): ?string
+    {
+        $portal = $this->getPortalByUser($userId);
+
+        if (!$portal) {
+            return null;
+        }
+
+        return $this->getPortalUrl($userId, $portal);
+    }
+
+    public function getPortalUrl($userId, string $portal): string
+    {
+        $company = $this->getCompanyByUser($userId) ?: $this->getOwnedCompanyByUser($userId);
+
+        if (!$company) {
+            return route($portal . '.onboarding');
+        }
+
+        $isApproved = $portal === 'supplier'
+            ? ($company->verification_status === 'approved' && $company->isSupplierSide())
+            : ($company->verification_status === 'approved' && $company->isBuyerSide());
+
+        if ($isApproved) {
+            return route($portal . '.dashboard');
+        }
+
+        return route('b2b.portal.status', ['portal' => $portal]);
     }
 }

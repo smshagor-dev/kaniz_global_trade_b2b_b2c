@@ -1,6 +1,13 @@
 @extends('b2b.layouts.supplier')
 
 @section('panel_content')
+    @php
+        $permissionService = app(\App\Services\B2BPermissionService::class);
+        $canManageInvoice = $permissionService->canManageInvoice(auth()->id(), $invoice->supplier_company_id);
+        $canManageFreight = $permissionService->canManageFreight(auth()->id(), $invoice->supplier_company_id);
+        $canManageTradeFinance = $permissionService->canManageTradeFinance(auth()->id(), $invoice->supplier_company_id);
+    @endphp
+
     <div class="aiz-titlebar mt-2 mb-4">
         <div class="row align-items-center">
             <div class="col-md-8">
@@ -69,19 +76,21 @@
 
             <div class="card">
                 <div class="card-body">
-                    @if ($invoice->status === 'draft')
+                    @if ($canManageInvoice && $invoice->status === 'draft')
                         <form action="{{ route('seller.b2b.proforma-invoices.send', $invoice->id) }}" method="POST" class="mb-2">
                             @csrf
                             <button type="submit" class="btn btn-success btn-block">{{ translate('Send Invoice') }}</button>
                         </form>
                     @endif
-                    @if (in_array($invoice->status, ['draft', 'sent']))
+                    @if ($canManageInvoice && in_array($invoice->status, ['draft', 'sent']))
                         <form action="{{ route('seller.b2b.proforma-invoices.cancel', $invoice->id) }}" method="POST">
                             @csrf
                             <button type="submit" class="btn btn-soft-danger btn-block">{{ translate('Cancel Invoice') }}</button>
                         </form>
                     @endif
-                    <a href="{{ route('seller.b2b.shipments.create', ['proforma_invoice_id' => $invoice->id, 'purchase_order_id' => $invoice->purchase_order_id]) }}" class="btn btn-soft-info btn-block mt-2">{{ translate('Create Shipment') }}</a>
+                    @if ($canManageFreight && $invoice->status === 'accepted')
+                        <a href="{{ route('seller.b2b.shipments.create', ['proforma_invoice_id' => $invoice->id, 'purchase_order_id' => $invoice->purchase_order_id]) }}" class="btn btn-soft-info btn-block mt-2">{{ translate('Create Shipment') }}</a>
+                    @endif
                 </div>
             </div>
         </div>

@@ -49,6 +49,8 @@
                                 <span class="badge badge-inline badge-secondary">{{ ucfirst($rfq->status) }}</span>
                                 @if ((int) $rfq->supplier_company_id === (int) $supplierCompany->id)
                                     <span class="badge badge-inline badge-info">{{ translate('Targeted') }}</span>
+                                @elseif ($rfq->is_related_match)
+                                    <span class="badge badge-inline badge-success">{{ translate('Related') }}</span>
                                 @endif
                             </td>
                             <td>
@@ -63,8 +65,10 @@
                                     <a href="{{ $existingQuotation->status === 'pending' ? route('seller.b2b.quotations.edit', $existingQuotation->id) : route('seller.b2b.quotations.show', $existingQuotation->id) }}" class="btn btn-soft-info btn-sm">
                                         {{ translate('View Quote') }}
                                     </a>
-                                @elseif ($rfq->status === 'open')
+                                @elseif ($rfq->can_submit_quote)
                                     <a href="{{ route('seller.b2b.rfqs.quote', $rfq->id) }}" class="btn btn-soft-primary btn-sm">{{ translate('Submit Quote') }}</a>
+                                @else
+                                    <span class="text-muted small">{{ translate('No action available') }}</span>
                                 @endif
                             </td>
                         </tr>

@@ -70,19 +70,19 @@
 
             <div class="card rounded-0 shadow-none border">
                 <div class="card-body">
-                    @if (in_array($purchaseOrder->status, ['draft', 'sent']))
+                    @if (($canManagePurchaseOrder ?? false) && in_array($purchaseOrder->status, ['draft', 'sent']))
                         <form action="{{ route('b2b.purchase-orders.cancel', $purchaseOrder->id) }}" method="POST" class="mb-2">
                             @csrf
                             <button type="submit" class="btn btn-soft-danger btn-block rounded-0">{{ translate('Cancel Purchase Order') }}</button>
                         </form>
                     @endif
-                    @if ($purchaseOrder->status === 'accepted')
+                    @if (($canManagePurchaseOrder ?? false) && $purchaseOrder->status === 'accepted')
                         <form action="{{ route('b2b.purchase-orders.complete', $purchaseOrder->id) }}" method="POST">
                             @csrf
                             <button type="submit" class="btn btn-success btn-block rounded-0">{{ translate('Mark Completed') }}</button>
                         </form>
                     @endif
-                    @if ($purchaseOrder->negotiation)
+                    @if (($canParticipateInNegotiation ?? false) && $purchaseOrder->negotiation)
                         <a href="{{ route('b2b.negotiations.show', $purchaseOrder->negotiation->id) }}" class="btn btn-soft-info btn-block rounded-0 mt-2">{{ translate('Open Negotiation') }}</a>
                     @endif
                     @if ($purchaseOrder->shipments->first())

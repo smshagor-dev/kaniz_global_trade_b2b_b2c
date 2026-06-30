@@ -40,14 +40,16 @@ class B2BPurchaseOrderController extends Controller
     {
         $purchaseOrder = $this->buyerQuery()->findOrFail($id);
         $timeline = $this->b2bTradeService->buildTradeTimelineForPurchaseOrder($purchaseOrder);
+        $canManagePurchaseOrder = $this->b2bPermissionService->canManagePurchaseOrder(Auth::id(), $purchaseOrder->buyer_company_id);
+        $canParticipateInNegotiation = $this->b2bPermissionService->canParticipateInNegotiation(Auth::id(), $purchaseOrder->buyer_company_id);
 
-        return view('b2b.purchase_orders.show', compact('purchaseOrder', 'timeline'));
+        return view('b2b.purchase_orders.show', compact('purchaseOrder', 'timeline', 'canManagePurchaseOrder', 'canParticipateInNegotiation'));
     }
 
     public function buyerCancel($id)
     {
         $purchaseOrder = $this->buyerQuery()->findOrFail($id);
-        abort_unless($this->b2bPermissionService->hasRole(Auth::id(), $purchaseOrder->buyer_company_id, ['owner', 'admin', 'procurement_manager']), 403);
+        abort_unless($this->b2bPermissionService->canManagePurchaseOrder(Auth::id(), $purchaseOrder->buyer_company_id), 403);
 
         if (!in_array($purchaseOrder->status, ['draft', 'sent'])) {
             flash(translate('Only draft or sent purchase orders can be cancelled.'))->warning();
@@ -69,7 +71,7 @@ class B2BPurchaseOrderController extends Controller
     public function buyerComplete($id)
     {
         $purchaseOrder = $this->buyerQuery()->findOrFail($id);
-        abort_unless($this->b2bPermissionService->hasRole(Auth::id(), $purchaseOrder->buyer_company_id, ['owner', 'admin', 'procurement_manager']), 403);
+        abort_unless($this->b2bPermissionService->canManagePurchaseOrder(Auth::id(), $purchaseOrder->buyer_company_id), 403);
 
         $invoice = $purchaseOrder->proformaInvoices->sortByDesc('created_at')->first();
         if ($invoice && $invoice->usesEscrow() && !in_array($invoice->escrow_status, ['released', 'refunded'], true)) {
@@ -116,7 +118,7 @@ class B2BPurchaseOrderController extends Controller
     public function supplierAccept($id)
     {
         $purchaseOrder = $this->supplierQuery()->findOrFail($id);
-        abort_unless($this->b2bPermissionService->hasRole(Auth::id(), $purchaseOrder->supplier_company_id, ['owner', 'admin', 'sales_manager']), 403);
+        abort_unless($this->b2bPermissionService->canManagePurchaseOrder(Auth::id(), $purchaseOrder->supplier_company_id), 403);
 
         if (!in_array($purchaseOrder->status, ['draft', 'sent'])) {
             flash(translate('This purchase order cannot be accepted.'))->warning();
@@ -140,7 +142,7 @@ class B2BPurchaseOrderController extends Controller
     public function supplierReject($id)
     {
         $purchaseOrder = $this->supplierQuery()->findOrFail($id);
-        abort_unless($this->b2bPermissionService->hasRole(Auth::id(), $purchaseOrder->supplier_company_id, ['owner', 'admin', 'sales_manager']), 403);
+        abort_unless($this->b2bPermissionService->canManagePurchaseOrder(Auth::id(), $purchaseOrder->supplier_company_id), 403);
 
         if (!in_array($purchaseOrder->status, ['draft', 'sent'])) {
             flash(translate('This purchase order cannot be rejected.'))->warning();

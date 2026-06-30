@@ -35,7 +35,9 @@ class B2BRfqController extends Controller
             ->latest()
             ->paginate(15);
 
-        return view('b2b.rfqs.index', compact('rfqs'));
+        $canCreateRfq = $this->b2bCompanyService->canCreateRfq(Auth::id(), $company->id);
+
+        return view('b2b.rfqs.index', compact('rfqs', 'canCreateRfq'));
     }
 
     public function create(Request $request)
@@ -111,11 +113,15 @@ class B2BRfqController extends Controller
             'quotations.supplier',
             'quotations.supplierCompany',
             'quotations.product',
+            'quotations.negotiation',
         ])
             ->where('b2b_company_id', $company->id)
             ->findOrFail($id);
 
-        return view('b2b.rfqs.show', compact('rfq'));
+        $canCreateRfq = $this->b2bCompanyService->canCreateRfq(Auth::id(), $company->id);
+        $canManagePurchaseOrder = $this->b2bPermissionService->canManagePurchaseOrder(Auth::id(), $company->id);
+
+        return view('b2b.rfqs.show', compact('rfq', 'canCreateRfq', 'canManagePurchaseOrder'));
     }
 
     public function edit($id)

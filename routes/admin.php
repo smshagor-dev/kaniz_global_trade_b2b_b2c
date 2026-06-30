@@ -789,9 +789,6 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
 
     Route::view('/system/update', 'backend.system.update')->name('system_update');
     Route::view('/system/server-status', 'backend.system.server_status')->name('system_server');
-    Route::view('/system/import-demo-data', 'backend.system.import_demo_data')->name('import_demo_data');
-
-    Route::post('/import-data', [BusinessSettingsController::class, 'import_data'])->name('import_data');
 
     // uploaded files
     Route::resource('/uploaded-files', AizUploadController::class);
@@ -896,6 +893,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/enterprise-search', 'dashboard')->name('admin.search.dashboard');
         Route::get('/enterprise-search/analytics', 'analytics')->name('admin.search.analytics');
         Route::post('/enterprise-search/settings', 'updateSettings')->name('admin.search.settings.update');
+        Route::post('/enterprise-search/index', 'manageIndex')->name('admin.search.index.manage');
         Route::post('/enterprise-search/reindex', 'reindex')->name('admin.search.reindex');
         Route::post('/enterprise-search/retry-failures', 'retryFailures')->name('admin.search.retry-failures');
     });

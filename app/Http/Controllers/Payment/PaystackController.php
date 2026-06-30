@@ -77,14 +77,11 @@ class PaystackController extends Controller
             $request->reference = Paystack::genTranxRef();
             return Paystack::getAuthorizationUrl()->redirectNow();
         } elseif (Session::get('payment_type') == 'seller_package_payment') {
-            $post_data['seller_package_id'] = $paymentData['seller_package_id'];
-            $post_data['payment_method'] = $paymentData['payment_method'];
+            $post_data = array_merge($post_data, \App\Support\B2BPaymentResolver::sellerPackagePayload($paymentData));
             $array = ['custom_fields' => $post_data];
-
-            $seller_package = SellerPackage::findOrFail($paymentData['seller_package_id']);
             $user = Auth::user();
             $request->email = $user->email;
-            $request->amount = round($seller_package->amount * 100);
+            $request->amount = round(\App\Support\B2BPaymentResolver::resolveSellerPackageAmount($paymentData) * 100);
             $request->currency = $currency;
             $request->metadata = json_encode($array);
             $request->reference = Paystack::genTranxRef();
@@ -157,6 +154,13 @@ class PaystackController extends Controller
                 $payment_detalis = json_encode($payment);
                 if (!empty($payment['data']) && $payment['data']['status'] == 'success') {
                     $payment_data['seller_package_id'] = $payment['data']['metadata']['custom_fields']['seller_package_id'];
+                    $payment_data['b2b_package_id'] = $payment['data']['metadata']['custom_fields']['b2b_package_id'] ?? null;
+                    $payment_data['b2b_product_promotion_package_id'] = $payment['data']['metadata']['custom_fields']['b2b_product_promotion_package_id'] ?? null;
+                    $payment_data['b2b_premium_verification_package_id'] = $payment['data']['metadata']['custom_fields']['b2b_premium_verification_package_id'] ?? null;
+                    $payment_data['b2b_ai_trade_desk_access'] = $payment['data']['metadata']['custom_fields']['b2b_ai_trade_desk_access'] ?? null;
+                    $payment_data['b2b_ai_access_price'] = $payment['data']['metadata']['custom_fields']['b2b_ai_access_price'] ?? null;
+                    $payment_data['b2b_company_id'] = $payment['data']['metadata']['custom_fields']['b2b_company_id'] ?? null;
+                    $payment_data['b2b_user_id'] = $payment['data']['metadata']['custom_fields']['b2b_user_id'] ?? null;
                     $payment_data['payment_method'] = $payment['data']['metadata']['custom_fields']['payment_method'];
                     Auth::login(User::where('email', $payment['data']['customer']['email'])->first());
                     return (new SellerPackageController)->purchase_payment_done($payment_data, $payment_detalis);

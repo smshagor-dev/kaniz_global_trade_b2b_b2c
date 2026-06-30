@@ -7,6 +7,11 @@
                 <h1 class="h3 mb-0">{{ translate('Enterprise Trade Finance') }}</h1>
                 <p class="text-muted mb-0">{{ translate('Enterprise oversight across escrow, settlement, milestone, dispute and refund operations.') }}</p>
             </div>
+            <div class="col-auto">
+                <a href="{{ route('admin.b2b.trade-finance.payouts') }}" class="btn btn-primary">
+                    {{ translate('Manage Supplier Payouts') }}
+                </a>
+            </div>
         </div>
     </div>
 

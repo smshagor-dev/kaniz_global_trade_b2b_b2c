@@ -173,6 +173,22 @@ class SellerPackageController extends Controller
 
     public function purchase_payment_done($payment_data, $payment)
     {
+        if (!empty($payment_data['b2b_package_id'])) {
+            return app(B2BPackageController::class)->purchasePaymentDone($payment_data, $payment);
+        }
+
+        if (!empty($payment_data['b2b_ai_trade_desk_access'])) {
+            return app(B2BAIController::class)->purchasePaymentDone($payment_data, $payment);
+        }
+
+        if (!empty($payment_data['b2b_premium_verification_package_id'])) {
+            return app(B2BPremiumVerificationController::class)->purchasePaymentDone($payment_data, $payment);
+        }
+
+        if (!empty($payment_data['b2b_product_promotion_package_id'])) {
+            return app(B2BProductPromotionController::class)->purchasePaymentDone($payment_data, $payment);
+        }
+
         $user = auth()->user();
         $seller = $user->shop;
         $seller->seller_package_id = Session::get('payment_data')['seller_package_id'];

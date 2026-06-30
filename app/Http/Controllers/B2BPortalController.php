@@ -63,61 +63,12 @@ class B2BPortalController extends Controller
 
     public function buyerOnboarding()
     {
-        if (!Auth::check()) {
-            return redirect()->guest(route('user.login'));
-        }
-
-        [$company, $mode] = $this->resolveOnboardingCompany('buyer');
-
-        if ($mode === 'dashboard') {
-            return redirect()->route('buyer.dashboard');
-        }
-
-        if ($mode === 'status') {
-            return redirect()->route('b2b.portal.status', ['portal' => 'buyer']);
-        }
-
-        $verificationRequirements = $this->verificationRequirementsFor('buyer');
-
-        return view('b2b.company.onboarding', [
-            'portal' => 'buyer',
-            'company' => $company,
-            'mode' => $company ? 'edit' : 'create',
-            'verificationRequirements' => $verificationRequirements,
-            'lockedCompanyType' => old('company_type', $company?->company_type ?? 'buyer'),
-            'allowedCompanyTypes' => ['buyer', 'retailer', 'importer'],
-            'portalRedirectRoute' => 'buyer.dashboard',
-        ]);
+        return $this->renderOnboarding('buyer');
     }
 
     public function supplierOnboarding()
     {
-        if (!Auth::check()) {
-            return redirect()->guest(route('user.login'));
-        }
-
-        [$company, $mode] = $this->resolveOnboardingCompany('supplier');
-
-        if ($mode === 'dashboard') {
-            return redirect()->route('supplier.dashboard');
-        }
-
-        if ($mode === 'status') {
-            return redirect()->route('b2b.portal.status', ['portal' => 'supplier']);
-        }
-
-        $lockedCompanyType = old('company_type', $company?->company_type ?? 'supplier');
-        $verificationRequirements = $this->verificationRequirementsFor($lockedCompanyType);
-
-        return view('b2b.company.onboarding', [
-            'portal' => 'supplier',
-            'company' => $company,
-            'mode' => $company ? 'edit' : 'create',
-            'verificationRequirements' => $verificationRequirements,
-            'lockedCompanyType' => $lockedCompanyType,
-            'allowedCompanyTypes' => ['supplier', 'manufacturer', 'wholesaler', 'distributor', 'exporter'],
-            'portalRedirectRoute' => 'supplier.dashboard',
-        ]);
+        return $this->renderOnboarding('supplier');
     }
 
     public function status(string $portal)
@@ -136,6 +87,7 @@ class B2BPortalController extends Controller
             'company' => $company,
             'switchableCompanies' => $switchableCompanies,
             'supportsPortal' => $company ? $this->supportsPortal($company, $portal) : false,
+            'hasActivePackage' => $company ? $this->hasActivePackageForPortal($company, $portal) : false,
         ]);
     }
 
@@ -151,8 +103,12 @@ class B2BPortalController extends Controller
             return redirect()->route($portal . '.onboarding');
         }
 
-        if ($this->isApprovedForPortal($company, $portal)) {
+        if ($this->isApprovedForPortal($company, $portal) && $this->hasActivePackageForPortal($company, $portal)) {
             return redirect()->route($portal . '.dashboard');
+        }
+
+        if ($this->isApprovedForPortal($company, $portal)) {
+            return redirect()->route('b2b.packages.index');
         }
 
         if ($this->supportsPortal($company, $portal)) {
@@ -170,8 +126,12 @@ class B2BPortalController extends Controller
             return [null, 'create'];
         }
 
-        if ($this->isApprovedForPortal($company, $portal)) {
+        if ($this->isApprovedForPortal($company, $portal) && $this->hasActivePackageForPortal($company, $portal)) {
             return [$company, 'dashboard'];
+        }
+
+        if ($this->isApprovedForPortal($company, $portal)) {
+            return [$company, 'packages'];
         }
 
         if ($this->supportsPortal($company, $portal)) {
@@ -191,6 +151,49 @@ class B2BPortalController extends Controller
     protected function isApprovedForPortal(B2BCompany $company, string $portal): bool
     {
         return $company->verification_status === 'approved' && $this->supportsPortal($company, $portal);
+    }
+
+    protected function hasActivePackageForPortal(B2BCompany $company, string $portal): bool
+    {
+        return $portal === 'supplier'
+            ? $this->b2bCompanyService->hasActiveSupplierPackage($company->user_id, $company->id)
+            : $this->b2bCompanyService->hasActiveBuyerPackage($company->user_id, $company->id);
+    }
+
+    protected function renderOnboarding(string $portal)
+    {
+        if (!Auth::check()) {
+            return redirect()->guest(route('user.login'));
+        }
+
+        [$company, $mode] = $this->resolveOnboardingCompany($portal);
+
+        if ($mode === 'dashboard') {
+            return redirect()->route($portal . '.dashboard');
+        }
+
+        if ($mode === 'packages') {
+            return redirect()->route('b2b.packages.index');
+        }
+
+        if ($mode === 'status') {
+            return redirect()->route('b2b.portal.status', ['portal' => $portal]);
+        }
+
+        $lockedCompanyType = old('company_type', $company?->company_type ?? $portal);
+        $verificationRequirements = $this->verificationRequirementsFor($lockedCompanyType);
+
+        return view('b2b.company.onboarding', [
+            'portal' => $portal,
+            'company' => $company,
+            'mode' => $company ? 'edit' : 'create',
+            'verificationRequirements' => $verificationRequirements,
+            'lockedCompanyType' => $lockedCompanyType,
+            'allowedCompanyTypes' => $portal === 'supplier'
+                ? ['supplier', 'manufacturer', 'wholesaler', 'distributor', 'exporter']
+                : ['buyer', 'retailer', 'importer'],
+            'portalRedirectRoute' => $portal . '.dashboard',
+        ]);
     }
 
     protected function verificationRequirementsFor(?string $companyType): Collection

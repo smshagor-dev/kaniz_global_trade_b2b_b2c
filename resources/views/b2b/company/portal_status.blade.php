@@ -4,8 +4,13 @@
     @php
         $isSupplier = $portal === 'supplier';
         $heading = $isSupplier ? translate('Supplier Portal Status') : translate('Buyer Portal Status');
-        $primaryAction = $isSupplier ? route('supplier.onboarding') : route('buyer.onboarding');
-        $primaryLabel = $company && $supportsPortal ? translate('Continue Onboarding') : translate('Start Onboarding');
+        $requiresPackage = $company && $supportsPortal && $company->verification_status === 'approved' && !($hasActivePackage ?? false);
+        $primaryAction = $requiresPackage
+            ? route('b2b.packages.index')
+            : ($isSupplier ? route('supplier.onboarding') : route('buyer.onboarding'));
+        $primaryLabel = $requiresPackage
+            ? translate('Choose Package')
+            : ($company && $supportsPortal ? translate('Continue Onboarding') : translate('Start Onboarding'));
     @endphp
 
     <div class="b2b-section-card">
@@ -26,6 +31,8 @@
             @if ($company->verification_note)
                 <div class="alert alert-warning">{{ $company->verification_note }}</div>
             @endif
+        @elseif ($requiresPackage)
+            <p class="text-muted mb-4">{{ translate('Your company is approved, but an active package is required before this portal can be used. Please purchase or activate the appropriate package first.') }}</p>
         @else
             <p class="text-muted mb-4">{{ translate('Portal access is not available yet for the current company. Continue with onboarding to align the role and verification requirements.') }}</p>
         @endif

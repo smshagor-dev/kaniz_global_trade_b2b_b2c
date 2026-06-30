@@ -6,6 +6,7 @@ use App\Models\B2BCompany;
 use App\Models\B2BSampleOrder;
 use App\Models\Product;
 use App\Services\B2BCompanyService;
+use App\Services\B2BNotificationService;
 use App\Services\B2BPermissionService;
 use App\Services\B2BSampleProcessingFeeService;
 use App\Services\B2BTradeService;
@@ -16,6 +17,7 @@ class B2BSampleOrderController extends Controller
 {
     public function __construct(
         protected B2BCompanyService $b2bCompanyService,
+        protected B2BNotificationService $b2bNotificationService,
         protected B2BPermissionService $b2bPermissionService,
         protected B2BTradeService $b2bTradeService,
         protected B2BSampleProcessingFeeService $sampleProcessingFeeService
@@ -25,6 +27,7 @@ class B2BSampleOrderController extends Controller
     public function create(Request $request)
     {
         $buyerCompany = $this->getBuyerCompany();
+        abort_unless($this->b2bPermissionService->canManagePurchaseOrder(Auth::id(), $buyerCompany->id), 403);
         $product = $request->product_id ? Product::findOrFail($request->product_id) : null;
         $supplierCompany = $this->resolveSupplierCompany($request, $product);
 
@@ -39,6 +42,7 @@ class B2BSampleOrderController extends Controller
     public function store(Request $request)
     {
         $buyerCompany = $this->getBuyerCompany();
+        abort_unless($this->b2bPermissionService->canManagePurchaseOrder(Auth::id(), $buyerCompany->id), 403);
         $data = $request->validate([
             'supplier_company_id' => 'required|exists:b2b_companies,id',
             'product_id' => 'nullable|exists:products,id',
@@ -70,6 +74,7 @@ class B2BSampleOrderController extends Controller
             'requested_at' => now(),
         ]);
 
+        $this->b2bNotificationService->notifySupplierAboutSampleOrder($sampleOrder);
         flash(translate('Sample request submitted successfully.'))->success();
 
         return redirect()->route('b2b.sample-orders.show', $sampleOrder->id);
@@ -105,7 +110,7 @@ class B2BSampleOrderController extends Controller
     public function buyerMarkPaid(Request $request, $id)
     {
         $company = $this->getBuyerCompany();
-        abort_unless($this->b2bPermissionService->hasRole(Auth::id(), $company->id, ['owner', 'admin', 'procurement_manager']), 403);
+        abort_unless($this->b2bPermissionService->canManagePurchaseOrder(Auth::id(), $company->id), 403);
 
         $sampleOrder = B2BSampleOrder::with('shippingQuotes')
             ->where('buyer_company_id', $company->id)
@@ -114,6 +119,11 @@ class B2BSampleOrderController extends Controller
         $request->validate([
             'payment_reference' => 'required|string|max:255',
         ]);
+
+        if ($sampleOrder->status !== 'payment_pending') {
+            flash(translate('Only payment pending sample orders can be marked as paid.'))->warning();
+            return back();
+        }
 
         $selectedQuote = $sampleOrder->shippingQuotes()->where('status', 'selected')->latest()->first();
         abort_if(!$selectedQuote, 422, 'Shipping quote selection is required before payment.');
@@ -128,6 +138,7 @@ class B2BSampleOrderController extends Controller
 
         $sampleOrder->update($payload);
 
+        $this->b2bNotificationService->notifySupplierAboutSampleOrder($sampleOrder);
         flash(translate('Sample order marked as paid.'))->success();
 
         return back();
@@ -163,19 +174,25 @@ class B2BSampleOrderController extends Controller
     public function supplierAccept(Request $request, $id)
     {
         $company = $this->getSupplierCompany();
-        abort_unless($this->b2bPermissionService->hasRole(Auth::id(), $company->id, ['owner', 'admin', 'sales_manager']), 403);
+        abort_unless($this->b2bPermissionService->canManagePurchaseOrder(Auth::id(), $company->id), 403);
 
         $request->validate([
             'sample_price' => 'nullable|numeric|min:0',
         ]);
 
         $sampleOrder = B2BSampleOrder::where('supplier_company_id', $company->id)->findOrFail($id);
+        if ($sampleOrder->status !== 'requested') {
+            flash(translate('Only requested sample orders can be accepted.'))->warning();
+            return back();
+        }
+
         $sampleOrder->update([
             'sample_price' => $request->sample_price ?? $sampleOrder->sample_price,
             'supplier_responded_at' => now(),
             'status' => 'accepted',
         ]);
 
+        $this->b2bNotificationService->notifyBuyerAboutSampleOrderUpdate($sampleOrder);
         flash(translate('Sample order accepted successfully.'))->success();
 
         return back();
@@ -184,14 +201,20 @@ class B2BSampleOrderController extends Controller
     public function supplierReject($id)
     {
         $company = $this->getSupplierCompany();
-        abort_unless($this->b2bPermissionService->hasRole(Auth::id(), $company->id, ['owner', 'admin', 'sales_manager']), 403);
+        abort_unless($this->b2bPermissionService->canManagePurchaseOrder(Auth::id(), $company->id), 403);
 
         $sampleOrder = B2BSampleOrder::where('supplier_company_id', $company->id)->findOrFail($id);
+        if ($sampleOrder->status !== 'requested') {
+            flash(translate('Only requested sample orders can be rejected.'))->warning();
+            return back();
+        }
+
         $sampleOrder->update([
             'supplier_responded_at' => now(),
             'status' => 'rejected',
         ]);
 
+        $this->b2bNotificationService->notifyBuyerAboutSampleOrderUpdate($sampleOrder);
         flash(translate('Sample order rejected successfully.'))->success();
 
         return back();

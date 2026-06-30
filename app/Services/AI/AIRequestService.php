@@ -43,7 +43,13 @@ class AIRequestService
             throw new RuntimeException('No active AI providers are configured.');
         }
 
-        $promptHash = hash('sha256', $module . '|' . $systemPrompt . '|' . $prompt);
+        $promptHash = hash('sha256', implode('|', [
+            $module,
+            $systemPrompt,
+            $prompt,
+            (string) ($payload['image_hash'] ?? ''),
+            json_encode($payload['cache_key'] ?? []),
+        ]));
 
         foreach ($providers as $providerSetting) {
             $this->assertProviderLimit($providerSetting);

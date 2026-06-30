@@ -16,8 +16,17 @@ use App\Models\Product;
 use App\Models\Category;
 use App\Models\FlashDeal;
 use App\Models\B2BCompany;
+use App\Models\B2BCompanyCertification;
+use App\Models\B2BContainerShipment;
+use App\Models\B2BEscrow;
+use App\Models\B2BFinanceDispute;
+use App\Models\B2BFinanceRefund;
+use App\Models\B2BFreightForwarder;
+use App\Models\B2BInsuranceProvider;
+use App\Models\B2BRfq;
 use App\Models\B2BShipment;
 use App\Models\B2BShippingProvider;
+use App\Models\B2BTradeDocument;
 use App\Models\B2BPackage;
 use App\Models\OrderDetail;
 use App\Models\ProductQuery;
@@ -94,6 +103,19 @@ class HomeController extends Controller
             'featured_supplier_monthly_price' => 0,
             'featured_supplier_package_name' => null,
             'featured_suppliers_list' => collect(),
+            'verified_manufacturers_list' => collect(),
+            'open_rfqs_count' => 0,
+            'latest_rfqs' => collect(),
+            'wholesale_deals_list' => collect(),
+            'logistics_partners_list' => collect(),
+            'country_supplier_map' => collect(),
+            'funded_escrows' => 0,
+            'active_disputes' => 0,
+            'completed_refunds' => 0,
+            'trade_documents_count' => 0,
+            'approved_certifications' => 0,
+            'container_shipments' => 0,
+            'insurance_partners' => 0,
         ];
 
         if (Schema::hasTable('b2b_shipping_providers')) {
@@ -117,6 +139,42 @@ class HomeController extends Controller
                 ->latest()
                 ->limit(6)
                 ->get();
+
+            $tradeServicesData['verified_manufacturers_list'] = B2BCompany::query()
+                ->publicSuppliers()
+                ->where('company_type', 'manufacturer')
+                ->with(['categories', 'certifications' => fn ($query) => $query->where('verification_status', 'approved')])
+                ->orderByDesc('verified_supplier_badge')
+                ->orderByDesc('profile_score')
+                ->latest()
+                ->limit(6)
+                ->get();
+
+            $countryCounts = B2BCompany::query()
+                ->publicSuppliers()
+                ->whereNotNull('country')
+                ->select('country', DB::raw('COUNT(*) as total'))
+                ->groupBy('country')
+                ->pluck('total', 'country');
+
+            $tradeServicesData['country_supplier_map'] = collect([
+                ['label' => 'Bangladesh', 'key' => 'Bangladesh', 'region' => 'South Asia'],
+                ['label' => 'China', 'key' => 'China', 'region' => 'East Asia'],
+                ['label' => 'India', 'key' => 'India', 'region' => 'South Asia'],
+                ['label' => 'Turkey', 'key' => 'Turkey', 'region' => 'Europe / MENA'],
+                ['label' => 'UAE', 'key' => 'UAE', 'region' => 'Middle East'],
+                ['label' => 'Europe', 'key' => 'Europe', 'region' => 'Regional hub'],
+            ])->map(function (array $entry) use ($countryCounts) {
+                $count = match ($entry['key']) {
+                    'UAE' => (int) (($countryCounts['UAE'] ?? 0) + ($countryCounts['United Arab Emirates'] ?? 0)),
+                    'Europe' => (int) collect([
+                        'Turkey', 'Germany', 'Italy', 'Spain', 'France', 'Netherlands', 'Poland', 'United Kingdom',
+                    ])->sum(fn ($country) => (int) ($countryCounts[$country] ?? 0)),
+                    default => (int) ($countryCounts[$entry['key']] ?? 0),
+                };
+
+                return array_merge($entry, ['count' => $count]);
+            });
         }
 
         if (Schema::hasTable('b2b_packages')) {
@@ -132,6 +190,79 @@ class HomeController extends Controller
         if (Schema::hasTable('b2b_shipments')) {
             $tradeServicesData['active_shipments'] = B2BShipment::query()
                 ->whereIn('status', ['preparing', 'picked_up', 'export_customs', 'in_transit', 'import_customs', 'out_for_delivery'])
+                ->count();
+        }
+
+        if (Schema::hasTable('b2b_rfqs')) {
+            $tradeServicesData['open_rfqs_count'] = B2BRfq::query()
+                ->whereIn('status', ['open', 'quoted'])
+                ->count();
+
+            $tradeServicesData['latest_rfqs'] = B2BRfq::query()
+                ->with(['company', 'category', 'product'])
+                ->whereIn('status', ['open', 'quoted'])
+                ->latest()
+                ->limit(4)
+                ->get();
+        }
+
+        if (Schema::hasTable('products')) {
+            $tradeServicesData['wholesale_deals_list'] = Product::query()
+                ->with(['thumbnail', 'publicSupplierCompany.categories'])
+                ->where('wholesale_product', 1)
+                ->where('approved', 1)
+                ->where('published', 1)
+                ->whereHas('publicSupplierCompany')
+                ->orderByDesc('featured')
+                ->latest()
+                ->limit(8)
+                ->get();
+        }
+
+        if (Schema::hasTable('b2b_freight_forwarders')) {
+            $tradeServicesData['logistics_partners_list'] = B2BFreightForwarder::query()
+                ->where('is_active', true)
+                ->orderByDesc('last_api_success_at')
+                ->orderBy('name')
+                ->limit(6)
+                ->get();
+        }
+
+        if (Schema::hasTable('b2b_container_shipments')) {
+            $tradeServicesData['container_shipments'] = B2BContainerShipment::query()->count();
+        }
+
+        if (Schema::hasTable('b2b_insurance_providers')) {
+            $tradeServicesData['insurance_partners'] = B2BInsuranceProvider::query()
+                ->where('is_active', true)
+                ->count();
+        }
+
+        if (Schema::hasTable('b2b_escrows')) {
+            $tradeServicesData['funded_escrows'] = B2BEscrow::query()
+                ->whereIn('status', ['funded', 'released'])
+                ->count();
+        }
+
+        if (Schema::hasTable('b2b_finance_disputes')) {
+            $tradeServicesData['active_disputes'] = B2BFinanceDispute::query()
+                ->where('status', 'open')
+                ->count();
+        }
+
+        if (Schema::hasTable('b2b_finance_refunds')) {
+            $tradeServicesData['completed_refunds'] = B2BFinanceRefund::query()
+                ->where('status', 'completed')
+                ->count();
+        }
+
+        if (Schema::hasTable('b2b_trade_documents')) {
+            $tradeServicesData['trade_documents_count'] = B2BTradeDocument::query()->count();
+        }
+
+        if (Schema::hasTable('b2b_company_certifications')) {
+            $tradeServicesData['approved_certifications'] = B2BCompanyCertification::query()
+                ->where('verification_status', 'approved')
                 ->count();
         }
 

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\B2BCompany;
 use App\Models\B2BCompanyCertification;
 use App\Models\B2BContainerShipment;
+use App\Models\B2BEscrow;
 use App\Models\B2BFinanceDispute;
 use App\Models\B2BFinanceRefund;
 use App\Models\B2BFreightForwarder;
@@ -88,6 +89,14 @@ class B2BDashboardService
             'sample_orders' => $companyId ? B2BSampleOrder::where('supplier_company_id', $companyId)->count() : 0,
             'finance_pending_settlements' => $companyId ? B2BSettlement::where('supplier_company_id', $companyId)->whereIn('status', ['pending_approval', 'approved'])->count() : 0,
             'finance_completed_settlements' => $companyId ? B2BSettlement::where('supplier_company_id', $companyId)->where('status', 'completed')->count() : 0,
+            'finance_gross_revenue' => $companyId ? B2BProformaInvoice::where('supplier_company_id', $companyId)->sum('grand_total') : 0,
+            'finance_platform_fees' => $companyId ? B2BProformaInvoice::where('supplier_company_id', $companyId)->sum('platform_fee_amount') : 0,
+            'finance_net_earnings' => $companyId ? B2BProformaInvoice::where('supplier_company_id', $companyId)->sum('supplier_payout_amount') : 0,
+            'finance_released_earnings' => $companyId ? B2BProformaInvoice::where('supplier_company_id', $companyId)->whereNotNull('supplier_paid_out_at')->sum('supplier_payout_amount') : 0,
+            'finance_available_payout' => $companyId ? B2BEscrow::where('supplier_company_id', $companyId)->where('status', 'released')->whereDoesntHave('settlements')->sum('released_amount') : 0,
+            'finance_requested_payout_amount' => $companyId ? B2BSettlement::where('supplier_company_id', $companyId)->whereIn('status', ['pending_approval', 'approved'])->sum('net_amount') : 0,
+            'finance_completed_payout_amount' => $companyId ? B2BSettlement::where('supplier_company_id', $companyId)->where('status', 'completed')->sum('net_amount') : 0,
+            'finance_total_payout_fees' => $companyId ? B2BSettlement::where('supplier_company_id', $companyId)->sum('fees') : 0,
             'finance_open_disputes' => $companyId ? B2BFinanceDispute::where('supplier_company_id', $companyId)->where('status', 'open')->count() : 0,
             'finance_milestones_due' => $companyId ? B2BPaymentMilestone::where('supplier_company_id', $companyId)->whereIn('status', ['pending', 'funded'])->count() : 0,
             'insurance_policies' => $companyId ? B2BInsurancePolicy::where('supplier_company_id', $companyId)->count() : 0,

@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\B2BCompanyCatalog;
 use App\Models\B2BCompanyCertification;
 use App\Models\Category;
+use App\Models\Product;
 use App\Services\B2BCompanyService;
 use App\Services\B2BPermissionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class B2BSupplierProfileController extends Controller
 {
@@ -26,6 +29,17 @@ class B2BSupplierProfileController extends Controller
             'company' => $company,
             'categories' => Category::where('parent_id', 0)->orderBy('name')->get(),
             'certifications' => $company->certifications()->latest()->get(),
+            'catalogs' => $company->catalogs()->with(['coverUpload', 'pdfUpload'])->latest()->get(),
+        ]);
+    }
+
+    public function catalogs()
+    {
+        $company = $this->getManageableSupplierCompany();
+
+        return view('seller.b2b.company.catalogs', [
+            'company' => $company,
+            'catalogs' => $company->catalogs()->with(['coverUpload', 'pdfUpload'])->latest()->get(),
         ]);
     }
 
@@ -115,6 +129,59 @@ class B2BSupplierProfileController extends Controller
         return back();
     }
 
+    public function storeCatalog(Request $request)
+    {
+        $company = $this->getManageableSupplierCompany();
+        $data = $this->validateCatalog($request);
+
+        $company->catalogs()->create([
+            'title' => $data['title'],
+            'slug' => $this->generateCatalogSlug($company->id, $data['title']),
+            'description' => $data['description'] ?? null,
+            'cover_image' => $data['cover_image'] ?? null,
+            'pdf_file' => $data['pdf_file'] ?? null,
+            'is_active' => $request->boolean('is_active', true),
+            'created_by' => Auth::id(),
+        ]);
+
+        flash(translate('Catalog created successfully.'))->success();
+
+        return back();
+    }
+
+    public function updateCatalog(Request $request, $id)
+    {
+        $company = $this->getManageableSupplierCompany();
+        $catalog = $company->catalogs()->findOrFail($id);
+        $data = $this->validateCatalog($request);
+
+        $catalog->update([
+            'title' => $data['title'],
+            'slug' => $this->generateCatalogSlug($company->id, $data['title'], $catalog->id),
+            'description' => $data['description'] ?? null,
+            'cover_image' => $data['cover_image'] ?? null,
+            'pdf_file' => $data['pdf_file'] ?? null,
+            'is_active' => $request->boolean('is_active'),
+        ]);
+
+        flash(translate('Catalog updated successfully.'))->success();
+
+        return back();
+    }
+
+    public function deleteCatalog($id)
+    {
+        $company = $this->getManageableSupplierCompany();
+        $catalog = $company->catalogs()->findOrFail($id);
+
+        Product::where('b2b_company_catalog_id', $catalog->id)->update(['b2b_company_catalog_id' => null]);
+        $catalog->delete();
+
+        flash(translate('Catalog deleted successfully.'))->success();
+
+        return back();
+    }
+
     protected function getManageableSupplierCompany()
     {
         $company = $this->b2bCompanyService->getCompanyByUser(Auth::id());
@@ -139,6 +206,38 @@ class B2BSupplierProfileController extends Controller
             'expiry_date' => 'nullable|date|after_or_equal:issue_date',
             'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
+    }
+
+    protected function validateCatalog(Request $request): array
+    {
+        return $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'cover_image' => 'nullable|integer|exists:uploads,id',
+            'pdf_file' => 'nullable|integer|exists:uploads,id',
+            'is_active' => 'nullable|boolean',
+        ]);
+    }
+
+    protected function generateCatalogSlug(int $companyId, string $title, ?int $ignoreId = null): string
+    {
+        $baseSlug = Str::slug($title);
+        $baseSlug = $baseSlug !== '' ? $baseSlug : 'catalog';
+        $slug = $baseSlug;
+        $counter = 2;
+
+        while (
+            B2BCompanyCatalog::query()
+                ->where('b2b_company_id', $companyId)
+                ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
+                ->where('slug', $slug)
+                ->exists()
+        ) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
     }
 
     protected function storeFile(Request $request, string $field, ?string $oldFile = null): ?string

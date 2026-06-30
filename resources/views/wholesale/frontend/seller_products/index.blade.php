@@ -1,4 +1,4 @@
-@extends('seller.layouts.app')
+@extends(($routeContext ?? 'seller') === 'supplier_b2b' ? 'b2b.layouts.app' : 'seller.layouts.app')
 @section('panel_content')
 
 <div class="row gutters-10 justify-content-center">
@@ -17,12 +17,12 @@
     @endif
 
     <div class="col-md-4 mx-auto mb-3" >
-        <a href="{{ route('wholesale_product_create.seller')}}">
+        <a href="{{ route($routeNames['create']) }}">
           <div class="p-3 rounded mb-3 c-pointer text-center bg-white shadow-sm hov-shadow-lg has-transition">
               <span class="size-60px rounded-circle mx-auto bg-secondary d-flex align-items-center justify-content-center mb-3">
                   <i class="las la-plus la-3x text-white"></i>
               </span>
-              <div class="fs-18 text-primary">{{ translate('Add New Wholesale Product') }}</div>
+              <div class="fs-18 text-primary">{{ translate('Add New Product') }}</div>
           </div>
         </a>
     </div>
@@ -66,7 +66,7 @@
     <form class="" id="sort_products" action="" method="GET">
         <div class="card-header row gutters-5">
             <div class="col">
-                <h5 class="mb-md-0 h6">{{ translate('All Wholesale Product') }}</h5>
+                <h5 class="mb-md-0 h6">{{ translate('All Products') }}</h5>
             </div>
             <div class="col-md-2 ml-auto">
                 <select class="form-control form-control-sm aiz-selectpicker mb-2 mb-md-0" name="type" id="type" onchange="sort_products()">
@@ -171,10 +171,10 @@
                             <a class="btn btn-soft-success btn-icon btn-circle btn-sm"  href="{{ route('product', $product->slug) }}" target="_blank" title="{{ translate('View') }}">
                                 <i class="las la-eye"></i>
                             </a>
-                            <a class="btn btn-soft-info btn-icon btn-circle btn-sm" href="{{route('wholesale_product_edit.seller', ['id'=>$product->id, 'lang'=>env('DEFAULT_LANGUAGE')] )}}" title="{{ translate('Edit') }}">
+                            <a class="btn btn-soft-info btn-icon btn-circle btn-sm" href="{{ route($routeNames['edit'], ['id' => $product->id, 'lang' => env('DEFAULT_LANGUAGE')]) }}" title="{{ translate('Edit') }}">
                                 <i class="las la-edit"></i>
                             </a>
-                            <a href="#" class="btn btn-soft-danger btn-icon btn-circle btn-sm confirm-delete" data-href="{{route('wholesale_product_destroy.seller', $product->id)}}" title="{{ translate('Delete') }}">
+                            <a href="#" class="btn btn-soft-danger btn-icon btn-circle btn-sm confirm-delete" data-href="{{ route($routeNames['delete'], $product->id) }}" title="{{ translate('Delete') }}">
                                 <i class="las la-trash"></i>
                             </a>
                         </td>

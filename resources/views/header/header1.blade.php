@@ -2,6 +2,9 @@
     $topHeaderTextColor = get_setting('top_header_text_color');
     $middleHeaderTextColor = get_setting('middle_header_text_color');
     $bottomHeaderTextColor = get_setting('bottom_header_text_color');
+    $headerSearchScope = request('scope', 'ai_mode');
+    $headerSearchQuery = request('q', request('keyword', ''));
+    $headerImageSearchEnabled = get_setting('enable_global_search_image', '1') === '1';
 @endphp
 <div class="top-navbar z-1035 h-35px h-sm-auto top-background-color-visibility"
     style="background-color: {{  get_setting('top_header_bg_color')  }}">
@@ -144,7 +147,8 @@
                 <!-- Search field -->
                 <div class="flex-grow-1 front-header-search d-flex align-items-center bg-white mx-xl-5">
                     <div class="position-relative flex-grow-1 px-3 px-lg-0">
-                        <form action="{{ route('search') }}" method="GET" class="stop-propagation">
+                        <form action="{{ route('search') }}" method="GET" class="stop-propagation" id="header-global-search-form">
+                            <input type="hidden" name="scope" id="header-global-search-scope" value="{{ $headerSearchScope }}">
                             <div class="d-flex position-relative align-items-center">
                                 <div class="d-lg-none" data-toggle="class-toggle" data-target=".front-header-search">
                                     <button class="btn px-2" type="button"><i
@@ -153,8 +157,14 @@
                                 <div class="search-input-box">
                                     <input type="text"
                                         class="border border-soft-light form-control fs-14 hov-animate-outline"
-                                        id="search" name="keyword" @isset($query) value="{{ $query }}" @endisset
+                                        id="search" name="keyword" value="{{ $headerSearchQuery }}"
                                         placeholder="{{ translate('I am shopping for...') }}" autocomplete="off">
+
+                                    @if ($headerImageSearchEnabled)
+                                        <button type="button" class="header-global-search-image" data-toggle="modal" data-target="#globalSearchImageModal" aria-label="{{ translate('Image Search') }}">
+                                            <i class="las la-camera"></i>
+                                        </button>
+                                    @endif
 
                                     <svg id="Group_723" data-name="Group 723" xmlns="http://www.w3.org/2000/svg"
                                         width="20.001" height="20" viewBox="0 0 20.001 20">
@@ -759,3 +769,98 @@
         </div>
     </div>
 </header>
+
+@if ($headerImageSearchEnabled)
+    @include('frontend.enterprise_search.partials.image_search_modal')
+@endif
+
+@once
+    <style>
+        .header-global-search-image {
+            position: absolute;
+            align-items: center;
+            justify-content: center;
+            top: 50%;
+            right: 42px;
+            transform: translateY(-50%);
+            width: 28px;
+            height: 28px;
+            border: 0;
+            border-radius: 999px;
+            background: transparent;
+            color: #9ca3af;
+            padding: 0;
+            z-index: 2;
+        }
+        .header-global-search-image:hover {
+            color: #ea580c;
+        }
+    </style>
+    <script>
+        (function () {
+            document.addEventListener('DOMContentLoaded', function () {
+                var form = document.getElementById('header-global-search-form');
+                var searchInput = document.getElementById('search');
+                var scopeInput = document.getElementById('header-global-search-scope');
+                var imageForm = document.getElementById('global-search-image-form');
+                var imageFeedback = document.getElementById('global-search-image-feedback');
+
+                if (!form || !searchInput || !scopeInput) {
+                    return;
+                }
+
+                scopeInput.value = scopeInput.value || 'ai_mode';
+
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+
+                    var query = searchInput.value.trim();
+                    var target = new URL('{{ route('global.search') }}', window.location.origin);
+
+                    if (query !== '') {
+                        target.searchParams.set('q', query);
+                    }
+
+                    target.searchParams.set('scope', scopeInput.value || 'ai_mode');
+                    window.location.href = target.toString();
+                });
+
+                if (imageForm && imageFeedback) {
+                    imageForm.addEventListener('submit', function (event) {
+                        event.preventDefault();
+                        imageFeedback.className = 'mt-3';
+                        imageFeedback.innerHTML = '<div class="alert alert-info mb-0">{{ translate('Analyzing image...') }}</div>';
+
+                        fetch(imageForm.action, {
+                            method: 'POST',
+                            body: new FormData(imageForm),
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        }).then(function (response) {
+                            return response.json().then(function (data) {
+                                return { ok: response.ok, data: data };
+                            });
+                        }).then(function (payload) {
+                            if (!payload.ok) {
+                                throw new Error(payload.data.message || '{{ translate('Image search failed.') }}');
+                            }
+
+                            var target = new URL('{{ route('global.search') }}', window.location.origin);
+                            target.searchParams.set('scope', 'products');
+
+                            if (payload.data.query) {
+                                target.searchParams.set('q', payload.data.query);
+                            }
+
+                            window.location.href = target.toString();
+                        }).catch(function (error) {
+                            imageFeedback.className = 'mt-3';
+                            imageFeedback.innerHTML = '<div class="alert alert-danger mb-0">' + error.message + '</div>';
+                        });
+                    });
+                }
+            });
+        })();
+    </script>
+@endonce

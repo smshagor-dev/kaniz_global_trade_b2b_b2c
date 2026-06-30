@@ -30,6 +30,22 @@ The project keeps the original an eCommerce CMS B2C system intact and adds enter
 
 ---
 
+## Latest Updates
+
+Current implementation work in this repository now includes:
+
+- Enterprise search foundation with global search controllers, search services, dashboard wiring, and frontend search UI
+- AI trade workspace foundation for supplier matching, commercial assistance, and AI-driven trade workflows
+- B2B homepage modernization for the `metro` theme with a global search hero, RFQ CTA, supplier discovery, and marketplace category spotlight
+- Expanded company workflow with team management, role management, company context, catalogs, and company-facing operational screens
+- Trade finance and insurance dashboard expansion for buyer, supplier, and admin workflows
+- Featured supplier, premium verification, package, and product-promotion management improvements
+- Additional negotiation, quotation, shipment, freight, and supplier profile UI hardening across buyer and seller panels
+
+The README below reflects the broader platform scope plus the newer search, AI, UX, and homepage updates already under active development.
+
+---
+
 ## Technology Stack
 
 ### Backend
@@ -132,12 +148,20 @@ Supported roles:
 
 The system supports company context, so one user can switch between multiple companies.
 
+Additional company operations now in progress include:
+
+- Company role management screens
+- Company member invitation and access controls
+- Company catalog management
+- Supplier-side finance account and operational profile flows
+
 ---
 
 ### Supplier Directory
 
 - Public supplier directory
 - Supplier public profile
+- Supplier storefront style public profile pages
 - Factory capability
 - Business scope
 - Main markets
@@ -149,6 +173,41 @@ The system supports company context, so one user can switch between multiple com
 - Supplier profile score
 - Request Quote button
 - Request Sample button
+
+---
+
+## Enterprise Search and Discovery
+
+The platform now includes an active enterprise search foundation.
+
+Current search scope includes:
+
+- Global search entrypoint
+- Search autocomplete
+- Product search
+- Supplier / manufacturer discovery
+- Search admin dashboard
+- Search service abstraction
+- OpenSearch-oriented driver structure
+- Image-assisted search UI entrypoint
+
+This layer is designed so marketplace discovery can expand without replacing the existing B2C browsing flow.
+
+---
+
+## AI Commerce Workspace
+
+AI support is now being wired into the B2B product layer.
+
+Current implementation direction includes:
+
+- AI trade dashboard
+- Supplier matching workflows
+- Commercial recommendation workflows
+- HS code and freight assistance foundations
+- Shared AI request service and model driver integration
+
+This AI layer is intended to augment sourcing, quotation, logistics, and trade decision support rather than replace human approval flows.
 
 ---
 
@@ -848,6 +907,32 @@ Supplier can manage:
 
 ---
 
+## Homepage and UX Modernization
+
+The marketplace now includes active UX modernization work across:
+
+- B2B buyer dashboard
+- B2B supplier dashboard
+- Search dashboard
+- Insurance dashboard
+- Trade finance dashboard
+- Supplier profile screens
+- Negotiation and sourcing workflow screens
+
+Homepage modernization work is also active for the `metro` frontend theme, including:
+
+- Global B2B hero search
+- Search scopes for products, manufacturers, and worldwide sourcing
+- Request Quote CTA
+- Become Supplier CTA
+- Featured supplier spotlight
+- RFQ-driven sourcing prompts
+- Marketplace category discovery
+
+The homepage continues to preserve the shared B2C foundation while shifting the first-screen experience toward global sourcing use cases.
+
+---
+
 ## Permissions
 
 Permission system is company-team based.
@@ -1198,11 +1283,13 @@ git log --oneline -1
 
 ---
 
-## Next Roadmap
+## Current Roadmap
 
 ### Phase 9: Enterprise Search and Discovery
 
-Planned:
+Status: In progress
+
+Current scope:
 
 - OpenSearch
 - Meilisearch
@@ -1219,7 +1306,9 @@ Planned:
 
 ### Phase 10: AI Commerce Engine
 
-Planned:
+Status: In progress
+
+Current scope:
 
 - AI supplier matching
 - AI RFQ assistant
@@ -1234,7 +1323,9 @@ Planned:
 
 ### Phase 11: Enterprise UX Modernization
 
-Planned:
+Status: In progress
+
+Current scope:
 
 - Modern admin dashboard
 - Modern buyer dashboard
@@ -1250,7 +1341,9 @@ Planned:
 
 ### Phase 12: B2B-first Homepage Redesign
 
-Planned:
+Status: In progress
+
+Current scope:
 
 - Global B2B hero
 - Search products, suppliers, manufacturers

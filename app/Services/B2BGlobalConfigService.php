@@ -90,7 +90,7 @@ class B2BGlobalConfigService
         foreach ($settings as $type => $value) {
             BusinessSetting::updateOrCreate(
                 ['type' => $type],
-                ['value' => (int) (bool) $value]
+                ['value' => is_bool($value) ? ((int) $value) : (string) $value]
             );
         }
     }

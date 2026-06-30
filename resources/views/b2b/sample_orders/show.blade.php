@@ -1,6 +1,12 @@
 @extends('b2b.layouts.app')
 
 @section('panel_content')
+    @php
+        $permissionService = app(\App\Services\B2BPermissionService::class);
+        $canManagePurchaseOrder = $permissionService->canManagePurchaseOrder(auth()->id(), $sampleOrder->buyer_company_id);
+        $allowSelectShippingQuote = $canManagePurchaseOrder && in_array($sampleOrder->status, ['accepted', 'shipping_quoted', 'payment_pending'], true);
+    @endphp
+
     <div class="aiz-titlebar mb-4">
         <div class="row align-items-center">
             <div class="col-md-8">
@@ -13,7 +19,7 @@
     </div>
 
     @include('b2b.partials.trade_timeline', ['timeline' => $timeline])
-    @include('b2b.partials.shipping_quotes_table', ['quotes' => $sampleOrder->shippingQuotes, 'allowSelect' => true])
+    @include('b2b.partials.shipping_quotes_table', ['quotes' => $sampleOrder->shippingQuotes, 'allowSelect' => $allowSelectShippingQuote])
 
     <div class="row gutters-16">
         <div class="col-lg-8">
@@ -37,7 +43,7 @@
                 </div>
             </div>
 
-            @if ($sampleOrder->status === 'payment_pending')
+            @if ($canManagePurchaseOrder && $sampleOrder->status === 'payment_pending')
                 <div class="card rounded-0 shadow-none border">
                     <div class="card-body">
                         <form action="{{ route('b2b.sample-orders.pay', $sampleOrder->id) }}" method="POST">

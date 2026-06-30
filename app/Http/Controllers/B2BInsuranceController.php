@@ -34,9 +34,26 @@ class B2BInsuranceController extends Controller
         $company = $this->getCompany('buyer');
         $payload = [
             'stats' => $this->insuranceService->companyDashboard($company, 'buyer'),
-            'policies' => B2BInsurancePolicy::where('buyer_company_id', $company->id)->latest()->paginate(10),
-            'claims' => B2BInsuranceClaim::where('buyer_company_id', $company->id)->latest()->paginate(10),
-            'quotes' => B2BInsuranceQuote::where('buyer_company_id', $company->id)->latest()->paginate(10),
+            'policies' => B2BInsurancePolicy::with(['provider', 'claims'])
+                ->where('buyer_company_id', $company->id)
+                ->latest()
+                ->paginate(10, ['*'], 'policies_page'),
+            'claims' => B2BInsuranceClaim::with(['policy', 'provider', 'documents'])
+                ->where('buyer_company_id', $company->id)
+                ->latest()
+                ->paginate(10, ['*'], 'claims_page'),
+            'quotes' => B2BInsuranceQuote::with(['provider', 'policy'])
+                ->where('buyer_company_id', $company->id)
+                ->latest()
+                ->paginate(10, ['*'], 'quotes_page'),
+            'activeProviders' => B2BInsuranceProvider::query()
+                ->where('is_active', true)
+                ->orderByDesc('is_default')
+                ->orderBy('name')
+                ->get(),
+            'providerOptions' => $this->insuranceService->providerOptions(),
+            'canManageInsurance' => $this->permissionService->canManageInsurance(Auth::id(), $company->id),
+            'canSubmitInsuranceClaim' => $this->permissionService->canSubmitInsuranceClaim(Auth::id(), $company->id),
         ];
 
         if (!request()->expectsJson()) {
@@ -55,9 +72,26 @@ class B2BInsuranceController extends Controller
         $company = $this->getCompany('supplier');
         $payload = [
             'stats' => $this->insuranceService->companyDashboard($company, 'supplier'),
-            'policies' => B2BInsurancePolicy::where('supplier_company_id', $company->id)->latest()->paginate(10),
-            'claims' => B2BInsuranceClaim::where('supplier_company_id', $company->id)->latest()->paginate(10),
-            'quotes' => B2BInsuranceQuote::where('supplier_company_id', $company->id)->latest()->paginate(10),
+            'policies' => B2BInsurancePolicy::with(['provider', 'claims'])
+                ->where('supplier_company_id', $company->id)
+                ->latest()
+                ->paginate(10, ['*'], 'policies_page'),
+            'claims' => B2BInsuranceClaim::with(['policy', 'provider', 'documents'])
+                ->where('supplier_company_id', $company->id)
+                ->latest()
+                ->paginate(10, ['*'], 'claims_page'),
+            'quotes' => B2BInsuranceQuote::with(['provider', 'policy'])
+                ->where('supplier_company_id', $company->id)
+                ->latest()
+                ->paginate(10, ['*'], 'quotes_page'),
+            'activeProviders' => B2BInsuranceProvider::query()
+                ->where('is_active', true)
+                ->orderByDesc('is_default')
+                ->orderBy('name')
+                ->get(),
+            'providerOptions' => $this->insuranceService->providerOptions(),
+            'canManageInsurance' => $this->permissionService->canManageInsurance(Auth::id(), $company->id),
+            'canSubmitInsuranceClaim' => $this->permissionService->canSubmitInsuranceClaim(Auth::id(), $company->id),
         ];
 
         if (!request()->expectsJson()) {
@@ -75,9 +109,15 @@ class B2BInsuranceController extends Controller
         $this->ensureInsuranceEnabled();
         $payload = [
             'stats' => $this->insuranceService->adminDashboard(),
+            'quotes' => B2BInsuranceQuote::with(['provider', 'policy'])
+                ->latest()
+                ->paginate(10, ['*'], 'quotes_page'),
             'providers' => B2BInsuranceProvider::latest()->paginate(10),
             'claims' => B2BInsuranceClaim::latest()->paginate(10),
             'policies' => B2BInsurancePolicy::latest()->paginate(10),
+            'payments' => B2BInsurancePayment::with(['provider', 'policy', 'claim'])
+                ->latest()
+                ->paginate(10, ['*'], 'payments_page'),
             'apiLogs' => B2BInsuranceApiLog::with('provider')->latest()->limit(20)->get(),
             'providerOptions' => $this->insuranceService->providerOptions(),
         ];
@@ -357,9 +397,20 @@ class B2BInsuranceController extends Controller
     {
         $this->ensureInsuranceEnabled();
         $company = $this->companyService->getCompanyByUser(Auth::id());
-        abort_unless($company && $this->permissionService->canManageInsurance(Auth::id(), $company->id), 403);
+        abort_unless(
+            $company &&
+            $this->permissionService->canAccessCompany(Auth::id(), $company->id) &&
+            $this->permissionService->canManageInsurance(Auth::id(), $company->id),
+            403
+        );
 
         $quote = $this->insuranceService->generateQuote($this->validatedQuote($request, $company), Auth::user(), $company);
+
+        if (!$this->expectsJsonResponse($request)) {
+            flash(translate('Insurance quote generated successfully.'))->success();
+
+            return back();
+        }
 
         return response()->json(['data' => $quote], 201);
     }
@@ -415,6 +466,12 @@ class B2BInsuranceController extends Controller
             'documents.*.metadata' => 'nullable|array',
         ]), Auth::user(), $company->id);
 
+        if (!$this->expectsJsonResponse($request)) {
+            flash(translate('Insurance claim submitted successfully.'))->success();
+
+            return back();
+        }
+
         return response()->json(['data' => $claim], 201);
     }
 
@@ -459,6 +516,12 @@ class B2BInsuranceController extends Controller
             'meta' => 'nullable|array',
             'paid_at' => 'nullable|date',
         ]), Auth::user());
+
+        if (!$this->expectsJsonResponse($request)) {
+            flash(translate('Insurance payment recorded successfully.'))->success();
+
+            return back();
+        }
 
         return response()->json(['data' => $payment], 201);
     }
@@ -570,10 +633,45 @@ class B2BInsuranceController extends Controller
             'currency' => 'required|string|max:20',
         ]);
 
+        $linkedBuyerCompanyId = null;
+        $linkedSupplierCompanyId = null;
+
+        if (!empty($validated['shipment_id'])) {
+            $shipment = \App\Models\B2BShipment::findOrFail($validated['shipment_id']);
+            $linkedBuyerCompanyId = $shipment->buyer_company_id;
+            $linkedSupplierCompanyId = $shipment->supplier_company_id;
+        } elseif (!empty($validated['container_shipment_id'])) {
+            $containerShipment = \App\Models\B2BContainerShipment::with('freightQuote')->findOrFail($validated['container_shipment_id']);
+            $linkedBuyerCompanyId = $containerShipment->freightQuote?->buyer_company_id;
+            $linkedSupplierCompanyId = $containerShipment->freightQuote?->supplier_company_id;
+        } elseif (!empty($validated['freight_quote_id'])) {
+            $freightQuote = \App\Models\B2BFreightQuote::findOrFail($validated['freight_quote_id']);
+            $linkedBuyerCompanyId = $freightQuote->buyer_company_id;
+            $linkedSupplierCompanyId = $freightQuote->supplier_company_id;
+        } elseif (!empty($validated['purchase_order_id'])) {
+            $purchaseOrder = \App\Models\B2BPurchaseOrder::findOrFail($validated['purchase_order_id']);
+            $linkedBuyerCompanyId = $purchaseOrder->buyer_company_id;
+            $linkedSupplierCompanyId = $purchaseOrder->supplier_company_id;
+        } elseif (!empty($validated['proforma_invoice_id'])) {
+            $invoice = \App\Models\B2BProformaInvoice::findOrFail($validated['proforma_invoice_id']);
+            $linkedBuyerCompanyId = $invoice->buyer_company_id;
+            $linkedSupplierCompanyId = $invoice->supplier_company_id;
+        }
+
         if (in_array($company->company_type, \App\Models\B2BCompany::SUPPLIER_TYPES, true)) {
-            $validated['supplier_company_id'] = $request->input('supplier_company_id', $company->id);
+            if ($linkedSupplierCompanyId !== null) {
+                abort_unless((int) $linkedSupplierCompanyId === (int) $company->id, 403);
+            }
+
+            $validated['supplier_company_id'] = $company->id;
+            $validated['buyer_company_id'] = $linkedBuyerCompanyId ?: $request->input('buyer_company_id');
         } else {
-            $validated['buyer_company_id'] = $request->input('buyer_company_id', $company->id);
+            if ($linkedBuyerCompanyId !== null) {
+                abort_unless((int) $linkedBuyerCompanyId === (int) $company->id, 403);
+            }
+
+            $validated['buyer_company_id'] = $company->id;
+            $validated['supplier_company_id'] = $linkedSupplierCompanyId ?: $request->input('supplier_company_id');
         }
 
         return $validated;
@@ -582,7 +680,11 @@ class B2BInsuranceController extends Controller
     protected function getCompany(string $type)
     {
         $company = $this->companyService->getCompanyByUser(Auth::id());
-        abort_unless($company, 403);
+        abort_unless(
+            $company &&
+            $this->permissionService->canAccessCompany(Auth::id(), $company->id),
+            403
+        );
 
         if ($type === 'buyer') {
             abort_unless($this->companyService->isApprovedBuyer(Auth::id(), $company->id), 403);
@@ -602,7 +704,11 @@ class B2BInsuranceController extends Controller
         }
 
         $company = $this->companyService->getCompanyByUser(Auth::id());
-        abort_unless($company, 403);
+        abort_unless(
+            $company &&
+            $this->permissionService->canAccessCompany(Auth::id(), $company->id),
+            403
+        );
         abort_unless(in_array($company->id, array_filter([$buyerCompanyId, $supplierCompanyId]), true), 403);
     }
 
@@ -664,5 +770,10 @@ class B2BInsuranceController extends Controller
         $decoded = json_decode((string) $value, true);
 
         return is_array($decoded) ? $decoded : null;
+    }
+
+    protected function expectsJsonResponse(Request $request): bool
+    {
+        return $request->expectsJson() || $request->wantsJson() || $request->ajax();
     }
 }

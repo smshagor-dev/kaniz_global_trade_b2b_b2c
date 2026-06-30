@@ -1,6 +1,11 @@
 @extends('frontend.layouts.user_panel')
 
 @section('panel_content')
+    @php
+        $hasOfflineRechargeRoute = addon_is_activated('offline_payment') && Route::has('offline_wallet_recharge_modal');
+        $hasPaymentReceiptRoute = addon_is_activated('offline_payment') && Route::has('payment_receipt.show');
+    @endphp
+
     <div class="aiz-titlebar mb-4">
         <div class="row align-items-center">
             <div class="col-md-6">
@@ -34,7 +39,7 @@
         </div>
 
         <!-- Offline Recharge Wallet -->
-        @if (addon_is_activated('offline_payment'))
+        @if ($hasOfflineRechargeRoute)
             <div class="col-md-4 mx-auto mb-4">
                 <div class="p-4 mb-3 c-pointer text-center bg-light has-transition border h-100 hov-bg-soft-light"
                     onclick="show_make_wallet_recharge_modal()">
@@ -129,9 +134,9 @@
             </div>
         </div>
     </div>
- @if (addon_is_activated('offline_payment'))
+  @if ($hasPaymentReceiptRoute)
     @include('manual_payment_methods.frontend.payment_receipt')
- @endif   
+  @endif   
 @endsection
 
 @section('script')
@@ -140,26 +145,30 @@
             $('#wallet_modal').modal('show');
         }
 
-        function show_make_wallet_recharge_modal() {
-            $.post('{{ route('offline_wallet_recharge_modal') }}', {
-                _token: '{{ csrf_token() }}'
-            }, function(data) {
-                $('#offline_wallet_recharge_modal_body').html(data);
-                $('#offline_wallet_recharge_modal').modal('show');
-            });
-        }
+        @if ($hasOfflineRechargeRoute)
+            function show_make_wallet_recharge_modal() {
+                $.post('{{ route('offline_wallet_recharge_modal') }}', {
+                    _token: '{{ csrf_token() }}'
+                }, function(data) {
+                    $('#offline_wallet_recharge_modal_body').html(data);
+                    $('#offline_wallet_recharge_modal').modal('show');
+                });
+            }
+        @endif
 
-        function showPaymentReceipt(id){
-            $('#payment-receipt-show-modal .modal-body').html('');
-            $.ajax({
-                type: "GET",
-                url: "{{ route('payment_receipt.show', '') }}/"+id,
-                data: {},
-                success: function(data) {
-                    $('#payment-receipt-show-modal .modal-body').html(data);
-                    $('#payment-receipt-show-modal').modal('show');
-                }
-            });
-        }
+        @if ($hasPaymentReceiptRoute)
+            function showPaymentReceipt(id){
+                $('#payment-receipt-show-modal .modal-body').html('');
+                $.ajax({
+                    type: "GET",
+                    url: "{{ route('payment_receipt.show', '') }}/"+id,
+                    data: {},
+                    success: function(data) {
+                        $('#payment-receipt-show-modal .modal-body').html(data);
+                        $('#payment-receipt-show-modal').modal('show');
+                    }
+                });
+            }
+        @endif
     </script>
 @endsection

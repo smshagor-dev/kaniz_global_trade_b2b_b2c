@@ -4,6 +4,8 @@
     @php
         CoreComponentRepository::instantiateShopRepository();
         CoreComponentRepository::initializeCache();
+        $hasAdminOfflineWalletModalRoute = Route::has('admin_offline_wallet_recharge_modal');
+        $hasAdminWalletMakePaymentRoute = Route::has('admin_wallet_recharge.make_payment');
     @endphp
 
 
@@ -297,21 +299,26 @@
             rightOffcanvas.innerHTML =
                 '<div class="footable-loader mt-5"><span class="fooicon fooicon-loader"></span></div>';
 
-            $.ajax({
-                type: "POST",
-                url: "{{ route('admin_offline_wallet_recharge_modal') }}",
-                data: {
-                    _token: AIZ.data.csrf,
-                    customer_id: userId
-                },
-                success: function (html) {
-                    rightOffcanvas.innerHTML = html;
-                },
-                error: function () {
-                    rightOffcanvas.innerHTML =
-                        '<p class="text-danger p-3">{{ translate("Failed to load") }}</p>';
-                }
-            });
+            @if ($hasAdminOfflineWalletModalRoute)
+                $.ajax({
+                    type: "POST",
+                    url: "{{ route('admin_offline_wallet_recharge_modal') }}",
+                    data: {
+                        _token: AIZ.data.csrf,
+                        customer_id: userId
+                    },
+                    success: function (html) {
+                        rightOffcanvas.innerHTML = html;
+                    },
+                    error: function () {
+                        rightOffcanvas.innerHTML =
+                            '<p class="text-danger p-3">{{ translate("Failed to load") }}</p>';
+                    }
+                });
+            @else
+                rightOffcanvas.innerHTML =
+                    '<p class="text-warning p-3">{{ translate("Offline wallet recharge is not available right now.") }}</p>';
+            @endif
         }
 
         function closeRightcanvas() {
@@ -356,27 +363,33 @@
                 btn.append('<span class="spinner-border spinner-border-sm ms-2" role="status" aria-hidden="true"></span>');
             }
 
-            $.ajax({
-                url: "{{ route('admin_wallet_recharge.make_payment') }}",
-                type: "POST",
-                data: {
-                    _token: AIZ.data.csrf,
-                    user_id: user_id,
-                    amount: amount,
-                    trx_id: trx_id,
-                    photo: photo
-                },
-                success: function (res) {
-                    AIZ.plugins.notify('success', 'Wallet recharged successfully');
-                    closeRightcanvas();
-                    location.reload();
-                },
-                error: function () {
-                    AIZ.plugins.notify('danger', 'Something went wrong');
-                    btn.prop('disabled', false);
-                    btn.find('.spinner-border').remove();
-                }
-            });
+            @if ($hasAdminWalletMakePaymentRoute)
+                $.ajax({
+                    url: "{{ route('admin_wallet_recharge.make_payment') }}",
+                    type: "POST",
+                    data: {
+                        _token: AIZ.data.csrf,
+                        user_id: user_id,
+                        amount: amount,
+                        trx_id: trx_id,
+                        photo: photo
+                    },
+                    success: function (res) {
+                        AIZ.plugins.notify('success', 'Wallet recharged successfully');
+                        closeRightcanvas();
+                        location.reload();
+                    },
+                    error: function () {
+                        AIZ.plugins.notify('danger', 'Something went wrong');
+                        btn.prop('disabled', false);
+                        btn.find('.spinner-border').remove();
+                    }
+                });
+            @else
+                AIZ.plugins.notify('warning', '{{ translate('Offline wallet recharge is not available right now.') }}');
+                btn.prop('disabled', false);
+                btn.find('.spinner-border').remove();
+            @endif
         });
     </script>
 @endsection    

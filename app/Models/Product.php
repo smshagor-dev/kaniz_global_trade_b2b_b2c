@@ -147,6 +147,11 @@ class Product extends Model
     {
         return $this->hasMany(B2BProductPromotion::class);
     }
+
+    public function b2bCatalog()
+    {
+        return $this->belongsTo(B2BCompanyCatalog::class, 'b2b_company_catalog_id');
+    }
     
     public function scopeIsApprovedPublished($query)
     {

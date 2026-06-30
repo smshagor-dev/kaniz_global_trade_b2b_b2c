@@ -12,6 +12,7 @@ class B2BCompanyMember extends Model
         'b2b_company_id',
         'user_id',
         'role',
+        'custom_role_id',
         'status',
         'invited_by',
         'joined_at',
@@ -34,5 +35,15 @@ class B2BCompanyMember extends Model
     public function inviter()
     {
         return $this->belongsTo(User::class, 'invited_by');
+    }
+
+    public function customRole()
+    {
+        return $this->belongsTo(B2BCompanyRole::class, 'custom_role_id');
+    }
+
+    public function getRoleLabelAttribute(): string
+    {
+        return $this->customRole?->name ?: ucwords(str_replace('_', ' ', (string) $this->role));
     }
 }

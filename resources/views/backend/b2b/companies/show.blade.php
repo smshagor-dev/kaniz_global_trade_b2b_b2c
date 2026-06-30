@@ -76,6 +76,46 @@
                 </div></div>
                 <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Response Metrics') }}</div><div class="col-md-9">{{ $company->response_rate ? $company->response_rate . '%' : '-' }} / {{ $company->response_time_hours ? $company->response_time_hours . 'h' : '-' }}</div></div>
                 <div class="row mb-4"><div class="col-md-3 text-secondary">{{ translate('Factory Capability') }}</div><div class="col-md-9">{{ $company->production_capacity ?: '-' }}<br>{{ $company->factory_location ?: '-' }}</div></div>
+
+                <h5 class="mb-3">{{ translate('Catalogs') }}</h5>
+                <div class="table-responsive mb-4">
+                    <table class="table aiz-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>{{ translate('Title') }}</th>
+                                <th>{{ translate('Status') }}</th>
+                                <th>{{ translate('Description') }}</th>
+                                <th>{{ translate('PDF') }}</th>
+                                <th>{{ translate('Created') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($company->catalogs as $catalog)
+                                <tr>
+                                    <td>{{ $catalog->title }}</td>
+                                    <td>
+                                        <span class="badge badge-inline badge-{{ $catalog->is_active ? 'success' : 'secondary' }}">
+                                            {{ $catalog->is_active ? translate('Active') : translate('Inactive') }}
+                                        </span>
+                                    </td>
+                                    <td>{{ \Illuminate\Support\Str::limit($catalog->description ?: '-', 120) }}</td>
+                                    <td>
+                                        @if ($catalog->pdf_file)
+                                            <a href="{{ uploaded_asset($catalog->pdf_file) }}" target="_blank">{{ translate('Open PDF') }}</a>
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td>{{ $catalog->created_at ? $catalog->created_at->format('d M Y') : '-' }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center">{{ translate('No catalogs found') }}</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             @endif
             <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Trade License') }}</div><div class="col-md-9">
                 @if ($company->trade_license_file)

@@ -2,7 +2,7 @@
 
 @section('content')
 @php
-    $seller_package = get_single_seller_package(Session::get('payment_data')['seller_package_id']);
+    $sellerPackageAmount = \App\Support\B2BPaymentResolver::resolveSellerPackageAmount(Session::get('payment_data', []));
 @endphp
    
 
@@ -13,7 +13,7 @@
 <script>
     var options = {
         "key": "{{ env('RAZOR_KEY') }}", // Enter the Key ID generated from the Dashboard
-        "amount": "{{ $seller_package->amount*100}}", // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+        "amount": "{{ $sellerPackageAmount * 100}}", // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
         "currency": "INR",
         "name": "{{ env('APP_NAME') }}", //your business name
         "description": "{{ Session::get('payment_type') }}",

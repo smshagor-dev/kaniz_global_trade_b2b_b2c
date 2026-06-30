@@ -1,6 +1,13 @@
 @extends('b2b.layouts.app')
 
 @section('panel_content')
+    @php
+        $permissionService = app(\App\Services\B2BPermissionService::class);
+        $canManageFreight = $permissionService->canManageFreight(auth()->id(), $quote->buyer_company_id);
+        $canApproveFreightCosts = $permissionService->canApproveFreightCosts(auth()->id(), $quote->buyer_company_id);
+        $canSelectQuote = $canManageFreight || $canApproveFreightCosts;
+    @endphp
+
     <div class="aiz-titlebar mb-4"><h1 class="fs-20 fw-700 text-dark">{{ translate('Freight Quote') }}: {{ $quote->quote_number }}</h1></div>
     <div class="card rounded-0 shadow-none border mb-4">
         <div class="card-body">
@@ -18,5 +25,11 @@
             </div>
         </div>
     </div>
+    @if ($canSelectQuote && $quote->status !== 'selected')
+        <form action="{{ route('b2b.freight-quotes.select', $quote->id) }}" method="POST" class="mb-4">
+            @csrf
+            <button type="submit" class="btn btn-success rounded-0">{{ translate('Select Freight Quote') }}</button>
+        </form>
+    @endif
     @include('b2b.partials.freight_quote_costs', ['quote' => $quote, 'editable' => false])
 @endsection

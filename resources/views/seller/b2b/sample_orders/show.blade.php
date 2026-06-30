@@ -1,6 +1,12 @@
 @extends('b2b.layouts.supplier')
 
 @section('panel_content')
+    @php
+        $permissionService = app(\App\Services\B2BPermissionService::class);
+        $canManagePurchaseOrder = $permissionService->canManagePurchaseOrder(auth()->id(), $sampleOrder->supplier_company_id);
+        $canManageFreight = $permissionService->canManageFreight(auth()->id(), $sampleOrder->supplier_company_id);
+    @endphp
+
     <div class="aiz-titlebar mt-2 mb-4">
         <div class="row align-items-center">
             <div class="col-md-8">
@@ -41,7 +47,7 @@
 
             <div class="card">
                 <div class="card-body">
-                    @if ($sampleOrder->status === 'requested')
+                    @if ($canManagePurchaseOrder && $sampleOrder->status === 'requested')
                         <form action="{{ route('seller.b2b.sample-orders.accept', $sampleOrder->id) }}" method="POST" class="mb-3">
                             @csrf
                             <div class="form-group">
@@ -56,9 +62,11 @@
                         </form>
                     @endif
 
-                    <a href="{{ route('seller.b2b.shipping-quotes.sample-orders.create', $sampleOrder->id) }}" class="btn btn-primary btn-block mt-2">{{ translate('Create Shipping Quote') }}</a>
+                    @if ($canManageFreight && in_array($sampleOrder->status, ['accepted', 'shipping_quoted', 'payment_pending'], true))
+                        <a href="{{ route('seller.b2b.shipping-quotes.sample-orders.create', $sampleOrder->id) }}" class="btn btn-primary btn-block mt-2">{{ translate('Create Shipping Quote') }}</a>
+                    @endif
 
-                    @if (in_array($sampleOrder->status, ['paid', 'in_shipment', 'shipping_quoted'], true))
+                    @if ($canManageFreight && in_array($sampleOrder->status, ['paid', 'in_shipment'], true))
                         <a href="{{ route('seller.b2b.shipments.create', ['sample_order_id' => $sampleOrder->id]) }}" class="btn btn-soft-info btn-block mt-2">{{ translate('Create Shipment') }}</a>
                     @endif
                 </div>

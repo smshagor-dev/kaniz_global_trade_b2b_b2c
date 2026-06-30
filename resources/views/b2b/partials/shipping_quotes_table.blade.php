@@ -25,7 +25,7 @@
                                 <div>{{ $quote->shippingProvider?->name ?: translate('Direct Supplier Quote') }}</div>
                                 <small class="text-muted">{{ ucwords(str_replace('_', ' ', $quote->transport_mode)) }}</small>
                             </td>
-                            <td>{{ $quote->origin_country }} → {{ $quote->destination_country }}</td>
+                            <td>{{ $quote->origin_country }} &rarr; {{ $quote->destination_country }}</td>
                             <td>{{ $quote->incoterm ?: '-' }}</td>
                             <td>{{ $quote->estimated_days ? $quote->estimated_days . ' ' . translate('days') : '-' }}</td>
                             <td>{{ number_format((float) $quote->subtotal_cost, 2) }} {{ $quote->currency }}</td>

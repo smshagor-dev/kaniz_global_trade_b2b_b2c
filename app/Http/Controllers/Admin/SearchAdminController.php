@@ -14,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
+use Throwable;
 
 class SearchAdminController extends Controller
 {
@@ -31,7 +32,7 @@ class SearchAdminController extends Controller
             'provider' => $provider,
             'providers' => array_keys((array) config('search.providers', [])),
             'indexName' => $this->searchManager->indexName(),
-            'health' => $this->searchManager->resilientDriver($provider)->health($this->searchManager->indexName()),
+            'health' => $this->searchManager->healthReport($provider),
             'documentCounts' => SearchDocument::query()
                 ->selectRaw('type, COUNT(*) as total')
                 ->groupBy('type')
@@ -59,15 +60,61 @@ class SearchAdminController extends Controller
         $request->validate([
             'search_provider' => 'required|string|in:' . implode(',', array_keys((array) config('search.providers', []))),
             'search_index_name' => 'required|string|max:100',
+            'enable_global_search_header' => 'nullable|boolean',
+            'enable_global_search_ai_mode' => 'nullable|boolean',
+            'enable_global_search_image' => 'nullable|boolean',
+            'global_search_image_max_upload_kb' => 'nullable|integer|min:512|max:10240',
+            'global_search_trending_keywords' => 'nullable|string|max:2000',
+            'global_search_popular_categories' => 'nullable|string|max:2000',
+            'global_search_placeholder_text' => 'nullable|string|max:255',
+            'search_opensearch_base_url' => 'nullable|url|max:255',
+            'search_opensearch_username' => 'nullable|string|max:255',
+            'search_opensearch_password' => 'nullable|string|max:255',
         ]);
 
-        foreach (['search_provider', 'search_index_name'] as $key) {
-            BusinessSetting::updateOrCreate(['type' => $key], ['value' => $request->input($key)]);
+        $values = [
+            'search_provider' => $request->input('search_provider'),
+            'search_index_name' => $request->input('search_index_name'),
+            'enable_global_search_header' => $request->boolean('enable_global_search_header') ? '1' : '0',
+            'enable_global_search_ai_mode' => $request->boolean('enable_global_search_ai_mode') ? '1' : '0',
+            'enable_global_search_image' => $request->boolean('enable_global_search_image') ? '1' : '0',
+            'global_search_image_max_upload_kb' => (string) $request->input('global_search_image_max_upload_kb', 4096),
+            'global_search_trending_keywords' => (string) $request->input('global_search_trending_keywords', ''),
+            'global_search_popular_categories' => (string) $request->input('global_search_popular_categories', ''),
+            'global_search_placeholder_text' => (string) $request->input('global_search_placeholder_text', ''),
+            'search_opensearch_base_url' => (string) $request->input('search_opensearch_base_url', ''),
+            'search_opensearch_username' => (string) $request->input('search_opensearch_username', ''),
+            'search_opensearch_password' => (string) $request->input('search_opensearch_password', ''),
+        ];
+
+        foreach ($values as $key => $value) {
+            BusinessSetting::updateOrCreate(['type' => $key], ['value' => $value]);
         }
 
         Cache::forget('business_settings');
 
         flash(translate('Search settings updated successfully'))->success();
+
+        return back();
+    }
+
+    public function manageIndex(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'action' => 'required|string|in:create,delete',
+        ]);
+
+        try {
+            if ($request->input('action') === 'create') {
+                $this->searchManager->createIndex();
+                flash(translate('Search index created successfully'))->success();
+            } else {
+                $this->searchManager->deleteIndex();
+                flash(translate('Search index deleted successfully'))->success();
+            }
+        } catch (Throwable $throwable) {
+            flash($throwable->getMessage())->error();
+        }
 
         return back();
     }

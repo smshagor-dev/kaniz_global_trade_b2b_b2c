@@ -45,7 +45,7 @@ class B2BShippingQuoteController extends Controller
     public function storeForPurchaseOrder(Request $request, $purchaseOrderId)
     {
         $company = $this->getSupplierCompany();
-        abort_unless($this->b2bPermissionService->hasRole(Auth::id(), $company->id, ['owner', 'admin', 'sales_manager']), 403);
+        abort_unless($this->b2bPermissionService->canManageFreight(Auth::id(), $company->id), 403);
 
         $purchaseOrder = B2BPurchaseOrder::with(['buyerCompany', 'supplierCompany'])->where('supplier_company_id', $company->id)->findOrFail($purchaseOrderId);
         $data = $this->validatedData($request);
@@ -71,6 +71,12 @@ class B2BShippingQuoteController extends Controller
         $company = $this->getSupplierCompany();
         $sampleOrder = B2BSampleOrder::with(['buyerCompany', 'supplierCompany'])->where('supplier_company_id', $company->id)->findOrFail($sampleOrderId);
 
+        if (!in_array($sampleOrder->status, ['accepted', 'shipping_quoted', 'payment_pending'], true)) {
+            flash(translate('Sample order must be accepted before shipping quotes can be created.'))->warning();
+
+            return redirect()->route('seller.b2b.sample-orders.show', $sampleOrder->id);
+        }
+
         return view('seller.b2b.shipping_quotes.create', [
             'purchaseOrder' => null,
             'sampleOrder' => $sampleOrder,
@@ -84,9 +90,16 @@ class B2BShippingQuoteController extends Controller
     public function storeForSampleOrder(Request $request, $sampleOrderId)
     {
         $company = $this->getSupplierCompany();
-        abort_unless($this->b2bPermissionService->hasRole(Auth::id(), $company->id, ['owner', 'admin', 'sales_manager']), 403);
+        abort_unless($this->b2bPermissionService->canManageFreight(Auth::id(), $company->id), 403);
 
         $sampleOrder = B2BSampleOrder::with(['buyerCompany', 'supplierCompany'])->where('supplier_company_id', $company->id)->findOrFail($sampleOrderId);
+
+        if (!in_array($sampleOrder->status, ['accepted', 'shipping_quoted', 'payment_pending'], true)) {
+            flash(translate('Sample order must be accepted before shipping quotes can be created.'))->warning();
+
+            return redirect()->route('seller.b2b.sample-orders.show', $sampleOrder->id);
+        }
+
         $data = $this->validatedData($request);
 
         $data = $this->logisticsChargeService->applyToShippingQuotePayload($data);
@@ -100,7 +113,7 @@ class B2BShippingQuoteController extends Controller
             'created_by' => Auth::id(),
         ])));
 
-        if (in_array($sampleOrder->status, ['accepted', 'requested'], true)) {
+        if (in_array($sampleOrder->status, ['accepted', 'shipping_quoted', 'payment_pending'], true)) {
             $sampleOrder->update(['status' => 'shipping_quoted']);
         }
 
@@ -112,11 +125,17 @@ class B2BShippingQuoteController extends Controller
     public function select($id)
     {
         $company = $this->getBuyerCompany();
-        abort_unless($this->b2bPermissionService->hasRole(Auth::id(), $company->id, ['owner', 'admin', 'procurement_manager']), 403);
+        abort_unless($this->b2bPermissionService->canManagePurchaseOrder(Auth::id(), $company->id), 403);
 
         $quote = B2BShippingQuote::with(['purchaseOrder', 'sampleOrder'])
             ->where('buyer_company_id', $company->id)
             ->findOrFail($id);
+
+        if ($quote->sampleOrder && !in_array($quote->sampleOrder->status, ['accepted', 'shipping_quoted', 'payment_pending'], true)) {
+            flash(translate('This sample order is not ready for shipping selection yet.'))->warning();
+
+            return back();
+        }
 
         if ($quote->purchase_order_id) {
             B2BShippingQuote::where('purchase_order_id', $quote->purchase_order_id)->update(['status' => 'rejected']);
@@ -155,7 +174,7 @@ class B2BShippingQuoteController extends Controller
     public function lookupRates(Request $request, $providerId)
     {
         $company = $this->getSupplierCompany();
-        abort_unless($this->b2bPermissionService->hasRole(Auth::id(), $company->id, ['owner', 'admin', 'sales_manager']), 403);
+        abort_unless($this->b2bPermissionService->canManageFreight(Auth::id(), $company->id), 403);
 
         $provider = B2BShippingProvider::where('is_active', true)->findOrFail($providerId);
         $data = $request->validate([

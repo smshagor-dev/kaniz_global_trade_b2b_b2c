@@ -29,6 +29,9 @@
                         </div>
                         <div class="col-md-3 text-md-right mt-3 mt-md-0">
                             <a href="mailto:{{ $supplier->business_email }}" class="btn btn-soft-primary btn-block mb-2">{{ translate('Contact Supplier') }}</a>
+                            @if ($supplier->catalogs->isNotEmpty())
+                                <a href="#supplier-catalogs" class="btn btn-soft-info btn-block mb-2">{{ translate('View Catalogs') }}</a>
+                            @endif
                             @auth
                                 <a href="{{ route('b2b.rfqs.create', ['supplier_company_id' => $supplier->id]) }}" class="btn btn-primary btn-block mb-2">{{ translate('Request Quote') }}</a>
                                 <a href="{{ route('b2b.sample-orders.create', ['supplier_company_id' => $supplier->id]) }}" class="btn btn-soft-info btn-block">{{ translate('Request Sample') }}</a>
@@ -49,6 +52,33 @@
 
             <div class="row">
                 <div class="col-lg-8">
+                    @if ($supplier->catalogs->isNotEmpty())
+                        <div class="card border-0 shadow-sm mb-4" id="supplier-catalogs">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">{{ translate('Company Catalogs') }}</h5>
+                                <span class="badge badge-inline badge-info">{{ $supplier->catalogs->count() }}</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    @foreach ($supplier->catalogs->take(3) as $catalog)
+                                        <div class="col-md-4 mb-3">
+                                            <div class="border rounded p-3 h-100">
+                                                @if ($catalog->cover_image)
+                                                    <img src="{{ uploaded_asset($catalog->cover_image) }}" class="img-fluid mb-3" alt="{{ $catalog->title }}">
+                                                @endif
+                                                <h6 class="mb-2">{{ $catalog->title }}</h6>
+                                                <p class="text-muted small">{{ \Illuminate\Support\Str::limit($catalog->description ?: '-', 100) }}</p>
+                                                @if ($catalog->pdf_file)
+                                                    <a href="{{ uploaded_asset($catalog->pdf_file) }}" target="_blank" class="btn btn-soft-primary btn-sm">{{ translate('Open Catalog') }}</a>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="card border-0 shadow-sm mb-4">
                         <div class="card-header bg-white"><h5 class="mb-0">{{ translate('Factory Capability') }}</h5></div>
                         <div class="card-body">
@@ -90,6 +120,30 @@
                             @empty
                                 <p class="mb-0 text-muted">{{ translate('No approved certifications listed yet.') }}</p>
                             @endforelse
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white"><h5 class="mb-0">{{ translate('Catalogs') }}</h5></div>
+                        <div class="card-body">
+                            <div class="row">
+                                @forelse ($supplier->catalogs as $catalog)
+                                    <div class="col-md-6 mb-3">
+                                        <div class="border rounded p-3 h-100">
+                                            @if ($catalog->cover_image)
+                                                <img src="{{ uploaded_asset($catalog->cover_image) }}" class="img-fluid mb-3" alt="{{ $catalog->title }}">
+                                            @endif
+                                            <h6 class="mb-2">{{ $catalog->title }}</h6>
+                                            <p class="text-muted small">{{ $catalog->description ?: '-' }}</p>
+                                            @if ($catalog->pdf_file)
+                                                <a href="{{ uploaded_asset($catalog->pdf_file) }}" target="_blank" class="btn btn-soft-primary btn-sm">{{ translate('View Catalog PDF') }}</a>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="col-12 text-muted">{{ translate('No catalogs available yet.') }}</div>
+                                @endforelse
+                            </div>
                         </div>
                     </div>
 

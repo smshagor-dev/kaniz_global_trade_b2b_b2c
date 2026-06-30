@@ -7,7 +7,6 @@
                 <div class="col-lg-8">
                     <span class="badge badge-inline badge-warning mb-3">{{ strtoupper($packageFor) }} {{ translate('PLAN') }}</span>
                     <h2 class="fw-700 mb-3">{{ translate('B2B Membership Packages') }}</h2>
-                    <p class="opacity-80 mb-0">{{ translate('Choose a buyer or supplier growth plan like Alibaba-style membership. Unlock RFQ volume, quotation power, product visibility, and larger team operations from one place.') }}</p>
                 </div>
                 <div class="col-lg-4 mt-4 mt-lg-0">
                     <div class="bg-white text-dark rounded p-4">
@@ -31,20 +30,6 @@
                 <div class="mb-4">
                     <span class="badge badge-inline badge-warning mb-3">{{ translate('Supplier Featured Packages') }}</span>
                     <h3 class="fw-700 mb-2">{{ translate('Separate featured package system') }}</h3>
-                    <p class="text-muted mb-0">{{ translate('These featured supplier packages are fully separate from your company membership package and will never replace or mix with it.') }}</p>
-                </div>
-
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-body px-4 py-3">
-                        <h5 class="mb-2">{{ translate('Revenue Projection') }}</h5>
-                        <div class="fs-16 text-muted">
-                            {{ $featuredProjection['plan_name'] ?? translate('Featured Supplier') }}:
-                            <strong>{{ single_price($featuredProjection['monthly_price'] ?? 0) }}/{{ translate('month') }}</strong>
-                        </div>
-                        <div class="fs-20 fw-700 mt-2">
-                            {{ $featuredProjection['company_count'] ?? 0 }} x {{ single_price($featuredProjection['monthly_price'] ?? 0) }} = {{ single_price($featuredProjection['projected_monthly_revenue'] ?? 0) }}/{{ translate('month') }}
-                        </div>
-                    </div>
                 </div>
 
                 <div class="row gutters-16">
@@ -69,7 +54,9 @@
                                         <div class="text-muted ml-2">{{ $package->duration }} {{ translate('days') }}</div>
                                     </div>
 
-                                    <div class="text-muted mb-3">{{ $package->description ?: translate('Featured placement package for supplier homepage visibility.') }}</div>
+                                    @if ($package->description)
+                                        <div class="text-muted mb-3">{{ $package->description }}</div>
+                                    @endif
 
                                     <ul class="list-unstyled fs-13 mb-4">
                                         <li class="mb-2">{{ translate('Homepage featured visibility included') }}</li>
@@ -88,13 +75,7 @@
                                             <button type="submit" class="btn btn-warning btn-block">{{ translate('Activate Featured Plan') }}</button>
                                         </form>
                                     @else
-                                        <form action="{{ route('b2b.packages.request', $package->id) }}" method="POST">
-                                            @csrf
-                                            <input type="text" class="form-control mb-3" name="payment_reference" placeholder="{{ translate('Payment reference or transaction ID') }}" required>
-                                            <textarea class="form-control mb-3" name="payment_notes" rows="2" placeholder="{{ translate('Optional payment note or proof details') }}"></textarea>
-                                            <textarea class="form-control mb-3" name="note" rows="3" placeholder="{{ translate('Optional note for admin approval') }}"></textarea>
-                                            <button type="submit" class="btn btn-warning btn-block">{{ translate('Request Featured Package') }}</button>
-                                        </form>
+                                        <button type="button" class="btn btn-warning btn-block" onclick="openB2BPackagePurchaseModal({{ $package->id }})">{{ translate('Purchase Featured Package') }}</button>
                                     @endif
                                 </div>
                             </div>
@@ -127,7 +108,9 @@
                             <div class="text-muted ml-2">{{ $package->duration }} {{ translate('days') }}</div>
                         </div>
 
-                        <div class="text-muted mb-3">{{ $package->description ?: translate('Growth package for B2B operations.') }}</div>
+                        @if ($package->description)
+                            <div class="text-muted mb-3">{{ $package->description }}</div>
+                        @endif
 
                         <ul class="list-unstyled fs-13 mb-4">
                             <li class="mb-2">{{ translate('RFQs') }}: {{ $package->rfq_limit ?: translate('Unlimited') }}</li>
@@ -148,13 +131,7 @@
                                 <button type="submit" class="btn btn-primary btn-block">{{ translate('Activate Free Plan') }}</button>
                             </form>
                         @else
-                            <form action="{{ route('b2b.packages.request', $package->id) }}" method="POST">
-                                @csrf
-                                <input type="text" class="form-control mb-3" name="payment_reference" placeholder="{{ translate('Payment reference or transaction ID') }}" required>
-                                <textarea class="form-control mb-3" name="payment_notes" rows="2" placeholder="{{ translate('Optional payment note or proof details') }}"></textarea>
-                                <textarea class="form-control mb-3" name="note" rows="3" placeholder="{{ translate('Optional note for admin approval') }}"></textarea>
-                                <button type="submit" class="btn btn-primary btn-block">{{ translate('Request This Membership Package') }}</button>
-                            </form>
+                            <button type="button" class="btn btn-primary btn-block" onclick="openB2BPackagePurchaseModal({{ $package->id }})">{{ translate('Purchase This Membership Package') }}</button>
                         @endif
                     </div>
                 </div>
@@ -239,4 +216,48 @@
             </div>
         </div>
     @endif
+@endsection
+
+@section('modal')
+    <div class="modal fade" id="b2b_package_payment_modal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ translate('Purchase Your Package') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="b2b_package_payment_form" method="POST">
+                    @csrf
+                    <div class="modal-body" style="overflow-y: unset;">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label>{{ translate('Payment Method') }}</label>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="mb-3">
+                                    <select class="form-control aiz-selectpicker" data-live-search="true" name="payment_option" required>
+                                        @include('partials.online_payment_options')
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group text-right mb-0">
+                            <button type="button" class="btn btn-sm btn-secondary mr-1" data-dismiss="modal">{{ translate('Cancel') }}</button>
+                            <button type="submit" class="btn btn-sm btn-primary">{{ translate('Confirm Payment') }}</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@section('script')
+    <script type="text/javascript">
+        function openB2BPackagePurchaseModal(id) {
+            var actionTemplate = @json(url('/b2b/packages/__ID__/purchase'));
+            document.getElementById('b2b_package_payment_form').setAttribute('action', actionTemplate.replace('__ID__', id));
+            $('#b2b_package_payment_modal').modal('show');
+        }
+    </script>
 @endsection

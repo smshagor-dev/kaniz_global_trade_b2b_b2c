@@ -10,6 +10,7 @@ use App\Services\B2BCompanyService;
 use App\Services\B2BProductPromotionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 
 class B2BProductPromotionController extends Controller
 {
@@ -196,6 +197,81 @@ class B2BProductPromotionController extends Controller
         flash(translate('Sponsored product package request submitted successfully. Admin approval is pending.'))->success();
 
         return back();
+    }
+
+    public function purchasePackage(Request $request, $id)
+    {
+        $company = $this->getSupplierCompany();
+        $package = B2BProductPromotionPackage::active()->findOrFail($id);
+
+        if ((float) $package->amount <= 0) {
+            $this->productPromotionService->activatePackage($company, $package);
+            flash(translate('Sponsored product package activated successfully.'))->success();
+
+            return back();
+        }
+
+        $request->validate([
+            'payment_option' => 'required|string|max:100',
+        ]);
+
+        if ($this->productPromotionService->getActivePackageForCompany($company)?->id === $package->id) {
+            flash(translate('This sponsored product package is already active.'))->warning();
+
+            return back();
+        }
+
+        $paymentData = [
+            'seller_package_id' => 0,
+            'b2b_package_id' => 0,
+            'b2b_premium_verification_package_id' => 0,
+            'b2b_product_promotion_package_id' => $package->id,
+            'b2b_company_id' => $company->id,
+            'b2b_user_id' => Auth::id(),
+            'payment_method' => $request->payment_option,
+        ];
+
+        $request->session()->put('payment_type', 'seller_package_payment');
+        $request->session()->put('payment_data', $paymentData);
+
+        $decorator = 'App\\Http\\Controllers\\Payment\\' . str_replace(' ', '', ucwords(str_replace('_', ' ', $request->payment_option))) . 'Controller';
+
+        if (class_exists($decorator)) {
+            return (new $decorator())->pay($request);
+        }
+
+        Session::forget('payment_type');
+        Session::forget('payment_data');
+        flash(translate('Selected payment method is not available right now.'))->warning();
+
+        return back();
+    }
+
+    public function purchasePaymentDone(array $paymentData, ?string $payment = null)
+    {
+        $package = B2BProductPromotionPackage::active()->findOrFail($paymentData['b2b_product_promotion_package_id']);
+        $company = B2BCompany::findOrFail($paymentData['b2b_company_id']);
+        $userId = (int) ($paymentData['b2b_user_id'] ?? Auth::id());
+
+        if ($userId && Auth::id() !== $userId) {
+            Auth::loginUsingId($userId);
+        }
+
+        $this->productPromotionService->activatePackage($company, $package);
+        $this->productPromotionService->recordAutomatedPurchase(
+            $company,
+            $package,
+            $userId ?: Auth::id(),
+            (string) ($paymentData['payment_method'] ?? 'online_payment'),
+            $payment
+        );
+
+        Session::forget('payment_type');
+        Session::forget('payment_data');
+
+        flash(translate('Sponsored product package purchasing successful.'))->success();
+
+        return redirect()->route('seller.b2b.product-promotions.index');
     }
 
     public function toggleProduct(Request $request, $productId)

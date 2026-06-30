@@ -12,6 +12,8 @@ use App\Models\B2BFreightQuote;
 use App\Models\B2BInsuranceClaim;
 use App\Models\B2BInsurancePolicy;
 use App\Models\B2BInsuranceQuote;
+use App\Models\B2BSampleOrder;
+use App\Models\B2BSettlement;
 use App\Models\B2BShipment;
 use App\Models\NotificationType;
 use App\Models\User;
@@ -228,37 +230,61 @@ class B2BNotificationService
 
     public function notifyInsuranceQuoteGenerated(B2BInsuranceQuote $quote): void
     {
-        $link = route('b2b.insurance.dashboard');
-
-        $this->notifyCompanies($quote->buyer_company_id, $quote->supplier_company_id, $link);
+        $this->notifyInsuranceCompanies($quote->buyer_company_id, $quote->supplier_company_id);
     }
 
     public function notifyInsurancePolicyIssued(B2BInsurancePolicy $policy): void
     {
-        $link = route('admin.b2b.insurance.dashboard');
-
-        $this->notifyCompanies($policy->buyer_company_id, $policy->supplier_company_id, $link);
+        $this->notifyInsuranceCompanies($policy->buyer_company_id, $policy->supplier_company_id);
     }
 
     public function notifyInsuranceClaimSubmitted(B2BInsuranceClaim $claim): void
     {
-        $link = route('b2b.insurance.dashboard');
-
-        $this->notifyCompanies($claim->buyer_company_id, $claim->supplier_company_id, $link);
+        $this->notifyInsuranceCompanies($claim->buyer_company_id, $claim->supplier_company_id);
     }
 
     public function notifyInsuranceClaimStatusUpdated(B2BInsuranceClaim $claim, string $status): void
     {
-        $link = route('admin.b2b.insurance.dashboard');
-
-        $this->notifyCompanies($claim->buyer_company_id, $claim->supplier_company_id, $link);
+        $this->notifyInsuranceCompanies($claim->buyer_company_id, $claim->supplier_company_id);
     }
 
     public function notifyInsurancePolicyExpiring(B2BInsurancePolicy $policy, bool $expired = false): void
     {
-        $link = route('b2b.insurance.dashboard');
+        $this->notifyInsuranceCompanies($policy->buyer_company_id, $policy->supplier_company_id);
+    }
 
-        $this->notifyCompanies($policy->buyer_company_id, $policy->supplier_company_id, $link);
+    public function notifySupplierAboutSampleOrder(B2BSampleOrder $sampleOrder): void
+    {
+        $this->notifyCompanies(
+            $sampleOrder->buyer_company_id,
+            $sampleOrder->supplier_company_id,
+            route('seller.b2b.sample-orders.show', $sampleOrder->id)
+        );
+    }
+
+    public function notifyBuyerAboutSampleOrderUpdate(B2BSampleOrder $sampleOrder): void
+    {
+        $this->notifyCompanies(
+            $sampleOrder->buyer_company_id,
+            $sampleOrder->supplier_company_id,
+            route('b2b.sample-orders.show', $sampleOrder->id)
+        );
+    }
+
+    public function notifySupplierPayoutRequested(B2BSettlement $settlement): void
+    {
+        $this->notifySupplierCompany($settlement->supplier_company_id, route('seller.b2b.finance.payouts'));
+        $this->notifyAdminTeam(route('admin.b2b.trade-finance.payouts'));
+    }
+
+    public function notifySupplierPayoutApproved(B2BSettlement $settlement): void
+    {
+        $this->notifySupplierCompany($settlement->supplier_company_id, route('seller.b2b.finance.payouts'));
+    }
+
+    public function notifySupplierPayoutCompleted(B2BSettlement $settlement): void
+    {
+        $this->notifySupplierCompany($settlement->supplier_company_id, route('seller.b2b.finance.payouts'));
     }
 
     protected function notifyCompanies(?int $buyerCompanyId, ?int $supplierCompanyId, string $link): void
@@ -273,6 +299,47 @@ class B2BNotificationService
         if ($supplierUser && (!$buyerUser || $supplierUser->id !== $buyerUser->id)) {
             $this->sendLinkNotification(collect([$supplierUser]), $link);
         }
+    }
+
+    protected function notifyInsuranceCompanies(?int $buyerCompanyId, ?int $supplierCompanyId): void
+    {
+        if ($buyerCompanyId) {
+            $buyerUser = User::whereHas('b2bCompany', fn ($query) => $query->where('id', $buyerCompanyId))->first();
+
+            if ($buyerUser) {
+                $this->sendLinkNotification(collect([$buyerUser]), route('b2b.insurance.dashboard'));
+            }
+        }
+
+        if ($supplierCompanyId) {
+            $supplierUser = User::whereHas('b2bCompany', fn ($query) => $query->where('id', $supplierCompanyId))->first();
+
+            if ($supplierUser) {
+                $this->sendLinkNotification(collect([$supplierUser]), route('seller.b2b.insurance.dashboard'));
+            }
+        }
+    }
+
+    protected function notifySupplierCompany(?int $supplierCompanyId, string $link): void
+    {
+        if (!$supplierCompanyId) {
+            return;
+        }
+
+        $supplierUsers = User::query()
+            ->whereHas('b2bCompany', fn ($query) => $query->where('id', $supplierCompanyId))
+            ->get();
+
+        $this->sendLinkNotification($supplierUsers, $link);
+    }
+
+    protected function notifyAdminTeam(string $link): void
+    {
+        $admins = User::query()
+            ->whereIn('user_type', ['admin', 'staff'])
+            ->get();
+
+        $this->sendLinkNotification($admins, $link);
     }
 
     protected function sendLinkNotification(EloquentCollection|Collection $users, string $link): void

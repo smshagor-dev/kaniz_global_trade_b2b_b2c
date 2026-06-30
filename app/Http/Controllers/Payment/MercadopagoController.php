@@ -54,8 +54,7 @@ class MercadopagoController extends Controller
                 $combined_order_id = rand(10000, 99999);
                 $billname = 'Customer Package Payment';
             } elseif ($paymentType == 'seller_package_payment') {
-                $seller_package = SellerPackage::findOrFail($paymentData['seller_package_id']);
-                $amount = round($seller_package->amount);
+                $amount = round(\App\Support\B2BPaymentResolver::resolveSellerPackageAmount($paymentData));
                 $combined_order_id = rand(10000, 99999);
                 $billname = 'Seller Package Payment';
             }

@@ -79,8 +79,7 @@ class AuthorizenetController extends Controller
         }
         elseif ($paymentType == 'seller_package_payment') {
             $invoiceNumber = rand(10000, 99999);
-            $seller_package = SellerPackage::findOrFail($paymentData['seller_package_id']);
-            $amount = $seller_package->amount;
+            $amount = \App\Support\B2BPaymentResolver::resolveSellerPackageAmount($paymentData);
             $lastName = $user->name;
         }
 

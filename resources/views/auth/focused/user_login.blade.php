@@ -7,6 +7,7 @@
             : uploaded_asset(get_setting('site_icon'));
         $loginHeading = $loginHeading ?? translate('Welcome Back !');
         $loginSubtitle = $loginSubtitle ?? translate('Login to your account');
+        $loginPortal = $loginPortal ?? 'user';
         $registerRoute = $registerRoute ?? route('user.registration');
     @endphp
     <!-- aiz-main-wrapper -->
@@ -38,6 +39,7 @@
                                 <div class="">
                                     <form class="form-default loginForm" id="user-login-form"  role="form" action="{{ route('login') }}" method="POST">
                                         @csrf
+                                        <input type="hidden" name="workspace_portal" value="{{ $loginPortal }}">
                                         
                                         <!-- Email or Phone -->
                                         @if (addon_is_activated('otp_system'))

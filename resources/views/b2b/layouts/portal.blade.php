@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="{{ static_asset('assets/css/aiz-seller.css') }}">
     <link rel="stylesheet" href="{{ static_asset('assets/css/custom-style.css') }}">
     <link rel="stylesheet" href="{{ static_asset('assets/css/seller-custom-style.css') }}">
+    @stack('styles')
 
     @php
         $portal = $portal ?? 'buyer';
@@ -188,7 +189,9 @@
 
     <script src="{{ static_asset('assets/js/vendors.js') }}"></script>
     <script src="{{ static_asset('assets/js/aiz-core.js') }}"></script>
+    @yield('modal')
     @yield('script')
+    @stack('scripts')
 
     <script type="text/javascript">
         @foreach (session('flash_notification', collect())->toArray() as $message)

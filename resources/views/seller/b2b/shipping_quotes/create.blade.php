@@ -104,7 +104,7 @@
     </div>
 @endsection
 
-@push('script')
+@push('scripts')
 <script>
     (function () {
         var providerSelect = document.querySelector('.js-shipping-provider');

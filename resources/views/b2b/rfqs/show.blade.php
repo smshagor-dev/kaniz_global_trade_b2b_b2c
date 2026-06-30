@@ -7,7 +7,7 @@
                 <h1 class="fs-20 fw-700 text-dark">{{ translate('RFQ Details') }}</h1>
             </div>
             <div class="col-md-6 text-md-right">
-                @if (!in_array($rfq->status, ['closed', 'cancelled']))
+                @if (($canCreateRfq ?? false) && !in_array($rfq->status, ['closed', 'cancelled']))
                     <a href="{{ route('b2b.rfqs.edit', $rfq->id) }}" class="btn btn-soft-primary rounded-0 mr-2">{{ translate('Edit RFQ') }}</a>
                     <form action="{{ route('b2b.rfqs.cancel', $rfq->id) }}" method="POST" class="d-inline">
                         @csrf
@@ -27,7 +27,7 @@
             <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Quantity') }}</div><div class="col-md-9">{{ $rfq->quantity }} {{ $rfq->unit }}</div></div>
             <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Target Price') }}</div><div class="col-md-9">{{ $rfq->target_price ? $rfq->target_price . ' ' . $rfq->currency : '-' }}</div></div>
             <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Incoterm') }}</div><div class="col-md-9">{{ $rfq->incoterm ?: '-' }}</div></div>
-            <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Destination') }}</div><div class="col-md-9">{{ $rfq->destination_city ?: '-' }} {{ $rfq->destination_country ? ', ' . $rfq->destination_country : '' }}</div></div>
+            <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Destination') }}</div><div class="col-md-9">{{ $rfq->destination_city ?: '-' }}{{ $rfq->destination_country ? ', ' . $rfq->destination_country : '' }}</div></div>
             <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Expected Delivery') }}</div><div class="col-md-9">{{ optional($rfq->expected_delivery_date)->format('Y-m-d') ?: '-' }}</div></div>
             <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Expires At') }}</div><div class="col-md-9">{{ optional($rfq->expires_at)->format('Y-m-d H:i') ?: '-' }}</div></div>
             <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Status') }}</div><div class="col-md-9"><span class="badge badge-inline badge-secondary">{{ ucfirst($rfq->status) }}</span></div></div>
@@ -90,7 +90,10 @@
                                 @if ($quotation->attachment)
                                     <a href="{{ asset($quotation->attachment) }}" target="_blank" class="btn btn-soft-info btn-sm">{{ translate('Attachment') }}</a>
                                 @endif
-                                @if ($quotation->status === 'pending' && !in_array($rfq->status, ['closed', 'cancelled']))
+                                @if ($quotation->negotiation)
+                                    <a href="{{ route('b2b.negotiations.show', $quotation->negotiation->id) }}" class="btn btn-soft-info btn-sm">{{ translate('Open Conversation') }}</a>
+                                @endif
+                                @if (($canManagePurchaseOrder ?? false) && $quotation->status === 'pending' && !in_array($rfq->status, ['closed', 'cancelled']))
                                     <form action="{{ route('b2b.quotations.accept', $quotation->id) }}" method="POST" class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-success btn-sm">{{ translate('Accept') }}</button>

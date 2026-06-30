@@ -71,7 +71,7 @@ class SearchService
             'result_count' => $hits->count(),
             'response_time_ms' => (int) round((microtime(true) - $started) * 1000),
             'filters' => $filters,
-            'metadata' => ['types' => $types],
+            'metadata' => array_merge(['types' => $types], (array) ($options['metadata'] ?? [])),
         ], $user);
 
         return $response;
@@ -448,6 +448,11 @@ class SearchService
         ], $user);
     }
 
+    public function recordCustomEvent(string $type, string $query, array $attributes = [], ?User $user = null): void
+    {
+        $this->recordEvent($type, $query, $attributes, $user);
+    }
+
     public function analyticsSummary(): array
     {
         $searches = SearchAnalyticsEvent::where('event_type', 'search');
@@ -671,9 +676,14 @@ class SearchService
 
     protected function providerName($driver): string
     {
-        return (string) Str::of(class_basename($driver))
-            ->replace(['SearchDriver', 'Driver'], '')
-            ->snake();
+        $baseName = class_basename($driver);
+
+        return match ($baseName) {
+            'DatabaseSearchDriver' => 'database',
+            default => (string) Str::of($baseName)
+                ->replaceLast('Driver', '')
+                ->snake(),
+        };
     }
 
     protected function expandQuery(string $query): string

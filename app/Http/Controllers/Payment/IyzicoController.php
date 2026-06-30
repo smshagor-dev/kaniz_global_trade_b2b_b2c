@@ -41,6 +41,13 @@ class IyzicoController extends Controller
         $data['order_id'] = 0;
         $data['customer_package_id'] = 0;
         $data['seller_package_id'] = 0;
+        $data['b2b_package_id'] = 0;
+        $data['b2b_product_promotion_package_id'] = 0;
+        $data['b2b_premium_verification_package_id'] = 0;
+        $data['b2b_ai_trade_desk_access'] = 0;
+        $data['b2b_ai_access_price'] = 0;
+        $data['b2b_company_id'] = 0;
+        $data['b2b_user_id'] = 0;
 
         if($paymentType == 'cart_payment'){
             $combined_order = CombinedOrder::findOrFail(Session::get('combined_order_id'));
@@ -69,9 +76,8 @@ class IyzicoController extends Controller
             $firstBasketItemCategory1 = "Package";
         }
         if($paymentType == 'seller_package_payment'){
-            $seller_package = SellerPackage::findOrFail($paymentData['seller_package_id']);
-            $amount = $seller_package->amount;
-            $data['seller_package_id'] = $paymentData['seller_package_id'];
+            $data = array_merge($data, \App\Support\B2BPaymentResolver::sellerPackagePayload($paymentData));
+            $amount = \App\Support\B2BPaymentResolver::resolveSellerPackageAmount($paymentData);
             $firstBasketItemName = "Package Payment";
             $firstBasketItemCategory1 = "Package";
         }
@@ -209,6 +215,13 @@ class IyzicoController extends Controller
                 return (new CustomerPackageController)->purchase_payment_done($data, $payment);
             } elseif ($payment_type == 'seller_package_payment') {
                 $data['seller_package_id'] = $seller_package_id;
+                $data['b2b_package_id'] = Session::get('payment_data.b2b_package_id', 0);
+                $data['b2b_product_promotion_package_id'] = Session::get('payment_data.b2b_product_promotion_package_id', 0);
+                $data['b2b_premium_verification_package_id'] = Session::get('payment_data.b2b_premium_verification_package_id', 0);
+                $data['b2b_ai_trade_desk_access'] = Session::get('payment_data.b2b_ai_trade_desk_access', 0);
+                $data['b2b_ai_access_price'] = Session::get('payment_data.b2b_ai_access_price', 0);
+                $data['b2b_company_id'] = Session::get('payment_data.b2b_company_id', 0);
+                $data['b2b_user_id'] = Session::get('payment_data.b2b_user_id', 0);
                 $data['payment_method'] = $payment_method;
 
                 return (new SellerPackageController)->purchase_payment_done($data, $payment);

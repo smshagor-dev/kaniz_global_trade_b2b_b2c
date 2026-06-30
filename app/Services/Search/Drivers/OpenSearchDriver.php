@@ -2,6 +2,7 @@
 
 namespace App\Services\Search\Drivers;
 
+use Illuminate\Support\Arr;
 use RuntimeException;
 
 class OpenSearchDriver extends AbstractHttpSearchDriver
@@ -94,15 +95,46 @@ class OpenSearchDriver extends AbstractHttpSearchDriver
                 ],
             ],
             'mappings' => [
+                'dynamic_templates' => [
+                    [
+                        'filters_string_template' => [
+                            'path_match' => 'filters.*',
+                            'match_mapping_type' => 'string',
+                            'mapping' => ['type' => 'keyword'],
+                        ],
+                    ],
+                    [
+                        'metadata_string_template' => [
+                            'path_match' => 'metadata.*',
+                            'match_mapping_type' => 'string',
+                            'mapping' => ['type' => 'keyword'],
+                        ],
+                    ],
+                ],
                 'properties' => [
                     'title' => ['type' => 'text'],
                     'summary' => ['type' => 'text'],
                     'keywords' => ['type' => 'text'],
                     'search_text' => ['type' => 'text'],
                     'type' => ['type' => 'keyword'],
+                    'entity_subtype' => ['type' => 'keyword'],
                     'visibility' => ['type' => 'keyword'],
-                    'filters' => ['type' => 'object', 'enabled' => true],
-                    'metadata' => ['type' => 'object', 'enabled' => true],
+                    'is_active' => ['type' => 'boolean'],
+                    'model_type' => ['type' => 'keyword'],
+                    'model_id' => ['type' => 'long'],
+                    'filters' => ['type' => 'object', 'dynamic' => true],
+                    'metadata' => ['type' => 'object', 'dynamic' => true],
+                    'rank_exact' => ['type' => 'float'],
+                    'rank_popularity' => ['type' => 'float'],
+                    'rank_sales' => ['type' => 'float'],
+                    'rank_verified' => ['type' => 'float'],
+                    'rank_featured' => ['type' => 'float'],
+                    'rank_supplier_score' => ['type' => 'float'],
+                    'rank_rating' => ['type' => 'float'],
+                    'rank_trade_volume' => ['type' => 'float'],
+                    'rank_response_rate' => ['type' => 'float'],
+                    'rank_recency' => ['type' => 'float'],
+                    'rank_ai_score' => ['type' => 'float'],
                 ],
             ],
         ]);
@@ -121,13 +153,15 @@ class OpenSearchDriver extends AbstractHttpSearchDriver
         }
 
         $response = $this->client()->get($this->baseUrl() . '/_cluster/health/' . $indexName);
+        $countResponse = $this->client()->get($this->baseUrl() . '/' . $indexName . '/_count');
 
         return [
-            'ok' => $response->successful(),
+            'ok' => $response->successful() && $countResponse->successful(),
             'provider' => 'opensearch',
             'index' => $indexName,
             'status' => data_get($response->json(), 'status'),
-            'document_count' => data_get($response->json(), 'number_of_data_nodes'),
+            'document_count' => (int) data_get($countResponse->json(), 'count', 0),
+            'message' => $response->successful() ? null : $response->body(),
         ];
     }
 
@@ -135,8 +169,31 @@ class OpenSearchDriver extends AbstractHttpSearchDriver
     {
         $filters = [];
 
-        foreach ((array) ($payload['types'] ?? []) as $type) {
-            $filters[] = ['term' => ['type' => $type]];
+        if (!empty($payload['types'])) {
+            $filters[] = ['terms' => ['type' => array_values((array) $payload['types'])]];
+        }
+
+        if (!empty($payload['visibility'])) {
+            $filters[] = ['terms' => ['visibility' => array_values((array) $payload['visibility'])]];
+        }
+
+        if (array_key_exists('is_active', $payload)) {
+            $filters[] = ['term' => ['is_active' => (bool) $payload['is_active']]];
+        }
+
+        foreach ((array) ($payload['filters'] ?? []) as $key => $value) {
+            if ($value === null || $value === '' || $value === []) {
+                continue;
+            }
+
+            $field = 'filters.' . $key;
+
+            if (is_array($value) && !Arr::isAssoc($value)) {
+                $filters[] = ['terms' => [$field => array_values($value)]];
+                continue;
+            }
+
+            $filters[] = ['term' => [$field => $value]];
         }
 
         return $filters;

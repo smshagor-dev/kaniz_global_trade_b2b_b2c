@@ -34,6 +34,16 @@ class B2BQuotationController extends Controller
         }
 
         $supplierCompany = $this->getApprovedSupplierCompany();
+        $supplierCategoryIds = $supplierCompany->categories()->pluck('categories.id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+        $supplierProductCategoryIds = $supplierCompany->wholesaleProducts()
+            ->pluck('category_id')
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
 
         $rfqs = B2BRfq::with(['company', 'product', 'category', 'quotations'])
             ->where('user_id', '!=', Auth::id())
@@ -52,6 +62,18 @@ class B2BQuotationController extends Controller
             ->latest()
             ->paginate(15)
             ->appends($request->query());
+
+        $rfqs->getCollection()->transform(function (B2BRfq $rfq) use ($supplierCompany, $supplierCategoryIds, $supplierProductCategoryIds) {
+            $rfq->is_related_match = $this->isRfqRelatedToSupplier(
+                $rfq,
+                $supplierCompany->id,
+                $supplierCategoryIds,
+                $supplierProductCategoryIds
+            );
+            $rfq->can_submit_quote = $rfq->is_related_match && in_array($rfq->status, ['open', 'quoted'], true);
+
+            return $rfq;
+        });
 
         return view('seller.b2b.rfqs.index', compact('rfqs', 'supplierCompany'));
     }
@@ -76,13 +98,9 @@ class B2BQuotationController extends Controller
 
         $rfq = $this->getQuotableRfq($rfqId);
         $supplierCompany = $this->getApprovedSupplierCompany();
+        $existingQuotation = $this->findExistingQuotation($rfq->id, $supplierCompany->id);
 
-        if ($existingQuotation = $this->findExistingQuotation($rfq->id, $supplierCompany->id)) {
-            flash(translate('You have already submitted a quotation for this RFQ.'))->warning();
-            return $this->redirectToExistingQuotation($existingQuotation);
-        }
-
-        return view('seller.b2b.rfqs.quote', compact('rfq', 'supplierCompany'));
+        return view('seller.b2b.rfqs.quote', compact('rfq', 'supplierCompany', 'existingQuotation'));
     }
 
     public function store(Request $request, $rfqId)
@@ -104,6 +122,7 @@ class B2BQuotationController extends Controller
         $data['supplier_user_id'] = Auth::id();
         $data['supplier_company_id'] = $supplierCompany->id;
         $data['product_id'] = $data['product_id'] ?? $rfq->product_id;
+        $data['currency'] = $rfq->currency;
         $data['status'] = 'pending';
         $data['attachment'] = $this->storeFile($request, 'attachment', 'uploads/b2b_quotations');
 
@@ -150,7 +169,7 @@ class B2BQuotationController extends Controller
         $this->getAccessibleSupplierCompany();
 
         $quotation = $this->ownedSupplierQuotationQuery()
-            ->with(['rfq.company', 'rfq.product', 'rfq.category', 'supplierCompany', 'product'])
+            ->with(['rfq.company', 'rfq.product', 'rfq.category', 'supplierCompany', 'product', 'negotiation'])
             ->findOrFail($id);
 
         return view('seller.b2b.quotations.show', compact('quotation'));
@@ -202,6 +221,7 @@ class B2BQuotationController extends Controller
         $data = $this->validatedData($request);
         $oldPrice = $quotation->price;
         $data['product_id'] = $data['product_id'] ?? $quotation->rfq->product_id;
+        $data['currency'] = $quotation->rfq->currency;
         $data['attachment'] = $this->storeFile($request, 'attachment', 'uploads/b2b_quotations', $quotation->attachment);
 
         $quotation->update($data);
@@ -353,6 +373,7 @@ class B2BQuotationController extends Controller
     protected function getQuotableRfq($rfqId): B2BRfq
     {
         $rfq = B2BRfq::with(['company', 'product', 'category'])->findOrFail($rfqId);
+        $supplierCompany = $this->getApprovedSupplierCompany();
 
         if ($rfq->user_id === Auth::id()) {
             abort(403);
@@ -366,7 +387,48 @@ class B2BQuotationController extends Controller
             abort(403);
         }
 
+        abort_unless(
+            $supplierCompany && $this->isRfqRelatedToSupplier($rfq, $supplierCompany->id),
+            403
+        );
+
         return $rfq;
+    }
+
+    protected function isRfqRelatedToSupplier(
+        B2BRfq $rfq,
+        int $supplierCompanyId,
+        ?array $supplierCategoryIds = null,
+        ?array $supplierProductCategoryIds = null
+    ): bool {
+        if ($rfq->supplier_company_id) {
+            return (int) $rfq->supplier_company_id === $supplierCompanyId;
+        }
+
+        $rfqCategoryId = (int) ($rfq->category_id ?: $rfq->product?->category_id);
+
+        if ($rfqCategoryId <= 0) {
+            return true;
+        }
+
+        $supplierCategoryIds ??= \App\Models\B2BCompany::find($supplierCompanyId)?->categories()
+            ->pluck('categories.id')
+            ->map(fn ($id) => (int) $id)
+            ->all() ?? [];
+
+        if (in_array($rfqCategoryId, $supplierCategoryIds, true)) {
+            return true;
+        }
+
+        $supplierProductCategoryIds ??= \App\Models\B2BCompany::find($supplierCompanyId)?->wholesaleProducts()
+            ->pluck('category_id')
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all() ?? [];
+
+        return in_array($rfqCategoryId, $supplierProductCategoryIds, true);
     }
 
     protected function getApprovedSupplierCompany()
@@ -405,7 +467,7 @@ class B2BQuotationController extends Controller
         abort_unless(
             $company &&
             $this->b2bCompanyService->isApprovedBuyer(Auth::id(), $company->id) &&
-            $this->b2bPermissionService->hasRole(Auth::id(), $company->id, ['owner', 'admin', 'procurement_manager']),
+            $this->b2bPermissionService->canManagePurchaseOrder(Auth::id(), $company->id),
             403
         );
 

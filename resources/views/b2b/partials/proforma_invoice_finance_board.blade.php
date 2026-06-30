@@ -1,4 +1,10 @@
 <div class="card rounded-0 shadow-none border mt-3">
+    @php
+        $currentRouteName = Route::currentRouteName();
+        $isSupplierInvoiceView = $currentRouteName === 'seller.b2b.proforma-invoices.show';
+        $isBuyerInvoiceView = $currentRouteName === 'b2b.proforma-invoices.show';
+        $financeActionsEnabled = $canManageTradeFinance ?? false;
+    @endphp
     <div class="card-header d-flex justify-content-between align-items-center">
         <span>{{ translate('Financial Operations') }}</span>
         <span class="badge badge-soft-primary">{{ translate('Escrow, refunds, disputes, settlements') }}</span>
@@ -49,7 +55,7 @@
                                 <td><span class="badge badge-inline badge-info">{{ ucfirst($escrow->status) }}</span></td>
                                 <td>{{ $escrow->amount }} {{ $escrow->currency }}</td>
                                 <td>
-                                    @if(Route::currentRouteName() === 'seller.b2b.proforma-invoices.show' && $escrow->status === 'released')
+                                    @if($isSupplierInvoiceView && $financeActionsEnabled && $escrow->status === 'released')
                                         <form action="{{ route('seller.b2b.trade-finance.settlements.store', $escrow->id) }}" method="POST">
                                             @csrf
                                             <div class="input-group input-group-sm">
@@ -78,49 +84,53 @@
 
         <div class="row gutters-12">
             <div class="col-lg-6">
-                <form action="{{ (Route::currentRouteName() === 'seller.b2b.proforma-invoices.show') ? route('seller.b2b.trade-finance.disputes.store', $invoice->id) : route('b2b.trade-finance.disputes.store', $invoice->id) }}" method="POST" class="border p-3 mb-3">
-                    @csrf
-                    <h5 class="fs-14 mb-3">{{ translate('Raise Finance Dispute') }}</h5>
-                    <div class="form-group">
-                        <select name="category" class="form-control" required>
-                            <option value="late_shipment">{{ translate('Late Shipment') }}</option>
-                            <option value="wrong_product">{{ translate('Wrong Product') }}</option>
-                            <option value="damage">{{ translate('Damage') }}</option>
-                            <option value="payment">{{ translate('Payment') }}</option>
-                            <option value="document_issue">{{ translate('Document Issue') }}</option>
-                            <option value="refund">{{ translate('Refund') }}</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <input type="text" name="title" class="form-control" placeholder="{{ translate('Dispute title') }}" required>
-                    </div>
-                    <div class="form-group">
-                        <textarea name="description" class="form-control" rows="3" placeholder="{{ translate('Describe the issue') }}" required></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-warning rounded-0">{{ translate('Create Dispute') }}</button>
-                </form>
+                @if($financeActionsEnabled)
+                    <form action="{{ $isSupplierInvoiceView ? route('seller.b2b.trade-finance.disputes.store', $invoice->id) : route('b2b.trade-finance.disputes.store', $invoice->id) }}" method="POST" class="border p-3 mb-3">
+                        @csrf
+                        <h5 class="fs-14 mb-3">{{ translate('Raise Finance Dispute') }}</h5>
+                        <div class="form-group">
+                            <select name="category" class="form-control" required>
+                                <option value="late_shipment">{{ translate('Late Shipment') }}</option>
+                                <option value="wrong_product">{{ translate('Wrong Product') }}</option>
+                                <option value="damage">{{ translate('Damage') }}</option>
+                                <option value="payment">{{ translate('Payment') }}</option>
+                                <option value="document_issue">{{ translate('Document Issue') }}</option>
+                                <option value="refund">{{ translate('Refund') }}</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="title" class="form-control" placeholder="{{ translate('Dispute title') }}" required>
+                        </div>
+                        <div class="form-group">
+                            <textarea name="description" class="form-control" rows="3" placeholder="{{ translate('Describe the issue') }}" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-warning rounded-0">{{ translate('Create Dispute') }}</button>
+                    </form>
+                @endif
             </div>
             <div class="col-lg-6">
-                <form action="{{ (Route::currentRouteName() === 'seller.b2b.proforma-invoices.show') ? route('seller.b2b.trade-finance.refunds.store', $invoice->id) : route('b2b.trade-finance.refunds.store', $invoice->id) }}" method="POST" class="border p-3">
-                    @csrf
-                    <h5 class="fs-14 mb-3">{{ translate('Request Refund') }}</h5>
-                    <div class="form-group">
-                        <input type="number" step="0.01" min="0.01" max="{{ $invoice->buyer_payable_total ?: $invoice->grand_total }}" name="amount" class="form-control" placeholder="{{ translate('Amount') }}" required>
-                    </div>
-                    <div class="form-group">
-                        <select name="refund_type" class="form-control" required>
-                            <option value="full">{{ translate('Full Refund') }}</option>
-                            <option value="partial">{{ translate('Partial Refund') }}</option>
-                            <option value="escrow">{{ translate('Escrow Refund') }}</option>
-                            <option value="gateway">{{ translate('Gateway Refund') }}</option>
-                            <option value="manual">{{ translate('Manual Refund') }}</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <textarea name="reason" class="form-control" rows="3" placeholder="{{ translate('Refund reason') }}" required></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-danger rounded-0">{{ translate('Submit Refund Request') }}</button>
-                </form>
+                @if($financeActionsEnabled)
+                    <form action="{{ $isSupplierInvoiceView ? route('seller.b2b.trade-finance.refunds.store', $invoice->id) : route('b2b.trade-finance.refunds.store', $invoice->id) }}" method="POST" class="border p-3">
+                        @csrf
+                        <h5 class="fs-14 mb-3">{{ translate('Request Refund') }}</h5>
+                        <div class="form-group">
+                            <input type="number" step="0.01" min="0.01" max="{{ $invoice->buyer_payable_total ?: $invoice->grand_total }}" name="amount" class="form-control" placeholder="{{ translate('Amount') }}" required>
+                        </div>
+                        <div class="form-group">
+                            <select name="refund_type" class="form-control" required>
+                                <option value="full">{{ translate('Full Refund') }}</option>
+                                <option value="partial">{{ translate('Partial Refund') }}</option>
+                                <option value="escrow">{{ translate('Escrow Refund') }}</option>
+                                <option value="gateway">{{ translate('Gateway Refund') }}</option>
+                                <option value="manual">{{ translate('Manual Refund') }}</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <textarea name="reason" class="form-control" rows="3" placeholder="{{ translate('Refund reason') }}" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-danger rounded-0">{{ translate('Submit Refund Request') }}</button>
+                    </form>
+                @endif
             </div>
         </div>
 
@@ -147,15 +157,17 @@
                                 @endforeach
                             </div>
                         @endif
-                        <form action="{{ (Route::currentRouteName() === 'seller.b2b.proforma-invoices.show') ? route('seller.b2b.trade-finance.disputes.messages.store', $dispute->id) : route('b2b.trade-finance.disputes.messages.store', $dispute->id) }}" method="POST" class="mt-2">
-                            @csrf
-                            <div class="input-group">
-                                <input type="text" name="message" class="form-control" placeholder="{{ translate('Add dispute message') }}" required>
-                                <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="submit">{{ translate('Send') }}</button>
+                        @if($financeActionsEnabled)
+                            <form action="{{ $isSupplierInvoiceView ? route('seller.b2b.trade-finance.disputes.messages.store', $dispute->id) : route('b2b.trade-finance.disputes.messages.store', $dispute->id) }}" method="POST" class="mt-2">
+                                @csrf
+                                <div class="input-group">
+                                    <input type="text" name="message" class="form-control" placeholder="{{ translate('Add dispute message') }}" required>
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary" type="submit">{{ translate('Send') }}</button>
+                                    </div>
                                 </div>
-                            </div>
-                        </form>
+                            </form>
+                        @endif
                     </div>
                 @endforeach
             </div>

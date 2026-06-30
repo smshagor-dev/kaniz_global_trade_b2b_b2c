@@ -248,7 +248,9 @@ Route::group(['middleware' => ['auth', 'verified', 'unbanned']], function () {
 
     Route::controller(B2BNegotiationController::class)->middleware('approved_b2b_company:buyer,package')->group(function () {
         Route::get('/b2b/negotiations', 'buyerIndex')->name('b2b.negotiations.index');
+        Route::get('/b2b/negotiations/data', 'buyerListData')->name('b2b.negotiations.data');
         Route::get('/b2b/negotiations/{id}', 'buyerShow')->name('b2b.negotiations.show');
+        Route::get('/b2b/negotiations/{id}/data', 'buyerShowData')->name('b2b.negotiations.show.data');
         Route::post('/b2b/negotiations/{id}/messages', 'buyerStore')->name('b2b.negotiations.messages.store');
     });
 });
@@ -325,7 +327,9 @@ Route::group(['prefix' => 'seller', 'middleware' => ['auth', 'verified', 'unbann
 
     Route::controller(B2BNegotiationController::class)->middleware('approved_b2b_company:supplier,package')->group(function () {
         Route::get('/b2b/negotiations', 'supplierIndex')->name('seller.b2b.negotiations.index');
+        Route::get('/b2b/negotiations/data', 'supplierListData')->name('seller.b2b.negotiations.data');
         Route::get('/b2b/negotiations/{id}', 'supplierShow')->name('seller.b2b.negotiations.show');
+        Route::get('/b2b/negotiations/{id}/data', 'supplierShowData')->name('seller.b2b.negotiations.show.data');
         Route::post('/b2b/negotiations/{id}/messages', 'supplierStore')->name('seller.b2b.negotiations.messages.store');
     });
 

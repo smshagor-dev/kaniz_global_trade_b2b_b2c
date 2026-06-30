@@ -13,12 +13,22 @@ class GeminiDriver extends AbstractAIHttpDriver
         $baseUrl = rtrim((string) ($providerSetting->base_url ?: config('ai.providers.gemini.base_url')), '/');
         $apiKey = $providerSetting->api_key;
         $prompt = trim(($payload['system_prompt'] ? $payload['system_prompt'] . "\n\n" : '') . $payload['prompt']);
+        $parts = [['text' => $prompt]];
+
+        if (!empty($payload['image']['base64'])) {
+            $parts[] = [
+                'inline_data' => [
+                    'mime_type' => (string) ($payload['image']['mime_type'] ?? 'image/jpeg'),
+                    'data' => (string) $payload['image']['base64'],
+                ],
+            ];
+        }
 
         $response = $this->client($providerSetting)
             ->withHeaders(['Content-Type' => 'application/json'])
             ->post($baseUrl . '/models/' . $model . ':generateContent?key=' . urlencode((string) $apiKey), [
                 'contents' => [[
-                    'parts' => [['text' => $prompt]],
+                    'parts' => $parts,
                 ]],
                 'generationConfig' => [
                     'temperature' => (float) ($payload['temperature'] ?? $providerSetting->temperature ?? 0.7),

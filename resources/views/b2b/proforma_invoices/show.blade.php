@@ -1,6 +1,13 @@
 @extends('b2b.layouts.app')
 
 @section('panel_content')
+    @php
+        $permissionService = app(\App\Services\B2BPermissionService::class);
+        $canManageInvoice = $permissionService->canManageInvoice(auth()->id(), $invoice->buyer_company_id);
+        $canManageTradeFinance = $permissionService->canManageTradeFinance(auth()->id(), $invoice->buyer_company_id);
+        $canManagePurchaseOrder = $permissionService->canManagePurchaseOrder(auth()->id(), $invoice->buyer_company_id);
+    @endphp
+
     <div class="aiz-titlebar mb-4">
         <div class="row align-items-center">
             <div class="col-md-8">
@@ -72,13 +79,13 @@
                 </div>
             </div>
 
-            @if ($invoice->status === 'sent')
+            @if ($canManageInvoice && $invoice->status === 'sent')
                 <form action="{{ route('b2b.proforma-invoices.accept', $invoice->id) }}" method="POST" class="mt-3">
                     @csrf
                     <button type="submit" class="btn btn-success btn-block rounded-0">{{ translate('Accept Proforma Invoice') }}</button>
                 </form>
             @endif
-            @if ($invoice->canFundEscrow())
+            @if ($canManageInvoice && $invoice->canFundEscrow())
                 <form action="{{ route('b2b.proforma-invoices.fund', $invoice->id) }}" method="POST" class="mt-3">
                     @csrf
                     <div class="form-group mb-2">
@@ -87,7 +94,7 @@
                     <button type="submit" class="btn btn-primary btn-block rounded-0">{{ translate('Fund Escrow') }}</button>
                 </form>
             @endif
-            @if ($invoice->canReleaseEscrow())
+            @if ($canManageInvoice && $invoice->canReleaseEscrow())
                 <form action="{{ route('b2b.proforma-invoices.release', $invoice->id) }}" method="POST" class="mt-3">
                     @csrf
                     <div class="form-group mb-2">
@@ -96,7 +103,7 @@
                     <button type="submit" class="btn btn-success btn-block rounded-0">{{ translate('Release Escrow') }}</button>
                 </form>
             @endif
-            @if ($invoice->canDisputeEscrow())
+            @if ($canManageInvoice && $invoice->canDisputeEscrow())
                 <form action="{{ route('b2b.proforma-invoices.dispute', $invoice->id) }}" method="POST" class="mt-3">
                     @csrf
                     <div class="form-group mb-2">
@@ -105,7 +112,7 @@
                     <button type="submit" class="btn btn-warning btn-block rounded-0">{{ translate('Raise Escrow Dispute') }}</button>
                 </form>
             @endif
-            @if ($invoice->shipments->first())
+            @if ($canManagePurchaseOrder && $invoice->shipments->first())
                 <a href="{{ route('b2b.shipments.show', $invoice->shipments->sortByDesc('created_at')->first()->id) }}" class="btn btn-soft-info btn-block rounded-0 mt-2">{{ translate('Track Shipment') }}</a>
             @endif
         </div>

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Payment;
 
-use App\Http\Controllers\Api\V2\Seller\SellerPackageController;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\SellerPackageController;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\CombinedOrder;
@@ -75,10 +75,9 @@ class PayhereController extends Controller
                 return PayhereUtility::create_customer_package_form($user_id, $package_id, $order_id, $amount, $first_name, $last_name, $phone, $email, $address, $city);
             }
             elseif ($paymentType == 'seller_package_payment') {
-                $seller_package = SellerPackage::findOrFail($paymentData['seller_package_id']);
                 $order_id = rand(100000, 999999);
-                $package_id = $seller_package->id;
-                $amount = $seller_package->amount;
+                $package_id = $paymentData['seller_package_id'];
+                $amount = \App\Support\B2BPaymentResolver::resolveSellerPackageAmount($paymentData);
                 return PayhereUtility::create_seller_package_form($user_id, $package_id, $order_id, $amount, $first_name, $last_name, $phone, $email, $address, $city);
             }
         }

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\B2BCompany;
 use App\Models\B2BPremiumVerificationPackage;
 use App\Models\B2BPremiumVerificationRequest;
+use Illuminate\Support\Str;
 
 class B2BPremiumVerificationService
 {
@@ -41,6 +42,37 @@ class B2BPremiumVerificationService
             'payment_submitted_at' => !empty($payload['payment_reference']) ? now() : null,
             'requested_at' => now(),
         ]);
+    }
+
+    public function recordAutomatedPurchase(
+        B2BCompany $company,
+        B2BPremiumVerificationPackage $package,
+        int $userId,
+        string $paymentMethod,
+        ?string $paymentDetails = null
+    ): B2BPremiumVerificationRequest {
+        $paymentReference = strtoupper(Str::slug($paymentMethod ?: 'online_payment', '_'))
+            . '-' . substr(sha1((string) $paymentDetails), 0, 16);
+
+        return B2BPremiumVerificationRequest::updateOrCreate(
+            [
+                'b2b_company_id' => $company->id,
+                'b2b_premium_verification_package_id' => $package->id,
+                'payment_reference' => $paymentReference,
+            ],
+            [
+                'requested_by' => $userId,
+                'amount' => $package->amount,
+                'status' => 'approved',
+                'note' => 'Automatic online payment completed.',
+                'payment_notes' => $paymentDetails,
+                'payment_submitted_at' => now(),
+                'requested_at' => now(),
+                'approved_at' => now(),
+                'approved_by' => null,
+                'rejection_note' => null,
+            ]
+        );
     }
 
     public function revenueProjection(int $companyCount): array

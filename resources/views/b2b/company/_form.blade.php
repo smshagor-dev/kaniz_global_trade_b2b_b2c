@@ -27,15 +27,17 @@
     $lockedCompanyType = $lockedCompanyType ?? null;
     $afterSubmitRoute = $afterSubmitRoute ?? 'b2b.company.show';
     $introText = $introText ?? translate('Company legal profile, banking details, and verification documents stay together on one page for faster review.');
+    $formId = $formId ?? 'b2b-company-form';
+    $sectionButtonText = $sectionButtonText ?? translate('Save Section');
 @endphp
 
 @if ($renderCard)
-        <div class="card rounded-0 shadow-none border">
-        <div class="card-header pt-4 border-bottom-0">
+        <div class="card rounded-0 shadow-none border-0 shadow-sm overflow-hidden">
+        <div class="card-header pt-4 border-bottom-0 bg-white">
             <h5 class="mb-0 fs-18 fw-700 text-dark">{{ $title }}</h5>
             <p class="text-muted mb-0 mt-2">{{ $introText }}</p>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4 p-lg-5 bg-light">
 @endif
         @if ($errors->any())
             <div class="alert alert-danger">
@@ -47,12 +49,19 @@
             </div>
         @endif
         @if ($renderForm)
-        <form action="{{ $action }}" method="POST" enctype="multipart/form-data">
+        <form id="{{ $formId }}" action="{{ $action }}" method="POST" enctype="multipart/form-data">
             @csrf
             <input type="hidden" name="after_submit_route" value="{{ $afterSubmitRoute }}">
         @endif
-            <div class="border rounded p-3 mb-4">
-                <h6 class="fw-700 mb-3">{{ translate('Company Identity') }}</h6>
+            <div class="card rounded-0 shadow-none border-0 mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center border-bottom">
+                    <div>
+                        <h6 class="fw-700 mb-1">{{ translate('Company Identity') }}</h6>
+                        <p class="text-muted fs-13 mb-0">{{ translate('Maintain the official business identity and primary contact details used across your B2B profile.') }}</p>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary rounded-0" name="save_section" value="company_identity">{{ $sectionButtonText }}</button>
+                </div>
+                <div class="card-body p-4 bg-white">
                 <div class="form-group row">
                     <label class="col-md-3 col-form-label fs-14">{{ translate('Company Name') }} <span class="text-danger">*</span></label>
                     <div class="col-md-9">
@@ -130,26 +139,38 @@
                         <input type="email" class="form-control rounded-0" name="business_email" value="{{ old('business_email', $company?->business_email) }}" required>
                     </div>
                 </div>
+                </div>
             </div>
 
-            <div class="border rounded p-3 mb-4">
-                <h6 class="fw-700 mb-3">{{ translate('Business Overview') }}</h6>
-                <div class="form-group row mb-0">
+            <div class="card rounded-0 shadow-none border-0 mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center border-bottom">
+                    <div>
+                        <h6 class="fw-700 mb-1">{{ translate('Business Overview') }}</h6>
+                        <p class="text-muted fs-13 mb-0">{{ translate('Present a concise profile summary that helps buyers, suppliers, and internal teams understand your company faster.') }}</p>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary rounded-0" name="save_section" value="business_overview">{{ $sectionButtonText }}</button>
+                </div>
+                <div class="card-body p-4 bg-white">
+                <div class="form-group row">
                     <label class="col-md-3 col-form-label fs-14">{{ translate('Description') }}</label>
                     <div class="col-md-9">
                         <textarea class="form-control rounded-0" name="description" rows="4">{{ old('description', $company?->description) }}</textarea>
                     </div>
                 </div>
+                </div>
             </div>
 
-            <div class="border rounded p-3 mb-4">
-                <div class="d-flex flex-wrap justify-content-between align-items-start mb-3">
+            <div class="card rounded-0 shadow-none border-0 mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center border-bottom">
                     <div>
                         <h6 class="fw-700 mb-1">{{ translate('Bank Account Verification') }}</h6>
-                        <p class="text-muted mb-0">{{ translate('Collect beneficiary details and one bank check or bank statement copy on the same page for finance review.') }}</p>
+                        <p class="text-muted fs-13 mb-0">{{ translate('Add beneficiary details and supporting bank document for finance review.') }}</p>
                     </div>
-                    <span class="badge badge-inline badge-soft-info">{{ translate('Alibaba-style bank check') }}</span>
+                    <div class="d-flex align-items-center">
+                        <button type="submit" class="btn btn-sm btn-primary rounded-0" name="save_section" value="bank_verification">{{ $sectionButtonText }}</button>
+                    </div>
                 </div>
+                <div class="card-body p-4 bg-white">
                 <div class="form-group row">
                     <label class="col-md-3 col-form-label fs-14">{{ translate('Account Name') }}</label>
                     <div class="col-md-9">
@@ -210,10 +231,18 @@
                         @endif
                     </div>
                 </div>
+                </div>
             </div>
 
-            <div class="border rounded p-3 mb-4">
-                <h6 class="fw-700 mb-3">{{ translate('Core Verification Documents') }}</h6>
+            <div class="card rounded-0 shadow-none border-0 mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center border-bottom">
+                    <div>
+                        <h6 class="fw-700 mb-1">{{ translate('Core Verification Documents') }}</h6>
+                        <p class="text-muted fs-13 mb-0">{{ translate('Upload the main files your company uses for identity, compliance, and verification review.') }}</p>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary rounded-0" name="save_section" value="core_documents">{{ $sectionButtonText }}</button>
+                </div>
+                <div class="card-body p-4 bg-white">
                 <div class="form-group row">
                     <label class="col-md-3 col-form-label fs-14">{{ translate('Company Logo') }}</label>
                     <div class="col-md-9">
@@ -247,12 +276,19 @@
                         @endif
                     </div>
                 </div>
+                </div>
             </div>
 
             @if ($verificationRequirements->count())
-                <div class="border rounded p-3 mb-4">
-                    <h6 class="fw-700 mb-3">{{ translate('Additional Verification Requirements') }}</h6>
-                    <p class="text-muted">{{ translate('Admin can configure extra documents or information such as business licenses, importer codes, owner ID, export permits, factory audits, or proof of address.') }}</p>
+                <div class="card rounded-0 shadow-none border-0 mb-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center border-bottom">
+                        <div>
+                            <h6 class="fw-700 mb-1">{{ translate('Additional Verification Requirements') }}</h6>
+                            <p class="text-muted fs-13 mb-0">{{ translate('Admin can configure extra documents or information such as business licenses, importer codes, owner ID, export permits, factory audits, or proof of address.') }}</p>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary rounded-0" name="save_section" value="additional_requirements">{{ $sectionButtonText }}</button>
+                    </div>
+                    <div class="card-body p-4 bg-white">
                     @foreach ($verificationRequirements as $requirement)
                         @php
                             $submission = $submissionMap->get($requirement->id);
@@ -289,11 +325,18 @@
                             @endif
                         </div>
                     @endforeach
+                    </div>
                 </div>
             @endif
 
-            <div class="form-group mb-0 text-right">
-                <button type="submit" class="btn btn-primary rounded-0 w-200px mt-3">{{ $submitText }}</button>
+            <div class="card rounded-0 shadow-none border-0">
+                <div class="card-body p-4 bg-white d-flex flex-wrap justify-content-between align-items-center">
+                    <div>
+                        <h6 class="fw-700 mb-1">{{ translate('Ready to save all changes?') }}</h6>
+                        <p class="text-muted mb-0">{{ translate('Use any section button for quick updates, or save the full company profile here.') }}</p>
+                    </div>
+                    <button type="submit" class="btn btn-primary rounded-0 px-5 mt-3 mt-md-0">{{ $submitText }}</button>
+                </div>
             </div>
         @if ($renderForm)
         </form>

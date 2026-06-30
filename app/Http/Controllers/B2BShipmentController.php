@@ -67,6 +67,8 @@ class B2BShipmentController extends Controller
     public function create(Request $request)
     {
         $company = $this->getSupplierCompany();
+        abort_unless($this->b2bPermissionService->canManageFreight(Auth::id(), $company->id), 403);
+
         $purchaseOrder = $request->purchase_order_id
             ? B2BPurchaseOrder::where('supplier_company_id', $company->id)->findOrFail($request->purchase_order_id)
             : null;
@@ -76,6 +78,25 @@ class B2BShipmentController extends Controller
         $proformaInvoice = $request->proforma_invoice_id
             ? B2BProformaInvoice::where('supplier_company_id', $company->id)->findOrFail($request->proforma_invoice_id)
             : null;
+
+        if ($purchaseOrder && !in_array($purchaseOrder->status, ['accepted', 'completed'], true)) {
+            flash(translate('Purchase order must be accepted before shipment can be created.'))->warning();
+
+            return redirect()->route('seller.b2b.purchase-orders.show', $purchaseOrder->id);
+        }
+
+        if ($sampleOrder && !in_array($sampleOrder->status, ['paid', 'in_shipment'], true)) {
+            flash(translate('Sample order must be paid before shipment can be created.'))->warning();
+
+            return redirect()->route('seller.b2b.sample-orders.show', $sampleOrder->id);
+        }
+
+        if ($proformaInvoice && !in_array($proformaInvoice->status, ['accepted'], true)) {
+            flash(translate('Proforma invoice must be accepted before shipment can be created.'))->warning();
+
+            return redirect()->route('seller.b2b.proforma-invoices.show', $proformaInvoice->id);
+        }
+
         $shippingQuotes = B2BShippingQuote::where('supplier_company_id', $company->id)
             ->when($purchaseOrder, fn ($query) => $query->where('purchase_order_id', $purchaseOrder->id))
             ->when($sampleOrder, fn ($query) => $query->where('sample_order_id', $sampleOrder->id))
@@ -97,7 +118,7 @@ class B2BShipmentController extends Controller
     public function store(Request $request)
     {
         $company = $this->getSupplierCompany();
-        abort_unless($this->b2bPermissionService->hasRole(Auth::id(), $company->id, ['owner', 'admin', 'sales_manager']), 403);
+        abort_unless($this->b2bPermissionService->canManageFreight(Auth::id(), $company->id), 403);
 
         $data = $request->validate([
             'purchase_order_id' => 'nullable|exists:b2b_purchase_orders,id',
@@ -137,6 +158,35 @@ class B2BShipmentController extends Controller
         $shippingQuote = !empty($data['shipping_quote_id']) ? B2BShippingQuote::where('supplier_company_id', $company->id)->findOrFail($data['shipping_quote_id']) : null;
         $shippingProviderId = $data['shipping_provider_id'] ?? $shippingQuote?->shipping_provider_id;
         $shippingProvider = $shippingProviderId ? B2BShippingProvider::find($shippingProviderId) : null;
+
+        if ($purchaseOrder && !in_array($purchaseOrder->status, ['accepted', 'completed'], true)) {
+            flash(translate('Purchase order must be accepted before shipment can be created.'))->warning();
+
+            return back();
+        }
+
+        if ($sampleOrder && !in_array($sampleOrder->status, ['paid', 'in_shipment'], true)) {
+            flash(translate('Shipment can only be created after the sample order is paid.'))->warning();
+            return back();
+        }
+
+        if ($proformaInvoice && !in_array($proformaInvoice->status, ['accepted'], true)) {
+            flash(translate('Proforma invoice must be accepted before shipment can be created.'))->warning();
+
+            return back();
+        }
+
+        if ($shippingQuote && $shippingQuote->status !== 'selected') {
+            flash(translate('Please use the selected shipping quote to create the shipment.'))->warning();
+
+            return back();
+        }
+
+        if ($sampleOrder && !$shippingQuote && $sampleOrder->shippingQuotes()->where('status', 'selected')->exists()) {
+            flash(translate('Please select the approved shipping quote before creating the shipment.'))->warning();
+
+            return back();
+        }
 
         $buyerCompanyId = $purchaseOrder?->buyer_company_id ?? $sampleOrder?->buyer_company_id ?? $proformaInvoice?->buyer_company_id;
         abort_if(!$buyerCompanyId, 422);
@@ -178,6 +228,8 @@ class B2BShipmentController extends Controller
 
         $this->b2bTradeService->addShipmentEvent($shipment, 'preparing', Auth::id(), translate('Shipment created'), $shipment->notes);
         $this->b2bAuditService->log(Auth::id(), $company->id, 'shipment_created', $shipment, 'Shipment created.');
+        $this->shipmentTrackingService->syncShipment($shipment->id);
+        app(\App\Services\B2BNotificationService::class)->notifyShipmentTrackingUpdate($shipment->fresh(['purchaseOrder', 'sampleOrder', 'buyerCompany', 'supplierCompany']), 'preparing');
 
         if ($request->boolean('generate_with_carrier') && $shippingProvider?->isApiProvider()) {
             $result = $this->b2bCarrierService->createShipment($shipment, array_merge(
@@ -210,7 +262,7 @@ class B2BShipmentController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $company = $this->getSupplierCompany();
-        abort_unless($this->b2bPermissionService->hasRole(Auth::id(), $company->id, ['owner', 'admin', 'sales_manager']), 403);
+        abort_unless($this->b2bPermissionService->canManageFreight(Auth::id(), $company->id), 403);
 
         $shipment = B2BShipment::where('supplier_company_id', $company->id)->findOrFail($id);
         $data = $request->validate([
@@ -230,6 +282,8 @@ class B2BShipmentController extends Controller
             $data['location'] ?? null,
             $data['event_at'] ?? null
         );
+        $this->shipmentTrackingService->syncShipment($shipment->id);
+        app(\App\Services\B2BNotificationService::class)->notifyShipmentTrackingUpdate($shipment->fresh(['purchaseOrder', 'sampleOrder', 'buyerCompany', 'supplierCompany']), $data['status']);
 
         flash(translate('Shipment status updated successfully.'))->success();
 
@@ -239,7 +293,7 @@ class B2BShipmentController extends Controller
     public function updateTracking(Request $request, $id)
     {
         $company = $this->getSupplierCompany();
-        abort_unless($this->b2bPermissionService->hasRole(Auth::id(), $company->id, ['owner', 'admin', 'sales_manager']), 403);
+        abort_unless($this->b2bPermissionService->canManageFreight(Auth::id(), $company->id), 403);
 
         $shipment = B2BShipment::where('supplier_company_id', $company->id)->findOrFail($id);
         $data = $request->validate([
@@ -307,7 +361,7 @@ class B2BShipmentController extends Controller
     public function sync($id)
     {
         $company = $this->getSupplierCompany();
-        abort_unless($this->b2bPermissionService->hasRole(Auth::id(), $company->id, ['owner', 'admin', 'sales_manager']), 403);
+        abort_unless($this->b2bPermissionService->canManageFreight(Auth::id(), $company->id), 403);
 
         $shipment = B2BShipment::where('supplier_company_id', $company->id)->findOrFail($id);
         $result = $this->shipmentTrackingService->syncShipment($shipment->id);
@@ -323,7 +377,7 @@ class B2BShipmentController extends Controller
     public function createCarrierShipment(Request $request, $id)
     {
         $company = $this->getSupplierCompany();
-        abort_unless($this->b2bPermissionService->hasRole(Auth::id(), $company->id, ['owner', 'admin', 'sales_manager']), 403);
+        abort_unless($this->b2bPermissionService->canManageFreight(Auth::id(), $company->id), 403);
 
         $shipment = B2BShipment::where('supplier_company_id', $company->id)->findOrFail($id);
         $result = $this->b2bCarrierService->createShipment($shipment, $request->input('carrier_payload', []), Auth::id());
@@ -334,7 +388,7 @@ class B2BShipmentController extends Controller
     public function requestPickup(Request $request, $id)
     {
         $company = $this->getSupplierCompany();
-        abort_unless($this->b2bPermissionService->hasRole(Auth::id(), $company->id, ['owner', 'admin', 'sales_manager']), 403);
+        abort_unless($this->b2bPermissionService->canManageFreight(Auth::id(), $company->id), 403);
 
         $shipment = B2BShipment::where('supplier_company_id', $company->id)->findOrFail($id);
         $result = $this->b2bCarrierService->requestPickup($shipment, $request->input('carrier_payload', []), Auth::id());
@@ -345,7 +399,7 @@ class B2BShipmentController extends Controller
     public function generateLabel(Request $request, $id)
     {
         $company = $this->getSupplierCompany();
-        abort_unless($this->b2bPermissionService->hasRole(Auth::id(), $company->id, ['owner', 'admin', 'sales_manager']), 403);
+        abort_unless($this->b2bPermissionService->canManageFreight(Auth::id(), $company->id), 403);
 
         $shipment = B2BShipment::where('supplier_company_id', $company->id)->findOrFail($id);
         $result = $this->b2bCarrierService->createLabel($shipment, $request->input('carrier_payload', []), Auth::id());
@@ -356,7 +410,7 @@ class B2BShipmentController extends Controller
     public function cancelCarrierShipment(Request $request, $id)
     {
         $company = $this->getSupplierCompany();
-        abort_unless($this->b2bPermissionService->hasRole(Auth::id(), $company->id, ['owner', 'admin', 'sales_manager']), 403);
+        abort_unless($this->b2bPermissionService->canManageFreight(Auth::id(), $company->id), 403);
 
         $shipment = B2BShipment::where('supplier_company_id', $company->id)->findOrFail($id);
         $result = $this->b2bCarrierService->cancelShipment($shipment, $request->input('carrier_payload', []), Auth::id());

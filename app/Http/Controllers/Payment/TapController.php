@@ -38,8 +38,7 @@ class TapController extends Controller
                 $customer_package = CustomerPackage::findOrFail($paymentData['customer_package_id']);
                 $amount = round($customer_package->amount);
             } elseif ($paymentType == 'seller_package_payment') {
-                $seller_package = SellerPackage::findOrFail($paymentData['seller_package_id']);
-                $amount = round($seller_package->amount);
+                $amount = round(\App\Support\B2BPaymentResolver::resolveSellerPackageAmount($paymentData));
             }
         }
 

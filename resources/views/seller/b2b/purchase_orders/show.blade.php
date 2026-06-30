@@ -1,6 +1,14 @@
 @extends('b2b.layouts.supplier')
 
 @section('panel_content')
+    @php
+        $permissionService = app(\App\Services\B2BPermissionService::class);
+        $canManagePurchaseOrder = $permissionService->canManagePurchaseOrder(auth()->id(), $purchaseOrder->supplier_company_id);
+        $canManageInvoice = $permissionService->canManageInvoice(auth()->id(), $purchaseOrder->supplier_company_id);
+        $canManageFreight = $permissionService->canManageFreight(auth()->id(), $purchaseOrder->supplier_company_id);
+        $canParticipateInNegotiation = $permissionService->canParticipateInNegotiation(auth()->id(), $purchaseOrder->supplier_company_id);
+    @endphp
+
     <div class="aiz-titlebar mt-2 mb-4">
         <div class="row align-items-center">
             <div class="col-md-8">
@@ -63,7 +71,7 @@
 
             <div class="card">
                 <div class="card-body">
-                    @if (in_array($purchaseOrder->status, ['draft', 'sent']))
+                    @if ($canManagePurchaseOrder && in_array($purchaseOrder->status, ['draft', 'sent']))
                         <form action="{{ route('seller.b2b.purchase-orders.accept', $purchaseOrder->id) }}" method="POST" class="mb-2">
                             @csrf
                             <button type="submit" class="btn btn-success btn-block">{{ translate('Accept Purchase Order') }}</button>
@@ -73,12 +81,16 @@
                             <button type="submit" class="btn btn-soft-danger btn-block">{{ translate('Reject Purchase Order') }}</button>
                         </form>
                     @endif
-                    @if ($purchaseOrder->status === 'accepted')
+                    @if ($canManageInvoice && $purchaseOrder->status === 'accepted')
                         <a href="{{ route('seller.b2b.proforma-invoices.create', $purchaseOrder->id) }}" class="btn btn-primary btn-block mt-2">{{ translate('Generate Proforma Invoice') }}</a>
                     @endif
-                    <a href="{{ route('seller.b2b.shipping-quotes.purchase-orders.create', $purchaseOrder->id) }}" class="btn btn-soft-primary btn-block mt-2">{{ translate('Create Shipping Quote') }}</a>
-                    <a href="{{ route('seller.b2b.shipments.create', ['purchase_order_id' => $purchaseOrder->id]) }}" class="btn btn-soft-info btn-block mt-2">{{ translate('Create Shipment') }}</a>
-                    @if ($purchaseOrder->negotiation)
+                    @if ($canManageFreight)
+                        <a href="{{ route('seller.b2b.shipping-quotes.purchase-orders.create', $purchaseOrder->id) }}" class="btn btn-soft-primary btn-block mt-2">{{ translate('Create Shipping Quote') }}</a>
+                        @if ($purchaseOrder->status === 'accepted')
+                            <a href="{{ route('seller.b2b.shipments.create', ['purchase_order_id' => $purchaseOrder->id]) }}" class="btn btn-soft-info btn-block mt-2">{{ translate('Create Shipment') }}</a>
+                        @endif
+                    @endif
+                    @if ($canParticipateInNegotiation && $purchaseOrder->negotiation)
                         <a href="{{ route('seller.b2b.negotiations.show', $purchaseOrder->negotiation->id) }}" class="btn btn-soft-info btn-block mt-2">{{ translate('Open Negotiation') }}</a>
                     @endif
                 </div>

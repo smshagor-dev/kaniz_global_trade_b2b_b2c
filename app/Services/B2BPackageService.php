@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\B2BCompany;
 use App\Models\B2BPackage;
 use App\Models\B2BPackageRequest;
+use Illuminate\Support\Str;
 
 class B2BPackageService
 {
@@ -133,9 +134,13 @@ class B2BPackageService
     public function activatePackage(B2BCompany $company, B2BPackage $package): void
     {
         $startsAt = now();
-        $expiresAt = $package->duration > 0 ? $startsAt->copy()->addDays($package->duration) : null;
 
         if ($package->isSupplierFeaturedPackage()) {
+            $baseDate = ($company->featured_package_expires_at && $company->featured_package_expires_at->isFuture())
+                ? $company->featured_package_expires_at->copy()
+                : $startsAt->copy();
+            $expiresAt = $package->duration > 0 ? $baseDate->copy()->addDays($package->duration) : null;
+
             $company->update([
                 'featured_b2b_package_id' => $package->id,
                 'featured_package_started_at' => $startsAt,
@@ -146,6 +151,11 @@ class B2BPackageService
 
             return;
         }
+
+        $baseDate = ($company->package_expires_at && $company->package_expires_at->isFuture())
+            ? $company->package_expires_at->copy()
+            : $startsAt->copy();
+        $expiresAt = $package->duration > 0 ? $baseDate->copy()->addDays($package->duration) : null;
 
         $company->update([
             'b2b_package_id' => $package->id,
@@ -170,6 +180,39 @@ class B2BPackageService
             'payment_submitted_at' => !empty($payload['payment_reference']) ? now() : null,
             'requested_at' => now(),
         ]);
+    }
+
+    public function recordAutomatedPurchase(
+        B2BCompany $company,
+        B2BPackage $package,
+        int $userId,
+        string $paymentMethod,
+        ?string $paymentDetails = null
+    ): B2BPackageRequest {
+        $paymentReference = strtoupper(Str::slug($paymentMethod ?: 'online_payment', '_'))
+            . '-' . substr(sha1((string) $paymentDetails), 0, 16);
+
+        return B2BPackageRequest::updateOrCreate(
+            [
+                'b2b_company_id' => $company->id,
+                'b2b_package_id' => $package->id,
+                'payment_reference' => $paymentReference,
+            ],
+            [
+                'request_type' => $package->isSupplierFeaturedPackage() ? 'supplier_featured' : 'membership',
+                'requested_by' => $userId,
+                'amount' => $package->amount,
+                'billing_cycle' => $package->duration >= 30 ? 'monthly' : 'custom',
+                'status' => 'approved',
+                'note' => 'Automatic online payment completed.',
+                'payment_notes' => $paymentDetails,
+                'payment_submitted_at' => now(),
+                'requested_at' => now(),
+                'approved_at' => now(),
+                'approved_by' => null,
+                'rejection_note' => null,
+            ]
+        );
     }
 
     public function featuredSupplierMonthlyRevenue(): float

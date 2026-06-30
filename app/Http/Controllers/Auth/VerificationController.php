@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\B2BCompanyService;
 use Illuminate\Foundation\Auth\VerifiesEmails;
 use App\Models\User;
 use Carbon\Carbon;
@@ -23,6 +24,20 @@ class VerificationController extends Controller
     */
 
     use VerifiesEmails;
+
+    protected function workspaceRedirectResponse(User $user)
+    {
+        $portalUrl = app(B2BCompanyService::class)->getPortalHomeUrl($user->id);
+        if ($portalUrl) {
+            return redirect()->to($portalUrl);
+        }
+
+        if ($user->user_type == 'seller') {
+            return redirect()->route('seller.dashboard');
+        }
+
+        return redirect()->route('dashboard');
+    }
 
     /**
      * Where to redirect users after verification.
@@ -94,10 +109,6 @@ class VerificationController extends Controller
             flash(translate('Sorry, we could not verifiy you. Please try again'))->error();
         }
 
-        if($user->user_type == 'seller') {
-            return redirect()->route('seller.dashboard');
-        }
-
-        return redirect()->route('dashboard');
+        return $this->workspaceRedirectResponse($user);
     }
 }

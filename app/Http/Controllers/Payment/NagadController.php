@@ -74,8 +74,7 @@ class NagadController
                 $this->tnx(rand(000000, 999999));
             }
             elseif ($paymentType == 'seller_package_payment') {
-                $seller_package = SellerPackage::findOrFail($paymentData['seller_package_id']);
-                $this->amount(round($seller_package->amount));
+                $this->amount(round(\App\Support\B2BPaymentResolver::resolveSellerPackageAmount($paymentData)));
                 $this->tnx(rand(000000, 999999));
             }
         }

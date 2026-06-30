@@ -12,6 +12,7 @@ use App\Models\Customer;
 use App\Models\Cart;
 use App\Models\UserDeviceLog;
 use App\Services\SocialRevoke;
+use App\Services\B2BCompanyService;
 use App\Utility\EmailUtility;
 use Session;
 use Illuminate\Http\Request;
@@ -37,6 +38,54 @@ class LoginController extends Controller
     */
 
     use AuthenticatesUsers;
+
+    protected function resolveWorkspaceLoginRoute(?string $workspacePortal): string
+    {
+        return match ($workspacePortal) {
+            'supplier' => 'supplier.login',
+            'buyer' => 'buyer.login',
+            'seller' => 'seller.login',
+            default => 'user.login',
+        };
+    }
+
+    protected function hasWorkspaceMismatch(Request $request, User $user): bool
+    {
+        $workspacePortal = $request->input('workspace_portal');
+
+        if (!$workspacePortal || in_array($workspacePortal, ['user', 'delivery_boy'], true)) {
+            return false;
+        }
+
+        $actualPortal = app(B2BCompanyService::class)->getPortalByUser($user->id);
+
+        return match ($workspacePortal) {
+            'supplier' => $actualPortal !== 'supplier',
+            'buyer' => $actualPortal !== 'buyer',
+            'seller' => $user->user_type !== 'seller' || in_array($actualPortal, ['supplier', 'buyer'], true),
+            default => false,
+        };
+    }
+
+    protected function workspaceRedirectResponse(?User $user = null)
+    {
+        $user = $user ?: auth()->user();
+
+        if (!$user) {
+            return redirect()->route('home');
+        }
+
+        $portalUrl = app(B2BCompanyService::class)->getPortalHomeUrl($user->id);
+        if ($portalUrl) {
+            return redirect()->to($portalUrl);
+        }
+
+        if ($user->user_type == 'seller') {
+            return redirect()->route('seller.dashboard');
+        }
+
+        return redirect()->route('dashboard');
+    }
 
     /**
      * Where to redirect users after login.
@@ -120,10 +169,7 @@ class LoginController extends Controller
         if (session('link') != null) {
             return redirect(session('link'));
         } else {
-            if (auth()->user()->user_type == 'seller') {
-                return redirect()->route('seller.dashboard');
-            }
-            return redirect()->route('dashboard');
+            return $this->workspaceRedirectResponse();
         }
     }
     /**
@@ -213,10 +259,7 @@ class LoginController extends Controller
         if (session('link') != null) {
             return redirect(session('link'));
         } else {
-            if (auth()->user()->user_type == 'seller') {
-                return redirect()->route('seller.dashboard');
-            }
-            return redirect()->route('dashboard');
+            return $this->workspaceRedirectResponse();
         }
     }
 
@@ -336,8 +379,20 @@ class LoginController extends Controller
      * Check user's role and redirect user based on their role
      * @return
      */
-    public function authenticated()
+    public function authenticated(Request $request, $user = null)
     {
+        $user = $user ?: auth()->user();
+
+        if ($user && $this->hasWorkspaceMismatch($request, $user)) {
+            auth()->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            flash(translate('This account is not allowed to log in from that portal.'))->error();
+
+            return redirect()->route($this->resolveWorkspaceLoginRoute($request->input('workspace_portal')));
+        }
+
         if (auth()->check()) {
             UserDeviceLog::query()->create([
                 'user_id' => auth()->id(),
@@ -373,7 +428,11 @@ class LoginController extends Controller
             CoreComponentRepository::instantiateShopRepository();
             return redirect()->route('admin.dashboard');
         } elseif (auth()->user()->user_type == 'seller') {
-            
+            $portalUrl = app(B2BCompanyService::class)->getPortalHomeUrl(auth()->id());
+            if ($portalUrl) {
+                return redirect()->to($portalUrl);
+            }
+
             if (auth()->user()->shop->registration_approval  == 0) {
                 auth()->logout();
                 flash(translate("Your seller account is under review. We will notify you once approved."));
@@ -385,13 +444,13 @@ class LoginController extends Controller
                 'email' => auth()->user()->email,
                 'time' => now()->toDateTimeString(),
             ]);
-            return redirect()->route('seller.dashboard');
+            return $this->workspaceRedirectResponse();
         } else {
 
             if (session('link') != null) {
                 return redirect(session('link'));
             } else {
-                return redirect()->route('dashboard');
+                return $this->workspaceRedirectResponse();
             }
         }
     }

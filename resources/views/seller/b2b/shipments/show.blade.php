@@ -1,6 +1,11 @@
 @extends('b2b.layouts.supplier')
 
 @section('panel_content')
+    @php
+        $permissionService = app(\App\Services\B2BPermissionService::class);
+        $canManageFreight = $permissionService->canManageFreight(auth()->id(), $shipment->supplier_company_id);
+    @endphp
+
     <div class="aiz-titlebar mt-2 mb-4">
         <div class="row align-items-center">
             <div class="col-md-8">
@@ -16,7 +21,7 @@
 
     <div class="row">
         <div class="col-lg-8">
-            @include('b2b.partials.trade_documents', ['documentable' => $shipment, 'documentTypeKey' => 'shipment', 'allowUpload' => true])
+            @include('b2b.partials.trade_documents', ['documentable' => $shipment, 'documentTypeKey' => 'shipment', 'allowUpload' => $canManageFreight])
         </div>
         <div class="col-lg-4">
             <div class="card mb-3">
@@ -44,57 +49,59 @@
                 </div>
             </div>
 
-            <div class="card mb-3">
-                <div class="card-header">{{ translate('Tracking Settings') }}</div>
-                <div class="card-body">
-                    <form action="{{ route('seller.b2b.shipments.tracking', $shipment->id) }}" method="POST">
-                        @csrf
-                        <div class="form-group">
-                            <label>{{ translate('Shipping Provider') }}</label>
-                            <select class="form-control aiz-selectpicker" name="shipping_provider_id" data-live-search="true">
-                                <option value="">{{ translate('Select Provider') }}</option>
-                                @foreach (\App\Models\B2BShippingProvider::where('is_active', true)->orderBy('name')->get() as $provider)
-                                    <option value="{{ $provider->id }}" @selected($shipment->shipping_provider_id === $provider->id)>{{ $provider->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>{{ translate('Tracking Number') }}</label>
-                            <input type="text" class="form-control" name="tracking_number" value="{{ $shipment->tracking_number }}">
-                        </div>
-                        <div class="form-group">
-                            <label>{{ translate('Carrier Reference') }}</label>
-                            <input type="text" class="form-control" name="carrier_reference" value="{{ $shipment->carrier_reference }}">
-                        </div>
-                        <div class="form-group">
-                            <label>{{ translate('Carrier Service') }}</label>
-                            <input type="text" class="form-control" name="carrier_service" value="{{ $shipment->carrier_service }}">
-                        </div>
-                        <div class="form-group">
-                            <label>{{ translate('Tracking URL') }}</label>
-                            <input type="url" class="form-control" name="tracking_url" value="{{ $shipment->tracking_url }}">
-                        </div>
-                        <div class="form-group">
-                            <label class="aiz-checkbox">
-                                <input type="checkbox" name="live_tracking_enabled" value="1" @checked($shipment->live_tracking_enabled)>
-                                <span class="aiz-square-check"></span>
-                                <span>{{ translate('Enable Live Tracking') }}</span>
-                            </label>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-block">{{ translate('Save Tracking Settings') }}</button>
-                    </form>
+            @if ($canManageFreight)
+                <div class="card mb-3">
+                    <div class="card-header">{{ translate('Tracking Settings') }}</div>
+                    <div class="card-body">
+                        <form action="{{ route('seller.b2b.shipments.tracking', $shipment->id) }}" method="POST">
+                            @csrf
+                            <div class="form-group">
+                                <label>{{ translate('Shipping Provider') }}</label>
+                                <select class="form-control aiz-selectpicker" name="shipping_provider_id" data-live-search="true">
+                                    <option value="">{{ translate('Select Provider') }}</option>
+                                    @foreach (\App\Models\B2BShippingProvider::where('is_active', true)->orderBy('name')->get() as $provider)
+                                        <option value="{{ $provider->id }}" @selected($shipment->shipping_provider_id === $provider->id)>{{ $provider->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>{{ translate('Tracking Number') }}</label>
+                                <input type="text" class="form-control" name="tracking_number" value="{{ $shipment->tracking_number }}">
+                            </div>
+                            <div class="form-group">
+                                <label>{{ translate('Carrier Reference') }}</label>
+                                <input type="text" class="form-control" name="carrier_reference" value="{{ $shipment->carrier_reference }}">
+                            </div>
+                            <div class="form-group">
+                                <label>{{ translate('Carrier Service') }}</label>
+                                <input type="text" class="form-control" name="carrier_service" value="{{ $shipment->carrier_service }}">
+                            </div>
+                            <div class="form-group">
+                                <label>{{ translate('Tracking URL') }}</label>
+                                <input type="url" class="form-control" name="tracking_url" value="{{ $shipment->tracking_url }}">
+                            </div>
+                            <div class="form-group">
+                                <label class="aiz-checkbox">
+                                    <input type="checkbox" name="live_tracking_enabled" value="1" @checked($shipment->live_tracking_enabled)>
+                                    <span class="aiz-square-check"></span>
+                                    <span>{{ translate('Enable Live Tracking') }}</span>
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">{{ translate('Save Tracking Settings') }}</button>
+                        </form>
 
-                    <form action="{{ route('seller.b2b.shipments.sync', $shipment->id) }}" method="POST" class="mt-3">
-                        @csrf
-                        <button type="submit" class="btn btn-soft-info btn-block">{{ translate('Sync Live Tracking Now') }}</button>
-                    </form>
+                        <form action="{{ route('seller.b2b.shipments.sync', $shipment->id) }}" method="POST" class="mt-3">
+                            @csrf
+                            <button type="submit" class="btn btn-soft-info btn-block">{{ translate('Sync Live Tracking Now') }}</button>
+                        </form>
+                    </div>
                 </div>
-            </div>
+            @endif
 
             @php
                 $providerType = $shipment->shippingProvider?->provider_type ?? 'manual';
             @endphp
-            @if ($providerType === 'manual' || !$shipment->shippingProvider)
+            @if ($canManageFreight && ($providerType === 'manual' || !$shipment->shippingProvider))
                 <div class="card">
                     <div class="card-header">{{ translate('Update Shipment Status') }}</div>
                     <div class="card-body">

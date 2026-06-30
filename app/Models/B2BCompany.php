@@ -69,6 +69,9 @@ class B2BCompany extends Model
         'product_promotion_started_at',
         'product_promotion_expires_at',
         'premium_verified_at',
+        'ai_trade_desk_active',
+        'ai_trade_desk_paid_at',
+        'ai_trade_desk_price',
         'verification_status',
         'verification_note',
         'verified_at',
@@ -80,6 +83,7 @@ class B2BCompany extends Model
         'verified_supplier_badge' => 'boolean',
         'premium_verified' => 'boolean',
         'featured_supplier' => 'boolean',
+        'ai_trade_desk_active' => 'boolean',
         'verified_at' => 'datetime',
         'package_started_at' => 'datetime',
         'package_expires_at' => 'datetime',
@@ -88,11 +92,13 @@ class B2BCompany extends Model
         'product_promotion_started_at' => 'datetime',
         'product_promotion_expires_at' => 'datetime',
         'premium_verified_at' => 'datetime',
+        'ai_trade_desk_paid_at' => 'datetime',
         'year_established' => 'integer',
         'response_time_hours' => 'integer',
         'profile_score' => 'integer',
         'export_percentage' => 'decimal:2',
         'response_rate' => 'decimal:2',
+        'ai_trade_desk_price' => 'decimal:2',
     ];
 
     public function user()
@@ -158,6 +164,16 @@ class B2BCompany extends Model
     public function invitations()
     {
         return $this->hasMany(B2BCompanyInvitation::class, 'b2b_company_id');
+    }
+
+    public function customRoles()
+    {
+        return $this->hasMany(B2BCompanyRole::class, 'b2b_company_id');
+    }
+
+    public function catalogs()
+    {
+        return $this->hasMany(B2BCompanyCatalog::class, 'b2b_company_id');
     }
 
     public function certifications()

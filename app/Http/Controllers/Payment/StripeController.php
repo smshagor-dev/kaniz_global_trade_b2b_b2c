@@ -50,8 +50,7 @@ class StripeController extends Controller
                 $amount = round($customer_package->amount * 100);
                 $client_reference_id = auth()->id();
             } elseif ($paymentType == 'seller_package_payment') {
-                $seller_package = SellerPackage::findOrFail($paymentData['seller_package_id']);
-                $amount = round($seller_package->amount * 100);
+                $amount = round(\App\Support\B2BPaymentResolver::resolveSellerPackageAmount($paymentData) * 100);
                 $client_reference_id = auth()->id();
             }
         }

@@ -78,7 +78,7 @@ class B2BInsuranceModuleTest extends TestCase
         $this->setActiveCompany($company);
         $this->createInsuranceProvider();
 
-        $response = $this->actingAs($buyer)->post(route('b2b.insurance.quotes.store'), [
+        $response = $this->actingAs($buyer)->postJson(route('b2b.insurance.quotes.store'), [
             'insurance_type' => 'cargo_insurance',
             'transport_mode' => 'sea_freight',
             'incoterm' => 'FOB',
@@ -98,6 +98,30 @@ class B2BInsuranceModuleTest extends TestCase
         $this->assertSame($company->id, $quote->buyer_company_id);
         $this->assertGreaterThan(0, (float) $quote->risk_score);
         $this->assertGreaterThan(0, (float) $quote->final_amount);
+    }
+
+    public function test_buyer_browser_quote_request_redirects_back_with_flash_message(): void
+    {
+        $buyer = $this->createUser();
+        $company = $this->createCompany($buyer, ['company_type' => 'buyer']);
+        $this->createCompanyMember($company, $buyer, 'finance_manager');
+        $this->setActiveCompany($company);
+        $this->createInsuranceProvider();
+
+        $response = $this->from(route('b2b.insurance.dashboard'))
+            ->actingAs($buyer)
+            ->post(route('b2b.insurance.quotes.store'), [
+                'insurance_type' => 'cargo_insurance',
+                'transport_mode' => 'sea_freight',
+                'origin_country' => 'China',
+                'destination_country' => 'Bangladesh',
+                'shipment_value' => 10000,
+                'coverage_amount' => 10000,
+                'currency' => 'USD',
+            ]);
+
+        $response->assertRedirect(route('b2b.insurance.dashboard'));
+        $response->assertSessionHas('flash_notification');
     }
 
     public function test_admin_can_issue_policy_from_quote_and_export_pdf(): void
@@ -143,7 +167,7 @@ class B2BInsuranceModuleTest extends TestCase
             'supplier_company_id' => $supplierCompany->id,
         ]);
 
-        $claimResponse = $this->actingAs($buyer)->post(route('b2b.insurance.claims.store', $policy->id), [
+        $claimResponse = $this->actingAs($buyer)->postJson(route('b2b.insurance.claims.store', $policy->id), [
             'claim_type' => 'damage',
             'summary' => 'Damaged shipment',
             'description' => 'Outer cartons were torn and wet.',
@@ -174,6 +198,38 @@ class B2BInsuranceModuleTest extends TestCase
 
         $this->assertSame('approved', $claim->status);
         $this->assertSame(1000.0, (float) $claim->approved_amount);
+    }
+
+    public function test_buyer_browser_claim_submission_redirects_back_with_flash_message(): void
+    {
+        $buyer = $this->createUser();
+        $buyerCompany = $this->createCompany($buyer, ['company_type' => 'buyer']);
+        $this->createCompanyMember($buyerCompany, $buyer, 'finance_manager');
+        $this->setActiveCompany($buyerCompany);
+
+        $supplier = $this->createSellerUser();
+        $supplierCompany = $this->createCompany($supplier, ['company_type' => 'supplier']);
+
+        $policy = $this->createInsurancePolicy([
+            'buyer_company_id' => $buyerCompany->id,
+            'supplier_company_id' => $supplierCompany->id,
+        ]);
+
+        $response = $this->from(route('b2b.insurance.dashboard'))
+            ->actingAs($buyer)
+            ->post(route('b2b.insurance.claims.store', $policy->id), [
+                'claim_type' => 'damage',
+                'summary' => 'Packaging damaged in transit',
+                'claim_amount' => 900,
+                'currency' => 'USD',
+                'documents' => [
+                    ['document_type' => 'invoice', 'file_path' => 'uploads/insurance/invoice.pdf'],
+                    ['document_type' => 'damage_report', 'file_path' => 'uploads/insurance/damage-report.pdf'],
+                ],
+            ]);
+
+        $response->assertRedirect(route('b2b.insurance.dashboard'));
+        $response->assertSessionHas('flash_notification');
     }
 
     public function test_shipment_sync_updates_linked_policy_status(): void

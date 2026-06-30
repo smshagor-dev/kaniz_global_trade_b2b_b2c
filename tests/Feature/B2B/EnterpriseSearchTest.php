@@ -13,8 +13,10 @@ use App\Models\SearchIndexingRun;
 use App\Services\Search\SearchEngineInterface;
 use App\Services\Search\SearchManager;
 use App\Services\Search\SearchService;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Http\UploadedFile;
 
 class EnterpriseSearchTest extends B2BFeatureTestCase
 {
@@ -112,6 +114,186 @@ class EnterpriseSearchTest extends B2BFeatureTestCase
 
         $this->assertSame('database', $response['provider']);
         $this->assertSame('Fallback Search Drill', $response['results'][0]['title']);
+    }
+
+    public function test_opensearch_provider_uses_terms_and_filters_when_configured(): void
+    {
+        BusinessSetting::updateOrCreate(['type' => 'search_provider'], ['value' => 'opensearch']);
+        BusinessSetting::updateOrCreate(['type' => 'search_opensearch_base_url'], ['value' => 'https://search.example.com']);
+
+        Http::fake([
+            'https://search.example.com/_cluster/health/*' => Http::response([
+                'status' => 'green',
+            ], 200),
+            'https://search.example.com/*/_count' => Http::response([
+                'count' => 1,
+            ], 200),
+            'https://search.example.com/*/_search' => function (\Illuminate\Http\Client\Request $request) {
+                $payload = $request->data();
+
+                $this->assertSame(['product', 'company'], $payload['query']['bool']['filter'][0]['terms']['type']);
+                $this->assertSame(['public'], $payload['query']['bool']['filter'][1]['terms']['visibility']);
+                $this->assertSame(true, $payload['query']['bool']['filter'][2]['term']['is_active']);
+                $this->assertSame('Bangladesh', $payload['query']['bool']['filter'][3]['term']['filters.country']);
+                $this->assertSame([10, 11], $payload['query']['bool']['filter'][4]['terms']['filters.category_id']);
+
+                return Http::response([
+                    'hits' => [
+                        'total' => ['value' => 1],
+                        'hits' => [
+                            [
+                                '_score' => 12.5,
+                                '_source' => [
+                                    'title' => 'OpenSearch Result',
+                                    'type' => 'product',
+                                    'visibility' => 'public',
+                                    'url' => '/product/open-search-result',
+                                ],
+                            ],
+                        ],
+                    ],
+                ], 200);
+            },
+        ]);
+
+        $response = app(SearchService::class)->search('open search result', [
+            'types' => ['product', 'company'],
+            'filters' => [
+                'country' => 'Bangladesh',
+                'category_id' => [10, 11],
+            ],
+        ]);
+
+        $this->assertSame('open_search', $response['provider']);
+        $this->assertSame('OpenSearch Result', $response['results'][0]['title']);
+    }
+
+    public function test_global_search_page_loads_and_legacy_search_still_works(): void
+    {
+        $global = $this->get(route('global.search'));
+        $legacy = $this->get(route('search'));
+
+        $global->assertOk();
+        $this->assertNotSame(500, $legacy->getStatusCode());
+    }
+
+    public function test_global_search_products_scope_returns_product_results(): void
+    {
+        BusinessSetting::updateOrCreate(['type' => 'search_provider'], ['value' => 'database']);
+
+        $seller = $this->createSellerUser();
+        $product = $this->createProduct($seller, $this->createCategory(), [
+            'name' => 'Marketplace Search Pump',
+            'slug' => 'marketplace-search-pump',
+            'wholesale_product' => 0,
+        ]);
+        app(SearchService::class)->indexModel($product->fresh());
+
+        $response = $this->getJson(route('global.search.json', [
+            'q' => 'Marketplace Search Pump',
+            'scope' => 'products',
+        ]));
+
+        $response->assertOk()
+            ->assertJsonPath('results.total', 1)
+            ->assertJsonPath('results.results.0.title', 'Marketplace Search Pump');
+    }
+
+    public function test_global_search_suppliers_scope_returns_supplier_results(): void
+    {
+        BusinessSetting::updateOrCreate(['type' => 'search_provider'], ['value' => 'database']);
+
+        $owner = $this->createSellerUser();
+        $company = $this->createCompany($owner, [
+            'company_name' => 'Search Supplier House',
+            'company_type' => 'supplier',
+            'public_profile_enabled' => 1,
+        ]);
+        app(SearchService::class)->indexModel($company->fresh());
+
+        $response = $this->getJson(route('global.search.json', [
+            'q' => 'Search Supplier House',
+            'scope' => 'suppliers',
+        ]));
+
+        $response->assertOk()
+            ->assertJsonFragment(['title' => 'Search Supplier House']);
+    }
+
+    public function test_global_search_manufacturers_scope_returns_manufacturer_results(): void
+    {
+        BusinessSetting::updateOrCreate(['type' => 'search_provider'], ['value' => 'database']);
+
+        $owner = $this->createSellerUser();
+        $company = $this->createCompany($owner, [
+            'company_name' => 'Search Manufacturer Works',
+            'company_type' => 'manufacturer',
+            'public_profile_enabled' => 1,
+        ]);
+        app(SearchService::class)->indexModel($company->fresh());
+
+        $response = $this->getJson(route('global.search.json', [
+            'q' => 'Search Manufacturer Works',
+            'scope' => 'manufacturers',
+        ]));
+
+        $response->assertOk()
+            ->assertJsonFragment(['title' => 'Search Manufacturer Works']);
+    }
+
+    public function test_global_search_suggestions_endpoint_returns_trending_and_recent_data(): void
+    {
+        $response = $this->withSession([
+            'global_recent_searches' => ['steel coils'],
+        ])->getJson(route('global.search.suggestions', [
+            'q' => 'st',
+            'scope' => 'products',
+        ]));
+
+        $response->assertOk()
+            ->assertJsonStructure(['query', 'suggestions', 'recent', 'trending'])
+            ->assertJsonPath('recent.0', 'steel coils');
+    }
+
+    public function test_image_search_validation_rejects_invalid_upload(): void
+    {
+        $response = $this->postJson(route('global.search.image'), [
+            'image' => UploadedFile::fake()->create('test.pdf', 10, 'application/pdf'),
+        ]);
+
+        $response->assertStatus(422);
+    }
+
+    public function test_image_search_without_ai_provider_returns_configured_error(): void
+    {
+        $response = $this->postJson(route('global.search.image'), [
+            'image' => UploadedFile::fake()->image('product.jpg'),
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('message', 'AI image search is not configured.');
+    }
+
+    public function test_ai_mode_falls_back_safely_without_provider(): void
+    {
+        BusinessSetting::updateOrCreate(['type' => 'search_provider'], ['value' => 'database']);
+
+        $seller = $this->createSellerUser();
+        $product = $this->createProduct($seller, $this->createCategory(), [
+            'name' => 'Cotton Search Tee',
+            'slug' => 'cotton-search-tee',
+            'wholesale_product' => 0,
+        ]);
+        app(SearchService::class)->indexModel($product->fresh());
+
+        $response = $this->getJson(route('global.search.json', [
+            'q' => 'Need 5000 cotton t-shirts shipped to Germany',
+            'scope' => 'ai_mode',
+        ]));
+
+        $response->assertOk()
+            ->assertJsonPath('ai.ai_available', false)
+            ->assertJsonPath('results.provider', 'database');
     }
 
     public function test_reindex_command_processes_products_in_chunks(): void

@@ -180,6 +180,7 @@ class WholesaleService
         }
 
         $product->pdf = $request->pdf;
+        $product->b2b_company_catalog_id = $request->b2b_company_catalog_id;
 
         $colors = array();
         $product->colors = json_encode($colors);

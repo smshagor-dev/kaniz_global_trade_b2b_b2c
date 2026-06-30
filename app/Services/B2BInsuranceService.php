@@ -324,6 +324,10 @@ class B2BInsuranceService
     public function issuePolicy(B2BInsuranceQuote $quote, array $data, ?User $actor = null, ?int $actorCompanyId = null): B2BInsurancePolicy
     {
         return DB::transaction(function () use ($quote, $data, $actor, $actorCompanyId) {
+            abort_if($quote->policy()->exists(), 422, 'A policy has already been issued for this quote.');
+            abort_unless($quote->status === 'quoted', 422, 'Only quoted insurance requests can be issued as policies.');
+            abort_if($quote->expires_at && $quote->expires_at->isPast(), 422, 'This insurance quote has expired.');
+
             $policy = B2BInsurancePolicy::create((new B2BInsurancePolicy())->filterPersistable([
                 'policy_number' => $this->nextNumber('IP'),
                 'provider_id' => $quote->provider_id,
@@ -379,6 +383,17 @@ class B2BInsuranceService
     public function submitClaim(B2BInsurancePolicy $policy, array $data, ?User $actor = null, ?int $actorCompanyId = null): B2BInsuranceClaim
     {
         return DB::transaction(function () use ($policy, $data, $actor, $actorCompanyId) {
+            abort_unless(
+                in_array($policy->status, ['approved', 'active', 'in_transit', 'claim_submitted'], true),
+                422,
+                'Claims can only be submitted for approved or active policies.'
+            );
+            abort_if(
+                $policy->claims()->whereIn('status', ['submitted', 'review', 'investigation', 'approved', 'partial_settlement', 'appealed'])->exists(),
+                422,
+                'An active claim already exists for this policy.'
+            );
+
             $claim = B2BInsuranceClaim::create((new B2BInsuranceClaim())->filterPersistable([
                 'claim_number' => $this->nextNumber('IC'),
                 'policy_id' => $policy->id,

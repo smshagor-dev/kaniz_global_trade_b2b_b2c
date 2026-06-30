@@ -3,6 +3,7 @@
     use Illuminate\Support\Facades\Auth;
 
     $resolvedCompany = Auth::check() ? app(B2BCompanyService::class)->getCompanyByUser(Auth::id()) : null;
-    $layout = ($resolvedCompany && $resolvedCompany->isSupplierSide()) ? 'b2b.layouts.supplier' : 'b2b.layouts.buyer';
+    $portal = $portal
+        ?? (($resolvedCompany && $resolvedCompany->isSupplierSide()) ? 'supplier' : 'buyer');
 @endphp
-@extends($layout)
+@extends('b2b.layouts.portal')

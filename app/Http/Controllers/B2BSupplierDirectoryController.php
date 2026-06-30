@@ -55,6 +55,7 @@ class B2BSupplierDirectoryController extends Controller
         $supplier = B2BCompany::with([
             'categories',
             'certifications' => fn ($query) => $query->where('verification_status', 'approved')->latest(),
+            'catalogs' => fn ($query) => $query->where('is_active', true)->with(['coverUpload', 'pdfUpload'])->latest(),
             'wholesaleProducts.thumbnail',
             'user.shop',
             'b2bPackage',

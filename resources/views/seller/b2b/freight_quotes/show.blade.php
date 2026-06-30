@@ -1,6 +1,14 @@
 @extends('b2b.layouts.supplier')
 
 @section('panel_content')
+    @php
+        $permissionService = app(\App\Services\B2BPermissionService::class);
+        $canManageFreight = $permissionService->canManageFreight(auth()->id(), $quote->supplier_company_id);
+        $canApproveFreightCosts = $permissionService->canApproveFreightCosts(auth()->id(), $quote->supplier_company_id);
+        $canEditCosts = $canManageFreight || $canApproveFreightCosts;
+        $canBookContainer = $canManageFreight && $quote->freight_mode === 'sea_freight' && $quote->status === 'selected';
+    @endphp
+
     <div class="aiz-titlebar mt-2 mb-4"><h1 class="h3">{{ translate('Freight Quote') }}: {{ $quote->quote_number }}</h1></div>
     <div class="card mb-4">
         <div class="card-body">
@@ -18,9 +26,15 @@
             </div>
         </div>
     </div>
+    @if ($canBookContainer)
+        <form action="{{ route('seller.b2b.container-shipments.store', $quote->id) }}" method="POST" class="mb-4">
+            @csrf
+            <button type="submit" class="btn btn-primary">{{ translate('Create Container Booking') }}</button>
+        </form>
+    @endif
     @include('b2b.partials.freight_quote_costs', [
         'quote' => $quote,
-        'editable' => true,
+        'editable' => $canEditCosts,
         'storeRoute' => route('seller.b2b.freight-quotes.cost-lines.store', $quote->id),
         'updateRoute' => fn ($line) => route('seller.b2b.freight-quotes.cost-lines.update', [$quote->id, $line->id]),
         'deleteRoute' => fn ($line) => route('seller.b2b.freight-quotes.cost-lines.delete', [$quote->id, $line->id]),

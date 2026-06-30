@@ -2,191 +2,245 @@
 
 @section('content')
     <style>
-        #section_featured .slick-slider .slick-list{
-            background: #fff;
-        }
-        #section_featured .slick-slider .slick-list .slick-slide {
-            margin-bottom: -5px;
-        }
+        .metro-search-hero { position: relative; background: linear-gradient(180deg, #f7f7fb 0%, #fff5f3 100%); }
+        .metro-search-hero-inner { position: static; width: 100%; max-width: none; margin: 0; transform: none; padding: 20px 0 0; }
+        .metro-search-tabs { display: flex; align-items: center; justify-content: center; gap: 34px; margin-bottom: 26px; flex-wrap: wrap; }
+        .metro-search-tab-divider { width: 1px; height: 34px; background: #d4d4d8; }
+        .metro-search-tab { border: 0; background: transparent; padding: 0 0 10px; color: #262626; font-size: 24px; font-weight: 800; line-height: 1; position: relative; cursor: pointer; }
+        .metro-search-tab.active { color: #ff6a00; }
+        .metro-search-tab.active::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; border-radius: 999px; background: #ff6a00; }
+        .metro-search-tab-ai { display: inline-flex; align-items: flex-start; gap: 2px; }
+        .metro-search-tab-ai-badge { color: #ff6a00; font-size: 11px; font-weight: 800; line-height: 1; }
+        .metro-search-shell { max-width: 100%; margin: 0 auto; border: 2px solid #ff6a00; border-radius: 24px; background: rgba(255,255,255,.98); box-shadow: 0 18px 48px -36px rgba(255,106,0,.4); padding: 18px 18px 14px; }
+        .metro-search-row { display: flex; align-items: center; gap: 18px; position: relative; }
+        .metro-search-input-wrap { flex: 1; position: relative; }
+        .metro-search-input { border: 0; height: 46px; font-size: 16px; color: #0f172a; box-shadow: none !important; padding: 0; }
+        .metro-search-input::placeholder { color: #737373; }
+        .metro-search-button { min-width: 148px; height: 44px; border: 0; border-radius: 999px; background: linear-gradient(135deg, #ffb300 0%, #ff4d2d 100%); color: #fff; font-size: 14px; font-weight: 700; padding: 0 24px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .metro-search-suggestions { position: absolute; top: calc(100% + 14px); left: 0; right: 0; z-index: 20; background: #fff; border: 1px solid #e5e7eb; border-radius: 18px; box-shadow: 0 18px 40px -30px rgba(15,23,42,.35); overflow: hidden; display: none; }
+        .metro-search-suggestions.is-active { display: block; }
+        .metro-search-suggestion { display: block; padding: 12px 16px; color: #0f172a; text-decoration: none; border-top: 1px solid #f1f5f9; }
+        .metro-search-suggestion:first-child { border-top: 0; }
+        .metro-search-suggestion:hover { background: #fff7ed; color: #ea580c; text-decoration: none; }
+        .metro-search-bottom { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; }
+        .metro-search-image-link { display: inline-flex; align-items: center; gap: 8px; color: #262626; font-size: 14px; font-weight: 700; text-decoration: none; }
+        .metro-search-image-link:hover { color: #ea580c; text-decoration: none; }
+        .metro-search-chip-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 18px; }
+        .metro-search-chip { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; border: 1px solid #e2e8f0; background: #fff; color: #334155; padding: 8px 12px; font-size: 12px; font-weight: 600; text-decoration: none; }
+        .metro-search-chip:hover { border-color: #fdba74; color: #ea580c; text-decoration: none; }
+        .metro-search-cta-banner { margin-top: 22px; padding: 28px 24px; border-radius: 24px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #334155 100%); box-shadow: 0 20px 50px -35px rgba(15,23,42,.55); text-align: center; }
+        .metro-search-cta-title { color: #fff; font-size: 34px; line-height: 1.08; font-weight: 800; letter-spacing: -.04em; margin-bottom: 18px; }
+        .metro-search-cta-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+        .metro-search-cta-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 170px; height: 48px; border-radius: 999px; padding: 0 22px; font-size: 14px; font-weight: 700; text-decoration: none; transition: .2s ease; }
+        .metro-search-cta-btn:hover { text-decoration: none; transform: translateY(-1px); }
+        .metro-search-cta-btn-primary { background: linear-gradient(135deg, #ffb300 0%, #ff4d2d 100%); color: #fff; }
+        .metro-search-cta-btn-secondary { border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.08); color: #fff; }
+        .metro-mega-categories, .metro-market-card, .metro-service-card, .metro-country-card { background: #fff; box-shadow: 0 18px 50px -40px rgba(15,23,42,.22); }
+        .metro-mega-categories { margin-top: 26px; border-radius: 28px; overflow: hidden; }
+        .metro-mega-categories-head, .metro-market-header { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
+        .metro-mega-categories-head { padding: 26px 26px 18px; border-bottom: 1px solid #eef2f7; }
+        .metro-mega-categories-kicker, .metro-market-kicker { color: #f97316; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+        .metro-mega-categories-title, .metro-market-title { color: #0f172a; font-size: 32px; line-height: 1.05; font-weight: 800; letter-spacing: -.04em; margin-top: 8px; margin-bottom: 0; }
+        .metro-mega-categories-subtitle, .metro-market-subtitle { color: #64748b; font-size: 14px; margin-top: 8px; margin-bottom: 0; }
+        .metro-mega-categories-link, .metro-market-link, .metro-service-link, .neg-profile-link { color: #f97316; font-size: 13px; font-weight: 700; text-decoration: none; }
+        .metro-mega-categories-grid, .metro-market-grid { display: grid; gap: 18px; }
+        .metro-mega-categories-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; }
+        .metro-market-section { margin-top: 28px; }
+        .metro-market-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .metro-market-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .metro-mega-category-card, .metro-market-card-link { display: block; color: inherit; text-decoration: none; }
+        .metro-mega-category-card { padding: 22px 20px; border-right: 1px solid #eef2f7; border-bottom: 1px solid #eef2f7; background: linear-gradient(180deg,#ffffff 0%,#fbfdff 100%); min-height: 100%; }
+        .metro-mega-category-icon, .metro-supplier-logo, .metro-product-thumb, .metro-service-icon { background: #fff7ed; color: #f97316; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; }
+        .metro-mega-category-icon { width: 58px; height: 58px; border-radius: 18px; margin-bottom: 16px; }
+        .metro-supplier-card-top, .metro-product-card-top { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px; }
+        .metro-supplier-logo, .metro-product-thumb { width: 72px; height: 72px; border-radius: 20px; flex-shrink: 0; }
+        .metro-service-icon { width: 54px; height: 54px; border-radius: 18px; font-size: 24px; margin-bottom: 16px; }
+        .metro-mega-category-icon img, .metro-supplier-logo img, .metro-product-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .metro-mega-category-name, .metro-market-card-title, .metro-service-title, .metro-country-name { color: #0f172a; font-weight: 800; }
+        .metro-mega-category-name, .metro-market-card-title, .metro-service-title { font-size: 18px; line-height: 1.2; margin-bottom: 8px; }
+        .metro-mega-category-meta, .metro-market-card-meta, .metro-service-copy, .metro-country-region { color: #64748b; font-size: 12px; line-height: 1.6; }
+        .metro-mega-category-tags, .metro-market-badges, .metro-inline-stats, .metro-profile-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .metro-mega-category-tag, .metro-market-badge, .metro-inline-stat { border-radius: 999px; padding: 6px 10px; font-size: 11px; font-weight: 700; }
+        .metro-mega-category-tag, .metro-inline-stat { background: #f8fafc; color: #475569; }
+        .metro-market-badge { background: #fff7ed; color: #c2410c; }
+        .metro-market-badge-soft { background: #f8fafc; color: #475569; }
+        .metro-rfq-banner { border-radius: 28px; background: linear-gradient(135deg, #fff7ed 0%, #ffffff 100%); box-shadow: 0 20px 50px -40px rgba(249,115,22,.45); padding: 24px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+        .metro-rfq-banner-title { color: #0f172a; font-size: 28px; line-height: 1.1; font-weight: 800; margin: 0; }
+        .metro-rfq-banner-subtitle { color: #64748b; font-size: 14px; margin: 8px 0 0; }
+        .metro-rfq-banner-action { display: inline-flex; align-items: center; justify-content: center; min-width: 180px; height: 48px; border-radius: 999px; background: linear-gradient(135deg, #ffb300 0%, #ff4d2d 100%); color: #fff; padding: 0 22px; font-size: 14px; font-weight: 700; text-decoration: none; }
+        .metro-country-card, .metro-service-card, .metro-market-card { border-radius: 24px; padding: 22px; }
+        .metro-country-count { color: #0f172a; font-size: 28px; line-height: 1; font-weight: 800; margin-bottom: 8px; }
         @media (max-width: 575px){
-            #section_featured .slick-slider .slick-list .slick-slide {
-                margin-bottom: -4px;
-            }
+            .metro-search-hero-inner { padding: 20px 14px 20px; }
+            .metro-search-tabs { gap: 18px; justify-content: flex-start; margin-bottom: 18px; }
+            .metro-search-tab { font-size: 18px; }
+            .metro-search-row { flex-wrap: wrap; }
+            .metro-search-button, .metro-search-cta-btn, .metro-rfq-banner-action { width: 100%; min-width: 0; }
+            .metro-search-bottom, .metro-market-header, .metro-rfq-banner, .metro-mega-categories-head { flex-direction: column; align-items: flex-start; }
+            .metro-mega-categories-title, .metro-market-title, .metro-search-cta-title, .metro-rfq-banner-title { font-size: 24px; }
+            .metro-mega-categories-grid, .metro-market-grid-3, .metro-market-grid-4 { grid-template-columns: 1fr; }
+            .metro-mega-category-card { border-right: 0; }
         }
     </style>
 
-    @php $lang = get_system_language()->code;  @endphp
+    @php
+        $lang = get_system_language()->code;
+        $searchHotCategories = $hot_categories->take(8);
+        $imageSearchEnabled = get_setting('enable_global_search_image', '1') === '1';
+        $megaCategories = $featured_categories->take(8);
+        $featuredSuppliers = $tradeServicesData['featured_suppliers_list'] ?? collect();
+        $latestRfqs = $tradeServicesData['latest_rfqs'] ?? collect();
+    @endphp
 
-    <!-- Sliders -->
-    <div class="home-banner-area mb-3">
-        <div class="p-0">
-            <!-- Sliders -->
-            <div class="home-slider slider-full">
-                @if (get_setting('home_slider_images', null, $lang) != null)
-                    <div class="aiz-carousel dots-inside-bottom mobile-img-auto-height" data-autoplay="true" data-infinite="true">
-                        @php
-                            $decoded_slider_images = json_decode(get_setting('home_slider_images', null, $lang), true);
-                            $sliders = get_slider_images($decoded_slider_images);
-                            $home_slider_links = get_setting('home_slider_links', null, $lang);
-                        @endphp
-                        @foreach ($sliders as $key => $slider)
-                            <div class="carousel-box">
-                                <a href="{{ isset(json_decode($home_slider_links, true)[$key]) ? json_decode($home_slider_links, true)[$key] : '' }}">
-                                    <!-- Image -->
-                                    <div class="d-block mw-100 img-fit overflow-hidden h-180px h-md-320px h-lg-460px h-xl-553px overflow-hidden">
-                                        <img class="img-fit h-100 m-auto has-transition ls-is-cached lazyloaded"
-                                        src="{{ $slider ? my_asset($slider->file_name) : static_asset('assets/img/placeholder.jpg') }}"
-                                        alt="{{ env('APP_NAME') }} promo"
-                                        onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder-rect.jpg') }}';">
-                                    </div>
-                                </a>
+    <div class="metro-search-hero mb-3">
+        <div class="container">
+            <div class="metro-search-hero-inner">
+                <div class="metro-search-tabs">
+                    <button type="button" class="metro-search-tab active" data-scope="ai_mode"><span class="metro-search-tab-ai"><span>AI Mode</span><span class="metro-search-tab-ai-badge">AI</span></span></button>
+                    <span class="metro-search-tab-divider d-none d-md-block"></span>
+                    <button type="button" class="metro-search-tab" data-scope="products">{{ translate('Products') }}</button>
+                    <button type="button" class="metro-search-tab" data-scope="manufacturers">{{ translate('Manufacturers') }}</button>
+                    <button type="button" class="metro-search-tab" data-scope="worldwide">{{ translate('Worldwide') }}</button>
+                </div>
+
+                <div class="metro-search-shell">
+                    <form method="GET" action="{{ route('global.search') }}" id="metro-search-form">
+                        <input type="hidden" name="scope" id="metro-search-scope" value="ai_mode">
+                        <div class="metro-search-row">
+                            <div class="metro-search-input-wrap">
+                                <input type="text" class="form-control metro-search-input" name="q" id="metro-home-search-input" placeholder="{{ translate('women’s intimates') }}" autocomplete="off">
+                                <div id="metro-home-search-suggestions" class="metro-search-suggestions"></div>
                             </div>
-                        @endforeach
+                            <button type="submit" class="metro-search-button"><i class="las la-search"></i><span>{{ translate('Search') }}</span></button>
+                        </div>
+                        <div class="metro-search-bottom">
+                            @if ($imageSearchEnabled)
+                                <a href="javascript:void(0)" class="metro-search-image-link" data-toggle="modal" data-target="#globalSearchImageModal"><i class="las la-camera-retro"></i><span>{{ translate('Image Search') }}</span></a>
+                            @endif
+                        </div>
+                    </form>
+                </div>
+
+                <div class="metro-search-cta-banner">
+                    <div class="metro-search-cta-title">{{ translate('Source products from verified global suppliers') }}</div>
+                    <div class="metro-search-cta-actions">
+                        <a href="{{ route('b2b.rfqs.create') }}" class="metro-search-cta-btn metro-search-cta-btn-primary">{{ translate('Request Quote') }}</a>
+                        <a href="{{ route('b2b.portal.become-supplier') }}" class="metro-search-cta-btn metro-search-cta-btn-secondary">{{ translate('Become Supplier') }}</a>
+                    </div>
+                </div>
+
+                <div class="metro-search-chip-row">
+                    @foreach ($searchHotCategories as $category)
+                        <a href="{{ route('products.category', $category->slug) }}" class="metro-search-chip"><i class="las la-fire text-warning"></i><span>{{ $category->getTranslation('name') }}</span></a>
+                    @endforeach
+                </div>
+
+                @if ($megaCategories->count() > 0)
+                    <div class="metro-mega-categories">
+                        <div class="metro-mega-categories-head">
+                            <div>
+                                <div class="metro-mega-categories-kicker">{{ translate('Mega Categories') }}</div>
+                                <h2 class="metro-mega-categories-title">{{ translate('Popular B2B + B2C categories') }}</h2>
+                                <p class="metro-mega-categories-subtitle">{{ translate('Browse high-demand marketplace categories used by wholesale buyers, retail shoppers, and global suppliers.') }}</p>
+                            </div>
+                            <a href="{{ route('categories.all') }}" class="metro-mega-categories-link">{{ translate('View all categories') }}</a>
+                        </div>
+                        <div class="metro-mega-categories-grid">
+                            @foreach ($megaCategories as $category)
+                                @php
+                                    $categoryName = $category->getTranslation('name');
+                                    $categoryProductsCount = $category->products()->count();
+                                    $categoryChildren = $category->childrenCategories()->take(3)->get();
+                                @endphp
+                                <a href="{{ route('products.category', $category->slug) }}" class="metro-mega-category-card">
+                                    <span class="metro-mega-category-icon">
+                                        @if ($category->cover_image)
+                                            <img src="{{ uploaded_asset($category->cover_image) }}" alt="{{ $categoryName }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                        @else
+                                            <i class="las la-cubes"></i>
+                                        @endif
+                                    </span>
+                                    <div class="metro-mega-category-name">{{ $categoryName }}</div>
+                                    <div class="metro-mega-category-meta">{{ $categoryProductsCount }} {{ translate('products') }}</div>
+                                    @if ($categoryChildren->count() > 0)
+                                        <div class="metro-mega-category-tags">
+                                            @foreach ($categoryChildren as $childCategory)
+                                                <span class="metro-mega-category-tag">{{ $childCategory->getTranslation('name') }}</span>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </a>
+                            @endforeach
+                        </div>
                     </div>
                 @endif
+
+                @if ($featuredSuppliers->count() > 0)
+                    <section class="metro-market-section">
+                        <div class="metro-market-header">
+                            <div>
+                                <div class="metro-market-kicker">{{ translate('Featured Suppliers') }}</div>
+                                <h2 class="metro-market-title">{{ translate('Verified supplier cards') }}</h2>
+                                <p class="metro-market-subtitle">{{ translate('Meet trusted global suppliers with public profiles, product categories, and response quality signals.') }}</p>
+                            </div>
+                            <a href="{{ route('b2b.suppliers.index') }}" class="metro-market-link">{{ translate('Browse supplier directory') }}</a>
+                        </div>
+                        <div class="metro-market-grid metro-market-grid-3">
+                            @foreach ($featuredSuppliers->take(3) as $supplier)
+                                <a href="{{ route('b2b.suppliers.show', $supplier->public_slug) }}" class="metro-market-card metro-market-card-link">
+                                    <div class="metro-supplier-card-top">
+                                        <span class="metro-supplier-logo">@if ($supplier->logo)<img src="{{ uploaded_asset($supplier->logo) }}" alt="{{ $supplier->company_name }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">@else<i class="las la-industry"></i>@endif</span>
+                                        <div>
+                                            <div class="metro-market-card-title">{{ $supplier->company_name }}</div>
+                                            <div class="metro-market-card-meta">{{ ucfirst($supplier->company_type) }} · {{ $supplier->country ?: translate('Global') }}</div>
+                                            <div class="metro-market-badges">
+                                                @if ($supplier->verified_supplier_badge)<span class="metro-market-badge">{{ translate('Verified Supplier') }}</span>@endif
+                                                @if ($supplier->premium_verified)<span class="metro-market-badge metro-market-badge-soft">{{ translate('Premium Verified') }}</span>@endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="metro-market-card-meta">{{ \Illuminate\Support\Str::limit($supplier->business_scope ?: $supplier->description, 120) ?: translate('View categories, response quality, and company profile details.') }}</div>
+                                    <div class="metro-inline-stats">
+                                        <span class="metro-inline-stat">{{ translate('Profile Score') }}: {{ (int) ($supplier->profile_score ?? 0) }}</span>
+                                        <span class="metro-inline-stat">{{ translate('Response') }}: {{ $supplier->response_rate ? rtrim(rtrim(number_format((float) $supplier->response_rate, 2), '0'), '.') . '%' : '-' }}</span>
+                                    </div>
+                                </a>
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
+
+                <section class="metro-market-section">
+                    <div class="metro-rfq-banner">
+                        <div>
+                            <h2 class="metro-rfq-banner-title">{{ translate('Post your requirement, get quotes fast') }}</h2>
+                            <p class="metro-rfq-banner-subtitle">{{ translate('Create an RFQ, target verified suppliers, and speed up sourcing with direct quote workflows.') }}</p>
+                        </div>
+                        <a href="{{ route('b2b.rfqs.create') }}" class="metro-rfq-banner-action">{{ translate('Post RFQ Now') }}</a>
+                    </div>
+                    @if ($latestRfqs->count() > 0)
+                        <div class="metro-market-grid metro-market-grid-4">
+                            @foreach ($latestRfqs as $rfq)
+                                <a href="{{ route('b2b.rfqs.show', $rfq->id) }}" class="metro-market-card metro-market-card-link">
+                                    <div class="metro-market-card-title">{{ \Illuminate\Support\Str::limit($rfq->title, 60) }}</div>
+                                    <div class="metro-market-card-meta">{{ $rfq->category?->getTranslation('name') ?: translate('General sourcing') }}</div>
+                                    <div class="metro-inline-stats">
+                                        <span class="metro-inline-stat">{{ translate('Qty') }}: {{ $rfq->quantity ?: '-' }} {{ $rfq->unit ?: '' }}</span>
+                                        <span class="metro-inline-stat">{{ ucfirst($rfq->status) }}</span>
+                                    </div>
+                                    <div class="metro-market-card-meta mt-3">{{ $rfq->destination_country ? translate('Destination') . ': ' . $rfq->destination_country : translate('Open for global supplier quotes') }}</div>
+                                </a>
+                            @endforeach
+                        </div>
+                    @endif
+                </section>
+
             </div>
         </div>
     </div>
 
-    <!-- Flash Deal -->
-    @php
-        $flash_deal = get_featured_flash_deal();
-        $flash_deal_bg = get_setting('flash_deal_bg_color');
-        $flash_deal_bg_full_width = (get_setting('flash_deal_bg_full_width') == 1) ? true : false;
-        $flash_deal_banner_menu_text = ((get_setting('flash_deal_banner_menu_text') == 'dark') ||  (get_setting('flash_deal_banner_menu_text') == null)) ? 'text-dark' : 'text-white';
-
-    @endphp
-    @if ($flash_deal != null)
-        <section class="mb-2 mb-md-3 mt-2 mt-md-3" style="background: {{ ($flash_deal_bg_full_width && $flash_deal_bg != null) ? $flash_deal_bg : '' }};" id="flash_deal">
-            <div class="container">
-                <!-- Top Section sm to lg -->
-                <div class="d-flex d-lg-none flex-wrap mb-2 mb-md-3 @if ($flash_deal_bg_full_width && $flash_deal_bg != null) pt-2 pt-md-3 @endif align-items-baseline justify-content-between">
-                    <!-- Title -->
-                    <h3 class="fs-16 fs-md-20 fw-700 mb-2 mb-sm-0">
-                        <span class="d-inline-block {{ ($flash_deal_bg_full_width && $flash_deal_bg != null) ? $flash_deal_banner_menu_text : 'text-dark'}}">{{ translate('Flash Sale') }}</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="24" viewBox="0 0 16 24"
-                            class="ml-3">
-                            <path id="Path_28795" data-name="Path 28795"
-                                d="M30.953,13.695a.474.474,0,0,0-.424-.25h-4.9l3.917-7.81a.423.423,0,0,0-.028-.428.477.477,0,0,0-.4-.207H21.588a.473.473,0,0,0-.429.263L15.041,18.151a.423.423,0,0,0,.034.423.478.478,0,0,0,.4.2h4.593l-2.229,9.683a.438.438,0,0,0,.259.5.489.489,0,0,0,.571-.127L30.9,14.164a.425.425,0,0,0,.054-.469Z"
-                                transform="translate(-15 -5)" fill="#fcc201" />
-                        </svg>
-                    </h3>
-                    <!-- Links -->
-                    <div>
-                        <div class="text-dark d-flex align-items-center mb-0">
-                            <a href="{{ route('flash-deals') }}"
-                                class="fs-10 fs-md-12 fw-700 has-transition @if ((get_setting('flash_deal_banner_menu_text') == 'light') && $flash_deal_bg_full_width && $flash_deal_bg != null) text-white opacity-60 hov-opacity-100 animate-underline-white @else text-reset opacity-60 hov-opacity-100 hov-text-primary animate-underline-primary @endif mr-3">{{ translate('View All Flash Sale') }}</a>
-                            <span class=" border-left border-soft-light border-width-2 pl-3">
-                                <a href="{{ route('flash-deal-details', $flash_deal->slug) }}"
-                                    class="fs-10 fs-md-12 fw-700 has-transition @if ((get_setting('flash_deal_banner_menu_text') == 'light') && $flash_deal_bg_full_width && $flash_deal_bg != null) == 'light') text-white opacity-60 hov-opacity-100 animate-underline-white @else text-reset opacity-60 hov-opacity-100 hov-text-primary animate-underline-primary @endif">{{ translate('View All Products from This Flash Sale') }}</a>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Countdown for small device -->
-                <div class="bg-white mb-3 d-md-none">
-                    <div class="aiz-count-down-circle" end-date="{{ date('Y/m/d H:i:s', $flash_deal->end_date) }}"></div>
-                </div>
-
-                <div class="row no-gutters align-items-center" style="background: {{ $flash_deal_bg }};">
-                    <!-- Flash Deals Baner & Countdown -->
-                    <div class="col-xxl-4 col-lg-5 col-6 h-200px h-md-400px h-lg-475px">
-                        <a href="{{ route('flash-deal-details', $flash_deal->slug) }}">
-                            <div class="h-100 w-100 w-xl-auto"
-                                style="background-image: url('{{ uploaded_asset($flash_deal->banner) }}'); background-size: cover; background-position: center center;">
-                                <div class="py-5 px-md-3 px-xl-5 d-none d-md-block">
-                                    <div class="bg-white">
-                                        <div class="aiz-count-down-circle"
-                                            end-date="{{ date('Y/m/d H:i:s', $flash_deal->end_date) }}"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-
-                    <div class="col-xxl-8 col-lg-7 col-6">
-                        <div class="pl-3 pr-lg-3 pl-xl-2rem pr-xl-2rem">
-                            <!-- Top Section from lg device -->
-                            <div class="d-none d-lg-flex flex-wrap mb-2 mb-md-3 align-items-baseline justify-content-between">
-                                <!-- Title -->
-                                <h3 class="fs-16 fs-md-20 fw-700 mb-2">
-                                    <span class="d-inline-block {{ $flash_deal_banner_menu_text }}">{{ translate('Flash Sale') }}</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="24" viewBox="0 0 16 24"
-                                        class="ml-3">
-                                        <path id="Path_28795" data-name="Path 28795"
-                                            d="M30.953,13.695a.474.474,0,0,0-.424-.25h-4.9l3.917-7.81a.423.423,0,0,0-.028-.428.477.477,0,0,0-.4-.207H21.588a.473.473,0,0,0-.429.263L15.041,18.151a.423.423,0,0,0,.034.423.478.478,0,0,0,.4.2h4.593l-2.229,9.683a.438.438,0,0,0,.259.5.489.489,0,0,0,.571-.127L30.9,14.164a.425.425,0,0,0,.054-.469Z"
-                                            transform="translate(-15 -5)" fill="#fcc201" />
-                                    </svg>
-                                </h3>
-                                <!-- Links -->
-                                <div>
-                                    <div class="text-dark d-flex align-items-center mb-0">
-                                        <a href="{{ route('flash-deals') }}"
-                                            class="fs-10 fs-md-12 fw-700 has-transition {{ $flash_deal_banner_menu_text }} @if (get_setting('flash_deal_banner_menu_text') == 'light') text-white opacity-60 hov-opacity-100 animate-underline-white @else text-reset opacity-60 hov-opacity-100 hov-text-primary animate-underline-primary @endif mr-3">
-                                            {{ translate('View All Flash Sale') }}
-                                        </a>
-                                        <span class=" border-left border-soft-light border-width-2 pl-3">
-                                            <a href="{{ route('flash-deal-details', $flash_deal->slug) }}"
-                                                class="fs-10 fs-md-12 fw-700 has-transition {{ $flash_deal_banner_menu_text }} @if (get_setting('flash_deal_banner_menu_text') == 'light') text-white opacity-60 hov-opacity-100 animate-underline-white @else text-reset opacity-60 hov-opacity-100 hov-text-primary animate-underline-primary @endif">{{ translate('View All Products from This Flash Sale') }}</a>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Flash Deals Products -->
-                            @php
-                                $flash_deal_products = get_flash_deal_products($flash_deal->id);
-                            @endphp
-                            <div class="aiz-carousel border-top @if (count($flash_deal_products) > 8) border-right @endif arrow-inactive-none arrow-x-0"
-                                data-rows="2" data-items="5" data-xxl-items="5" data-xl-items="3.5" data-lg-items="3" data-md-items="2"
-                                data-sm-items="2.5" data-xs-items="1.7" data-arrows="true" data-dots="false">
-                                @foreach ($flash_deal_products as $key => $flash_deal_product)
-                                    <div class="carousel-box bg-white border-left border-bottom">
-                                        @if ($flash_deal_product->product != null && $flash_deal_product->product->published != 0)
-                                            @php
-                                                $product_url = route('product', $flash_deal_product->product->slug);
-                                                if ($flash_deal_product->product->auction_product == 1) {
-                                                    $product_url = route('auction-product', $flash_deal_product->product->slug);
-                                                }
-                                            @endphp
-                                            <div
-                                                class="h-100px h-md-200px h-lg-auto flash-deal-item position-relative text-center has-transition hov-shadow-out z-1">
-                                                <a href="{{ $product_url }}"
-                                                    class="d-block py-md-2 overflow-hidden hov-scale-img"
-                                                    title="{{ $flash_deal_product->product->getTranslation('name') }}">
-                                                    <!-- Image -->
-
-                                                    <div class="d-block h-100 position-relative image-hover-effect">
-                                                        <img class="lazyload h-60px h-md-100px h-lg-120px mw-100 mx-auto has-transition product-main-image"
-                                                            src="{{ get_image($flash_deal_product->product->thumbnail) }}"
-                                                            alt="{{ $flash_deal_product->product->getTranslation('name') }}"
-                                                            onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
-                                                        <img class="lazyload h-60px h-md-100px h-lg-120px w-100 mx-auto has-transition product-hover-image position-absolute"
-                                                            src="{{ get_first_product_image($flash_deal_product->product->thumbnail, $flash_deal_product->product->photos) }}"
-                                                            alt="{{ $flash_deal_product->product->getTranslation('name') }}"
-                                                            onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
-                                                    </div>  
-                                                    <!-- Price -->
-                                                    <div
-                                                        class="fs-10 fs-md-14 mt-md-2 text-center h-md-48px has-transition overflow-hidden pt-md-4 flash-deal-price lh-1-5">
-                                                        <span
-                                                            class="d-block text-primary fw-700">{{ home_discounted_base_price($flash_deal_product->product) }}</span>
-                                                        @if (home_base_price($flash_deal_product->product) != home_discounted_base_price($flash_deal_product->product))
-                                                            <del
-                                                                class="d-block fw-400 text-secondary">{{ home_base_price($flash_deal_product->product) }}</del>
-                                                        @endif
-                                                    </div>
-                                                </a>
-                                            </div>
-                                        @endif
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+    @if ($imageSearchEnabled)
+        @include('frontend.enterprise_search.partials.image_search_modal')
     @endif
 
     <!-- Today's deal -->
@@ -289,11 +343,6 @@
         </div>
     @endif
 
-    <!-- Featured Products -->
-    <div id="section_featured" class="pt-2 pt-md-3" style="background: #f5f5fa;">
-
-    </div>
-
     @if (addon_is_activated('preorder'))
 
         <!-- Preorder Banner 1 -->
@@ -364,11 +413,6 @@
             </div>
         </div>
     @endif
-
-    <!-- Best Selling  -->
-    <div id="section_best_selling">
-
-    </div>
 
     <!-- New Products -->
     <div id="section_newest">
@@ -674,47 +718,114 @@
         @endif
     @endif
 
-    <!-- Top Brands -->
-    @if (get_setting('top_brands') != null)
-        <section class="mb-2 mb-md-3 mt-2 mt-md-3">
-            <div class="container">
-                <!-- Top Section -->
-                <div class="d-flex mb-2 mb-md-3 align-items-baseline justify-content-between">
-                    <!-- Title -->
-                    <h3 class="fs-16 fs-md-20 fw-700 mb-2 mb-sm-0">{{ translate('Top Brands') }}</h3>
-                    <!-- Links -->
-                    <div class="d-flex">
-                        <a class="text-blue fs-10 fs-md-12 fw-700 hov-text-primary animate-underline-primary"
-                            href="{{ route('brands.all') }}">{{ translate('View All Brands') }}</a>
-                    </div>
-                </div>
-                <!-- Brands Section -->
-                <div class="bg-white px-3">
-                    <div
-                        class="row row-cols-xxl-6 row-cols-xl-6 row-cols-lg-4 row-cols-md-4 row-cols-3 gutters-16 border-top border-left">
-                        @php
-                            $top_brands = json_decode(get_setting('top_brands'));
-                            $brands = get_brands($top_brands);
-                        @endphp
-                        @foreach ($brands as $brand)
-                            <div
-                                class="col text-center border-right border-bottom hov-scale-img has-transition hov-shadow-out z-1">
-                                <a href="{{ route('products.brand', $brand->slug) }}" class="d-block p-sm-3">
-                                    <img src="{{ $brand->logo != null ? uploaded_asset($brand->logo)  : static_asset('assets/img/placeholder.jpg') }}"
-                                        class="lazyload h-100 h-md-100px mx-auto has-transition p-2 p-sm-4 mw-100"
-                                        alt="{{ $brand->getTranslation('name') }}"
-                                        onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
-                                    <p class="text-center text-dark fs-12 fs-md-14 fw-700 mt-2">
-                                        {{ $brand->getTranslation('name') }}
-                                    </p>
-                                </a>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        </section>
-    @endif
+@endsection
 
+@section('script')
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById('metro-home-search-input');
+        const suggestions = document.getElementById('metro-home-search-suggestions');
+        const scopeInput = document.getElementById('metro-search-scope');
+        const scopeTabs = document.querySelectorAll('.metro-search-tab[data-scope]');
+        const searchForm = document.getElementById('metro-search-form');
+        const imageForm = document.getElementById('global-search-image-form');
+        const imageFeedback = document.getElementById('global-search-image-feedback');
+        let searchTimer = null;
+
+        if (!searchInput || !suggestions || !scopeInput) {
+            return;
+        }
+
+        const hideSuggestions = function () {
+            suggestions.innerHTML = '';
+            suggestions.classList.remove('is-active');
+        };
+
+        const activeScope = function () {
+            return scopeInput.value || 'ai_mode';
+        };
+
+        scopeTabs.forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                scopeInput.value = tab.dataset.scope || 'ai_mode';
+                scopeTabs.forEach(function (item) {
+                    item.classList.toggle('active', item === tab);
+                });
+                hideSuggestions();
+            });
+        });
+
+        searchInput.addEventListener('input', function () {
+            window.clearTimeout(searchTimer);
+            const value = searchInput.value.trim();
+
+            if (value.length < 2) {
+                hideSuggestions();
+                return;
+            }
+
+            searchTimer = window.setTimeout(function () {
+                fetch('{{ route('global.search.autocomplete') }}?q=' + encodeURIComponent(value) + '&scope=' + encodeURIComponent(activeScope()))
+                    .then(function (response) { return response.json(); })
+                    .then(function (data) {
+                        const items = (data && data.suggestions) ? data.suggestions : [];
+
+                        if (!items.length) {
+                            hideSuggestions();
+                            return;
+                        }
+
+                        suggestions.innerHTML = items.map(function (item) {
+                            const title = item.title || '';
+                            const subtitle = item.subtitle ? '<div class="text-muted fs-11 mt-1">' + item.subtitle + '</div>' : '';
+                            const href = item.url || ('{{ route('global.search') }}?q=' + encodeURIComponent(title) + '&scope=' + encodeURIComponent(activeScope()));
+                            return '<a class="metro-search-suggestion" href="' + href + '"><strong>' + title + '</strong>' + subtitle + '</a>';
+                        }).join('');
+                        suggestions.classList.add('is-active');
+                    })
+                    .catch(function () {
+                        hideSuggestions();
+                    });
+            }, 220);
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!suggestions.contains(event.target) && event.target !== searchInput) {
+                hideSuggestions();
+            }
+        });
+
+        if (imageForm && imageFeedback && searchForm) {
+            imageForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+                imageFeedback.className = 'mt-3';
+                imageFeedback.innerHTML = '<div class="alert alert-info mb-0">{{ translate('Analyzing image...') }}</div>';
+
+                fetch(imageForm.action, {
+                    method: 'POST',
+                    body: new FormData(imageForm),
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                }).then(function (response) {
+                    return response.json().then(function (data) {
+                        return { ok: response.ok, data: data };
+                    });
+                }).then(function (payload) {
+                    if (!payload.ok) {
+                        throw new Error(payload.data.message || '{{ translate('Image search failed.') }}');
+                    }
+
+                    if (payload.data.query) {
+                        searchInput.value = payload.data.query;
+                        scopeInput.value = 'products';
+                        searchForm.submit();
+                    }
+                }).catch(function (error) {
+                    imageFeedback.className = 'mt-3';
+                    imageFeedback.innerHTML = '<div class="alert alert-danger mb-0">' + error.message + '</div>';
+                });
+            });
+        }
+    });
+</script>
 @endsection
 

@@ -87,7 +87,12 @@ class B2BFreightQuoteController extends Controller
     public function store(Request $request)
     {
         $company = $this->companyService->getCompanyByUser(Auth::id());
-        abort_unless($company && $this->permissionService->canAccessCompany(Auth::id(), $company->id), 403);
+        abort_unless(
+            $company &&
+            $this->permissionService->canAccessCompany(Auth::id(), $company->id) &&
+            ($this->permissionService->canManageFreight(Auth::id(), $company->id) || $this->permissionService->canApproveFreightCosts(Auth::id(), $company->id)),
+            403
+        );
 
         $data = $request->validate([
             'forwarder_id' => 'nullable|exists:b2b_freight_forwarders,id',
@@ -185,8 +190,8 @@ class B2BFreightQuoteController extends Controller
 
     public function select($id)
     {
-        $company = $this->companyService->getCompanyByUser(Auth::id());
-        abort_unless($company && $this->permissionService->canAccessCompany(Auth::id(), $company->id), 403);
+        $company = $this->getAccessibleCompany();
+        abort_unless($this->permissionService->canManageFreight(Auth::id(), $company->id) || $this->permissionService->canApproveFreightCosts(Auth::id(), $company->id), 403);
 
         $quote = B2BFreightQuote::where('buyer_company_id', $company->id)->orWhere('supplier_company_id', $company->id)->findOrFail($id);
         B2BFreightQuote::where(function ($query) use ($quote) {
@@ -199,7 +204,18 @@ class B2BFreightQuoteController extends Controller
 
         $quote->update(['status' => 'selected']);
 
-        return response()->json(['success' => true, 'quote_id' => $quote->id]);
+        if ($this->expectsJsonResponse()) {
+            return response()->json(['success' => true, 'quote_id' => $quote->id]);
+        }
+
+        flash(translate('Freight quote selected successfully.'))->success();
+
+        return back();
+    }
+
+    protected function expectsJsonResponse(): bool
+    {
+        return request()->expectsJson() || request()->wantsJson() || request()->ajax();
     }
 
     public function storeCostLine(Request $request, $id)
@@ -251,20 +267,40 @@ class B2BFreightQuoteController extends Controller
         $shipment = !empty($data['shipment_id']) ? B2BShipment::find($data['shipment_id']) : null;
         $rfq = !empty($data['rfq_id']) ? B2BRfq::find($data['rfq_id']) : null;
 
-        $buyer = $data['buyer_company_id']
-            ?? $purchaseOrder?->buyer_company_id
+        $linkedBuyerCompanyId = $purchaseOrder?->buyer_company_id
             ?? $invoice?->buyer_company_id
             ?? $sampleOrder?->buyer_company_id
             ?? $shipment?->buyer_company_id
-            ?? $rfq?->b2b_company_id
-            ?? $activeCompanyId;
+            ?? $rfq?->b2b_company_id;
 
-        $supplier = $data['supplier_company_id']
-            ?? $purchaseOrder?->supplier_company_id
+        $linkedSupplierCompanyId = $purchaseOrder?->supplier_company_id
             ?? $invoice?->supplier_company_id
             ?? $sampleOrder?->supplier_company_id
             ?? $shipment?->supplier_company_id
             ?? $rfq?->supplier_company_id;
+
+        abort_if(
+            $linkedBuyerCompanyId !== null &&
+            $linkedSupplierCompanyId !== null &&
+            (int) $activeCompanyId !== (int) $linkedBuyerCompanyId &&
+            (int) $activeCompanyId !== (int) $linkedSupplierCompanyId,
+            403
+        );
+
+        $buyer = $data['buyer_company_id']
+            ?? $linkedBuyerCompanyId
+            ?? $activeCompanyId;
+
+        $supplier = $data['supplier_company_id']
+            ?? $linkedSupplierCompanyId;
+
+        if ($linkedBuyerCompanyId !== null) {
+            $buyer = $linkedBuyerCompanyId;
+        }
+
+        if ($linkedSupplierCompanyId !== null) {
+            $supplier = $linkedSupplierCompanyId;
+        }
 
         return [$buyer, $supplier];
     }

@@ -60,11 +60,10 @@ class PaykuController
                     'email' => $email
                 ];
             } elseif ($paymentType == 'seller_package_payment') {
-                $seller_package = SellerPackage::findOrFail($paymentData['seller_package_id']);
                 $data = [
                     'order' => $orderCode,
                     'subject' => 'SellerPackage Payment',
-                    'amount' => $seller_package->amount,
+                    'amount' => \App\Support\B2BPaymentResolver::resolveSellerPackageAmount($paymentData),
                     'email' => $email
                 ];
             }

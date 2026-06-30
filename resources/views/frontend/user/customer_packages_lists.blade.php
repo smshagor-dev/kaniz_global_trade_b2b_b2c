@@ -164,6 +164,8 @@
 
 @section('script')
     <script type="text/javascript">
+        const hasOfflineCustomerPackageRoute = @json(Route::has('offline_customer_package_purchase_modal'));
+
         function select_payment_type(id) {
             $('input[name=package_id]').val(id);
             $('#select_payment_type_modal').modal('show');
@@ -176,7 +178,12 @@
                 show_price_modal(package_id);
             } else if (type == 'offline') {
                 $("#select_type_cancel").click();
-                $.post('{{ route('offline_customer_package_purchase_modal') }}', {
+                if (!hasOfflineCustomerPackageRoute) {
+                    AIZ.plugins.notify('warning', '{{ translate('Offline package payment is not available right now.') }}');
+                    return;
+                }
+
+                $.post('{{ Route::has('offline_customer_package_purchase_modal') ? route('offline_customer_package_purchase_modal') : '' }}', {
                     _token: '{{ csrf_token() }}',
                     package_id: package_id
                 }, function(data) {

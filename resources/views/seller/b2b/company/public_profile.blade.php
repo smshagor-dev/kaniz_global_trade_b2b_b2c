@@ -190,4 +190,12 @@
             @endforelse
         </div>
     </div>
+
+    <div class="mt-4">
+        @include('seller.b2b.company.partials.catalog_manager', ['catalogs' => $catalogs])
+    </div>
+@endsection
+
+@section('script')
+    @stack('catalog_scripts')
 @endsection

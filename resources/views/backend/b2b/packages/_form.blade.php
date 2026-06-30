@@ -63,7 +63,7 @@
         <div class="form-group row">
             <label class="col-sm-2 col-form-label">{{ translate('Highlight Text') }}</label>
             <div class="col-sm-4">
-                <input type="text" class="form-control" name="highlight_text" value="{{ old('highlight_text', $package?->highlight_text) }}" placeholder="Most popular">
+                <input type="text" class="form-control" name="highlight_text" value="{{ old('highlight_text', $package?->highlight_text) }}">
             </div>
             <label class="col-sm-2 col-form-label">{{ translate('Logo') }}</label>
             <div class="col-sm-4">

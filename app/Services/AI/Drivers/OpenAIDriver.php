@@ -10,12 +10,31 @@ class OpenAIDriver extends AbstractAIHttpDriver
     public function generate(AIProviderSetting $providerSetting, array $payload): array
     {
         $model = $payload['model'] ?? $providerSetting->model;
+        $input = $payload['prompt'];
+
+        if (!empty($payload['image']['base64'])) {
+            $mimeType = (string) ($payload['image']['mime_type'] ?? 'image/jpeg');
+            $input = [[
+                'role' => 'user',
+                'content' => array_values(array_filter([
+                    $payload['prompt'] !== '' ? [
+                        'type' => 'input_text',
+                        'text' => $payload['prompt'],
+                    ] : null,
+                    [
+                        'type' => 'input_image',
+                        'image_url' => 'data:' . $mimeType . ';base64,' . $payload['image']['base64'],
+                    ],
+                ])),
+            ]];
+        }
+
         $response = $this->client($providerSetting)
             ->withToken((string) $providerSetting->api_key)
             ->withHeaders(['Content-Type' => 'application/json'])
             ->post(rtrim((string) ($providerSetting->base_url ?: config('ai.providers.openai.base_url')), '/') . '/responses', [
                 'model' => $model,
-                'input' => $payload['prompt'],
+                'input' => $input,
                 'instructions' => $payload['system_prompt'] ?: null,
                 'temperature' => (float) ($payload['temperature'] ?? $providerSetting->temperature ?? 0.7),
                 'max_output_tokens' => min((int) ($payload['max_tokens'] ?? $providerSetting->max_tokens ?? 1024), (int) config('ai.limits.max_tokens', 4096)),

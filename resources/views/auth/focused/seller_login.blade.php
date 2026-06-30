@@ -7,6 +7,7 @@
             : uploaded_asset(get_setting('site_icon'));
         $loginHeading = $loginHeading ?? translate('Welcome Back !');
         $loginSubtitle = $loginSubtitle ?? translate('Login To Your Seller Account');
+        $loginPortal = $loginPortal ?? 'seller';
         $registerRoute = $registerRoute ?? route(get_setting('seller_registration_verify') === '1' ? 'shop-reg.verification' : 'shops.create');
     @endphp
     <!-- aiz-main-wrapper -->
@@ -38,6 +39,7 @@
                                 <div class="">
                                     <form class="form-default" id="seller-login-form" role="form" action="{{ route('login') }}" method="POST">
                                         @csrf
+                                        <input type="hidden" name="workspace_portal" value="{{ $loginPortal }}">
                                         
                                         <div class="form-group">
                                             <label for="email" class="fs-12 fw-700 text-soft-dark">{{  translate('Email') }}</label>
