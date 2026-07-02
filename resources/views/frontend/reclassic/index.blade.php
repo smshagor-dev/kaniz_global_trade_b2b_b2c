@@ -5,9 +5,12 @@
         .home-slider {
             max-width: 100% !important;
         }
+        #left-side-product-alert{
+            display: none !important;
+        }
         .home-banner-area .aiz-category-menu .sub-cat-menu {
-            width: calc(100% - 290px);
-            left: calc(280px);
+            width: calc(100% - 270px);
+            left: 270px;
         }
         /* #auction_products .slick-slider .slick-list .slick-slide, */
         #section_home_categories .slick-slider .slick-list .slick-slide {
@@ -22,7 +25,8 @@
             }
         }
         @media (max-width: 991px){
-            .home-banner-area .container{
+            .home-banner-area .container,
+            .home-banner-area .layout-container{
                 min-width: 0;
                 padding-left: 15px !important;
                 padding-right: 15px!important;
@@ -38,12 +42,14 @@
             border-radius: 14px;
             padding: 14px;
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+            box-sizing: border-box;
         }
         .home-side-card{
             border-radius: 14px;
             background: linear-gradient(180deg, #ffffff 0%, #fff8f1 100%);
             border: 1px solid #f5e7d8;
             padding: 16px;
+            box-sizing: border-box;
         }
         .home-side-card + .home-side-card{
             margin-top: 14px;
@@ -84,13 +90,103 @@
             font-weight: 700;
             text-decoration: none !important;
         }
+        .home-feature-strip{
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 0;
+            margin-top: 18px;
+            padding: 16px 10px;
+            background: #fff;
+            border: 1px solid #f0f1f3;
+            border-radius: 0;
+            box-shadow: 0 3px 18px rgba(15, 23, 42, 0.06);
+        }
+        .home-feature-item{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-width: 0;
+            padding: 10px 18px;
+            position: relative;
+            text-align: center;
+        }
+        .home-feature-item:not(:last-child)::after{
+            content: "";
+            position: absolute;
+            top: 10px;
+            right: 0;
+            width: 1px;
+            height: calc(100% - 20px);
+            background: #f1f3f5;
+        }
+        .home-feature-icon{
+            flex: 0 0 42px;
+            width: 42px;
+            height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #222;
+        }
+        .home-feature-title{
+            color: #1f1f1f;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.3;
+            margin-bottom: 0;
+        }
+        .home-feature-text{
+            color: #5f6368;
+            font-size: 12px;
+            line-height: 1.35;
+        }
+        .home-feature-copy{
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: center;
+        }
+        .home-feature-icon svg{
+            width: 40px;
+            height: 40px;
+            display: block;
+        }
+        .home-feature-icon .accent{
+            stroke: #ff6a00;
+        }
+        .home-feature-icon .base{
+            stroke: #23262b;
+        }
+        @media (max-width: 1199px){
+            .home-feature-strip{
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                padding: 12px 8px;
+            }
+            .home-feature-item:nth-child(3)::after{
+                display: none;
+            }
+        }
+        @media (max-width: 767px){
+            .home-feature-strip{
+                grid-template-columns: repeat(1, minmax(0, 1fr));
+                padding: 10px 0;
+            }
+            .home-feature-item{
+                padding: 12px 16px;
+            }
+            .home-feature-item::after{
+                display: none;
+            }
+        }
     </style>
 
     @php $lang = get_system_language()->code;  @endphp
 
     <!-- home banner area -->
     <div class="home-banner-area mb-3" style="">
-        <div class="container">
+        <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
             <div class="row gutters-12 position-relative">
                 <!-- category menu -->
                 <div class="position-static d-none d-xl-block col-auto">
@@ -111,7 +207,7 @@
                                     <div class="carousel-box">
                                         <a class="d-block" href="{{ isset(json_decode($home_slider_links, true)[$key]) ? json_decode($home_slider_links, true)[$key] : '' }}">
                                             <img
-                                                class="d-block mw-100 img-fit h-180px h-md-320px @if(count($featured_categories) == 0) h-lg-530px @else h-lg-350px @endif"
+                                                class="d-block mw-100 img-fit h-180px h-md-320px @if(count($featured_categories) == 0) h-lg-530px @else h-lg-370px @endif"
                                                 src="{{ $slider ? my_asset($slider->file_name) : static_asset('assets/img/placeholder.jpg') }}"
                                                 alt="{{ env('APP_NAME')}} promo"
                                                 onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder-rect.jpg') }}';"
@@ -123,38 +219,71 @@
                         </div>
                     @endif
 
-                    <!-- Featured Categories -->
-                    @if (count($featured_categories) > 0)
-                        <div class="bg-whit mt-4">
-                            <div class="aiz-carousel slick-left arrow-inactive-none arrow-x-0" data-items="6.5" data-xxl-items="6.5" data-xl-items="4.5"
-                                data-lg-items="5" data-md-items="5" data-sm-items="3" data-xs-items="2" data-arrows="true">
-                                @foreach ($featured_categories as $key => $category)
-                                    @php
-                                        $category_name = $category->getTranslation('name');
-                                    @endphp
-                                    <div class="carousel-box">
-                                        <div class="d-flex flex-column align-items-center overflow-hidden" style="width: 110px; height: 155px;border-radius: 8px;background: #f5f6f7; box-shadow: 0px 0px 25px -15px rgba(171,169,171,1);">
-                                            <div class="overflow-hidden hov-scale-img" style="width: 110px; height:100px; min-height:100px;">
-                                                <a class="d-block h-100" href="{{ route('products.category', $category->slug) }}">
-                                                    <img src="{{ isset($category->bannerImage->file_name) ? my_asset($category->bannerImage->file_name) : static_asset('assets/img/placeholder.jpg') }}"
-                                                        class="lazyload img-fit h-100 mx-auto has-transition"
-                                                        alt="{{ $category->getTranslation('name') }}"
-                                                        onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
-                                                </a>
-                                            </div>
-                                            <p class="mt-1 mb-0 fs-12 fw-500 text-center text-truncate-2 px-2">
-                                                <a class="text-reset hov-text-primary"
-                                                    href="{{ route('products.category', $category->slug) }}"
-                                                    style="width: max-content;">
-                                                    {{ $category_name }}
-                                                </a>
-                                            </p>
-                                        </div>
-                                    </div>
-                                @endforeach
+                    <div class="home-feature-strip">
+                        <div class="home-feature-item">
+                            <span class="home-feature-icon" aria-hidden="true">
+                                <svg viewBox="0 0 32 32" fill="none">
+                                    <path class="base" d="M16 4 25 9.2v11.1L16 25.6 7 20.3V9.2L16 4Z" stroke-width="1.8" stroke-linejoin="round"/>
+                                    <path class="accent" d="M16 4v10.5M25 9.2 16 14.5M16 14.5 7 9.2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                            <div class="home-feature-copy">
+                                <div class="home-feature-title">{{ translate('Millions of Products') }}</div>
+                                <div class="home-feature-text">{{ translate('to choose from') }}</div>
                             </div>
                         </div>
-                    @endif
+                        <div class="home-feature-item">
+                            <span class="home-feature-icon" aria-hidden="true">
+                                <svg viewBox="0 0 32 32" fill="none">
+                                    <path class="base" d="M16 5.2 24.5 8.6v7.8c0 5.1-3.4 8.5-8.5 10.4-5.1-1.9-8.5-5.3-8.5-10.4V8.6L16 5.2Z" stroke-width="1.8" stroke-linejoin="round"/>
+                                    <path class="accent" d="m12.5 16.3 2.4 2.5 4.8-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                            <div class="home-feature-copy">
+                                <div class="home-feature-title">{{ translate('Verified Suppliers') }}</div>
+                                <div class="home-feature-text">{{ translate('around the world') }}</div>
+                            </div>
+                        </div>
+                        <div class="home-feature-item">
+                            <span class="home-feature-icon" aria-hidden="true">
+                                <svg viewBox="0 0 32 32" fill="none">
+                                    <path class="base" d="M16 5.2 24.5 8.6v7.8c0 5.1-3.4 8.5-8.5 10.4-5.1-1.9-8.5-5.3-8.5-10.4V8.6L16 5.2Z" stroke-width="1.8" stroke-linejoin="round"/>
+                                    <path class="accent" d="m12.5 16.3 2.4 2.5 4.8-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                            <div class="home-feature-copy">
+                                <div class="home-feature-title">{{ translate('Secure Payments') }}</div>
+                                <div class="home-feature-text">{{ translate('multiple options') }}</div>
+                            </div>
+                        </div>
+                        <div class="home-feature-item">
+                            <span class="home-feature-icon" aria-hidden="true">
+                                <svg viewBox="0 0 32 32" fill="none">
+                                    <path class="base" d="M5.5 9.5h13v10h-13zM18.5 12h4.4l3.1 3.2v4.3h-7.5z" stroke-width="1.8" stroke-linejoin="round"/>
+                                    <circle class="base" cx="10.2" cy="22.3" r="1.8" stroke-width="1.8"/>
+                                    <circle class="accent" cx="22.7" cy="22.3" r="1.8" stroke-width="1.8"/>
+                                </svg>
+                            </span>
+                            <div class="home-feature-copy">
+                                <div class="home-feature-title">{{ translate('On-time delivery') }}</div>
+                                <div class="home-feature-text">{{ translate('worldwide shipping') }}</div>
+                            </div>
+                        </div>
+                        <div class="home-feature-item">
+                            <span class="home-feature-icon" aria-hidden="true">
+                                <svg viewBox="0 0 32 32" fill="none">
+                                    <path class="base" d="M9 16a7 7 0 1 1 14 0" stroke-width="1.8" stroke-linecap="round"/>
+                                    <path class="base" d="M9 16h-1.2A2.3 2.3 0 0 0 5.5 18.3v2.2a2.3 2.3 0 0 0 2.3 2.3H10V16Zm14 0h1.2a2.3 2.3 0 0 1 2.3 2.3v2.2a2.3 2.3 0 0 1-2.3 2.3H22V16Z" stroke-width="1.8" stroke-linejoin="round"/>
+                                    <path class="accent" d="M21.5 24.5c-1 .9-2.6 1.5-4.5 1.5h-2" stroke-width="1.8" stroke-linecap="round"/>
+                                    <circle class="accent" cx="21.8" cy="24.3" r="1.3" stroke-width="1.8"/>
+                                </svg>
+                            </span>
+                            <div class="home-feature-copy">
+                                <div class="home-feature-title">{{ translate('24/7 Support') }}</div>
+                                <div class="home-feature-text">{{ translate("we're here to help") }}</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="col-12 col-lg-auto mt-4">
@@ -187,7 +316,7 @@
     @php $homeBanner1Images = get_setting('home_banner1_images', null, $lang);   @endphp
     @if ($homeBanner1Images != null)
         <div class="mb-2 mb-md-3 mt-2 mt-md-3">
-            <div class="container">
+            <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
                 @php
                     $banner_1_imags = json_decode($homeBanner1Images);
                     $data_md = count($banner_1_imags) >= 2 ? 2 : 1;
@@ -223,7 +352,7 @@
     @endphp
     @if ($flash_deal != null)
         <section class="mb-2 mb-md-3 mt-2 mt-md-3" id="flash_deal">
-            <div class="container">
+            <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
                 <div class="rounded-2 overflow-hidden p-3 p-md-2rem @if(get_setting('flash_deal_section_outline') == 1) border @endif" style="background: {{ $flash_deal_bg != null ? $flash_deal_bg : '#fff9ed' }}; border-color: {{ get_setting('flash_deal_section_outline_color') }} !important;">
                     <!-- Top Section -->
                     <div class="d-flex flex-wrap align-items-baseline justify-content-center justify-content-sm-between mb-2 mb-md-3 position-relative">
@@ -336,7 +465,7 @@
         @php $homepreorder_banner_1Images = get_setting('home_preorder_banner_1_images', null, $lang);   @endphp
         @if ($homepreorder_banner_1Images != null)
             <div class="mb-2 mb-md-3 mt-2 mt-md-3">
-                <div class="container">
+                <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
                     @php
                         $banner_2_imags = json_decode($homepreorder_banner_1Images);
                         $data_md = count($banner_2_imags) >= 2 ? 2 : 1;
@@ -377,7 +506,7 @@
     @php $homeBanner2Images = get_setting('home_banner2_images', null, $lang);   @endphp
     @if ($homeBanner2Images != null)
         <div class="mb-2 mb-md-3 mt-2 mt-md-3">
-            <div class="container">
+            <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
                 @php
                     $banner_2_imags = json_decode($homeBanner2Images);
                     $data_md = count($banner_2_imags) >= 2 ? 2 : 1;
@@ -420,7 +549,7 @@
     @php $homeBanner3Images = get_setting('home_banner3_images', null, $lang);   @endphp
     @if ($homeBanner3Images != null)
         <div class="mb-2 mb-md-3 mt-2 mt-md-3">
-            <div class="container">
+            <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
                 @php
                     $banner_3_imags = json_decode($homeBanner3Images);
                     $data_md = count($banner_3_imags) >= 2 ? 2 : 1;
@@ -532,7 +661,7 @@
         @endphp
         @if (count($classified_products) > 0)
             <section class="mb-2 mb-md-3 mt-2rem">
-                <div class="container">
+                <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
                     <div class="p-3 p-md-2rem rounded-2 overflow-hidden @if(get_setting('classified_section_outline') == 1) border @endif"
                         style="background: {{ $classified_section_bg != null ? $classified_section_bg : '#fff9ed' }}; border-color: {{ get_setting('classified_section_outline_color') }} !important;">
                         <!-- Top Section -->
@@ -628,7 +757,7 @@
         @endphp
         @if (count($best_selers) > 0)
         <section class="mb-2 mb-md-3 mt-2 mt-md-3">
-            <div class="container">
+            <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
                 <div class="p-3 p-md-2rem rounded-2 @if(get_setting('sellers_section_outline') == 1) border @endif"
                     style="background: {{ $sellers_section_bg != null ? $sellers_section_bg : '#fff9ed' }}; border-color: {{ get_setting('sellers_section_outline_color') }} !important; padding-bottom: 1rem !important;">
                     <!-- Top Section -->
@@ -730,7 +859,7 @@
             $brands_section_bg = get_setting('brands_section_bg_color');
         @endphp
         <section class="mb-2 mb-md-3 mt-2 mt-md-3 pb-2 pb-md-3">
-            <div class="container">
+            <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
                 <div class="p-3 p-md-2rem rounded-2 @if(get_setting('brands_section_outline') == 1) border @endif"
                     style="background: {{ $brands_section_bg != null ? $brands_section_bg : '#f0f2f5' }}; border-color: {{ get_setting('brands_section_outline_color') }} !important; padding-bottom: 1rem !important;">
                     <!-- Top Section -->

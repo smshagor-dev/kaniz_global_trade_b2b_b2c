@@ -30,6 +30,22 @@
             'label' => $label,
             'link' => json_decode(get_setting('header_menu_links'), true)[$index] ?? '#',
         ]);
+    $compareCount = Session::has('compare') ? count(Session::get('compare')) : 0;
+    $wishlistCount = Auth::check() ? get_wishlists()->count() : 0;
+    $notificationCount = Auth::check() ? Auth::user()->unreadNotifications->count() : 0;
+    $dashboardRoute = isAdmin() ? route('admin.dashboard') : route('dashboard');
+    $headerSearchScopes = collect([
+        ['value' => 'ai_mode', 'label' => translate('AI Search')],
+        ['value' => 'products', 'label' => translate('Products')],
+        ['value' => 'manufacturers', 'label' => translate('Manufacturers')],
+        ['value' => 'suppliers', 'label' => translate('Suppliers')],
+        ['value' => 'worldwide', 'label' => translate('Worldwide')],
+    ])->when(get_setting('enable_global_search_ai_mode', '1') !== '1', function ($items) {
+        return $items->reject(fn ($item) => $item['value'] === 'ai_mode')->values();
+    });
+    $activeHeaderSearchScope = $headerSearchScopes->firstWhere('value', $headerSearchScope) ?? $headerSearchScopes->first();
+    $headerSearchScope = $activeHeaderSearchScope['value'] ?? 'products';
+    $headerSearchScopeLabel = $activeHeaderSearchScope['label'] ?? translate('Products');
 @endphp
 
 <header class="@if (get_setting('header_stikcy') == 'on') sticky-top @endif kaniz-header-wrap">
@@ -40,7 +56,7 @@
                     <div class="dropdown" id="country-deliver-change">
                         <a href="javascript:void(0)" class="kaniz-top-link dropdown-toggle" data-toggle="dropdown"
                             data-display="static" aria-expanded="false">
-                            <span>Deliver to:</span>
+                            <span>Deliver from:</span>
                             <span class="kaniz-flag kaniz-selected-country-code">{{ $selectedCountry['code'] }}</span>
                             <span class="kaniz-selected-country-name">{{ $selectedCountry['name'] }}</span>
                         </a>
@@ -104,7 +120,7 @@
                         <i class="las la-user-circle"></i>
                         <span>Buyer Central</span>
                     </a>
-                    <a href="{{ route('home') }}" class="kaniz-top-link">
+                    <a href="{{ route('custom-pages.show_custom_page', 'contact-us') }}" class="kaniz-top-link">
                         <i class="las la-question-circle"></i>
                         <span>Help Center</span>
                     </a>
@@ -169,10 +185,22 @@
                         <input type="hidden" name="scope" id="header-global-search-scope" value="{{ $headerSearchScope }}">
                         <input type="hidden" name="country" id="header-global-search-country" value="{{ $selectedCountry['name'] }}">
                         <div class="kaniz-search-shell">
-                            <button type="button" class="kaniz-search-category">
-                                <span>Products</span>
-                                <i class="las la-angle-down"></i>
-                            </button>
+                            <div class="dropdown kaniz-search-category-dropdown">
+                                <button type="button" class="kaniz-search-category" data-toggle="dropdown" aria-expanded="false">
+                                    <span id="header-search-scope-label">{{ $headerSearchScopeLabel }}</span>
+                                    <i class="las la-angle-down"></i>
+                                </button>
+                                <div class="dropdown-menu kaniz-search-scope-menu">
+                                    @foreach ($headerSearchScopes as $scopeOption)
+                                        <button type="button"
+                                            class="dropdown-item kaniz-search-scope-item @if ($headerSearchScope === $scopeOption['value']) active @endif"
+                                            data-scope="{{ $scopeOption['value'] }}"
+                                            data-label="{{ $scopeOption['label'] }}">
+                                            {{ $scopeOption['label'] }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
                             <div class="kaniz-search-input-wrap">
                                 <input type="text" id="search" name="keyword" value="{{ $headerSearchQuery }}"
                                     placeholder="What are you looking for..." autocomplete="off">
@@ -203,27 +231,102 @@
                 </div>
 
                 <div class="kaniz-header-actions">
+                    <a href="{{ route('compare') }}" class="kaniz-action-link kaniz-action-icon" title="{{ translate('Compare') }}">
+                        <span class="kaniz-action-icon-wrap">
+                            <i class="las la-exchange-alt"></i>
+                            @if ($compareCount > 0)
+                                <span class="kaniz-action-badge">{{ $compareCount }}</span>
+                            @endif
+                        </span>
+                        <span>{{ translate('Compare') }}</span>
+                    </a>
+
+                    <a href="{{ route('wishlists.index') }}" class="kaniz-action-link kaniz-action-icon" title="{{ translate('Favorite') }}">
+                        <span class="kaniz-action-icon-wrap">
+                            <i class="lar la-heart"></i>
+                            @if ($wishlistCount > 0)
+                                <span class="kaniz-action-badge">{{ $wishlistCount }}</span>
+                            @endif
+                        </span>
+                        <span>{{ translate('Favorite') }}</span>
+                    </a>
+
                     @auth
-                        <a href="{{ route('dashboard') }}" class="kaniz-action-link">
-                            <i class="lar la-user"></i>
-                            <span>{{ \Illuminate\Support\Str::limit(Auth::user()->name, 12) }}</span>
-                        </a>
+                        <div class="dropdown">
+                            <a href="{{ route('customer.all-notifications') }}" class="kaniz-action-link kaniz-action-icon"
+                                data-toggle="dropdown" aria-expanded="false" title="{{ translate('Notifications') }}">
+                                <span class="kaniz-action-icon-wrap">
+                                    <i class="lar la-bell"></i>
+                                    @if ($notificationCount > 0)
+                                        <span class="kaniz-action-badge">{{ $notificationCount }}</span>
+                                    @endif
+                                </span>
+                                <span>{{ translate('Notifications') }}</span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right kaniz-profile-menu kaniz-notification-menu">
+                                <div class="kaniz-notification-menu-title">{{ translate('Notifications') }}</div>
+                                <div class="kaniz-notification-list">
+                                    @forelse (Auth::user()->unreadNotifications->take(6) as $notification)
+                                        @php
+                                            $notificationText = $notification->data['message'] ?? $notification->data['title'] ?? null;
+                                            if (!$notificationText && !empty($notification->data['order_code'])) {
+                                                $notificationText = translate('Order') . ' #' . $notification->data['order_code'];
+                                            }
+                                            if (!$notificationText && !empty($notification->data['tracking_code'])) {
+                                                $notificationText = translate('Tracking code') . ': ' . $notification->data['tracking_code'];
+                                            }
+                                            if (!$notificationText) {
+                                                $notificationText = class_basename($notification->type);
+                                            }
+                                        @endphp
+                                        <a href="{{ route('notification.read-and-redirect', encrypt($notification->id)) }}"
+                                            class="dropdown-item kaniz-profile-item kaniz-notification-item">
+                                            <i class="lar la-bell"></i>
+                                            <span>{{ $notificationText }}</span>
+                                        </a>
+                                    @empty
+                                        <div class="kaniz-notification-empty">{{ translate('No notification found') }}</div>
+                                    @endforelse
+                                </div>
+                                <a href="{{ route('customer.all-notifications') }}"
+                                    class="dropdown-item kaniz-profile-item kaniz-notification-footer">
+                                    <i class="las la-arrow-right"></i>
+                                    <span>{{ translate('View All Notifications') }}</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="dropdown">
+                            <a href="{{ $dashboardRoute }}" class="kaniz-action-link kaniz-action-icon" data-toggle="dropdown"
+                                aria-expanded="false" title="{{ translate('Profile') }}">
+                                <span class="kaniz-action-icon-wrap">
+                                    <i class="lar la-user"></i>
+                                </span>
+                                <span>{{ translate('Profile') }}</span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right kaniz-profile-menu">
+                                <a href="{{ $dashboardRoute }}" class="dropdown-item kaniz-profile-item">
+                                    <i class="las la-th-large"></i>
+                                    <span>{{ translate('Dashboard') }}</span>
+                                </a>
+                                <a href="{{ route('conversations.index') }}" class="dropdown-item kaniz-profile-item">
+                                    <i class="lar la-comment-alt"></i>
+                                    <span>{{ translate('Message') }}</span>
+                                </a>
+                                <a href="{{ route('purchase_history.index') }}" class="dropdown-item kaniz-profile-item">
+                                    <i class="las la-clipboard-list"></i>
+                                    <span>{{ translate('Order') }}</span>
+                                </a>
+                            </div>
+                        </div>
                     @else
-                        <a href="{{ route('user.login') }}" class="kaniz-action-link kaniz-action-auth">
-                            <i class="lar la-user"></i>
-                            <span>Sign in<br><strong>Join free</strong></span>
+                        <a href="{{ route('user.login') }}" class="kaniz-action-link kaniz-action-icon" title="{{ translate('Profile') }}">
+                            <span class="kaniz-action-icon-wrap">
+                                <i class="lar la-user"></i>
+                            </span>
+                            <span>{{ translate('Profile') }}</span>
                         </a>
                     @endauth
-
-                    <a href="{{ route('conversations.index') }}" class="kaniz-action-link">
-                        <i class="lar la-comment-alt"></i>
-                        <span>Messages</span>
-                    </a>
-
-                    <a href="{{ route('purchase_history.index') }}" class="kaniz-action-link">
-                        <i class="las la-clipboard-list"></i>
-                        <span>Orders</span>
-                    </a>
 
                     <div id="cart_items" class="kaniz-cart-box">
                         @include('frontend.partials.cart.cart')
@@ -245,8 +348,8 @@
                     <a href="{{ $headerMenus->get(0)['link'] ?? route('home') }}" class="kaniz-bottom-link">Featured selections</a>
                     <a href="{{ $headerMenus->get(1)['link'] ?? route('home') }}" class="kaniz-bottom-link">Trade Assurance</a>
                     <a href="{{ route('buyer.portal') }}" class="kaniz-bottom-link">Buyer Central</a>
-                    <a href="{{ route('b2b.portal.become-supplier') }}" class="kaniz-bottom-link">Sell on Kaniz Global Trade</a>
-                    <a href="{{ $headerMenus->get(2)['link'] ?? route('home') }}" class="kaniz-bottom-link">Help</a>
+                    <a href="{{ route('shops.create') }}" class="kaniz-bottom-link">Sell on Kaniz Global Trade</a>
+                    <a href="{{ route('custom-pages.show_custom_page', 'contact-us') }}" class="kaniz-bottom-link">Help</a>
                 </nav>
             </div>
         </div>
@@ -476,6 +579,37 @@
             white-space: nowrap;
         }
 
+        .kaniz-search-category:focus {
+            outline: 0;
+        }
+
+        .kaniz-search-category-dropdown .dropdown-menu {
+            margin-top: 8px;
+            z-index: 1080;
+        }
+
+        .kaniz-search-scope-menu {
+            min-width: 210px;
+            padding: 8px 0;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+        }
+
+        .kaniz-search-scope-item {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1f2937;
+            padding: 10px 14px;
+        }
+
+        .kaniz-search-scope-item.active,
+        .kaniz-search-scope-item:hover,
+        .kaniz-search-scope-item:focus {
+            background: #fff7ed;
+            color: #ea580c;
+        }
+
         .kaniz-search-input-wrap {
             position: relative;
             flex: 1 1 auto;
@@ -517,19 +651,22 @@
         .kaniz-action-link,
         .kaniz-cart-box > a {
             display: inline-flex;
+            flex-direction: column;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            gap: 6px;
             color: #1f2937;
             text-decoration: none;
-            min-height: 48px;
-            padding: 0 8px;
-            font-size: 13px;
+            min-height: 56px;
+            min-width: 52px;
+            padding: 0 6px;
+            font-size: 11px;
             line-height: 1.2;
             white-space: nowrap;
         }
 
         .kaniz-action-link i {
-            font-size: 26px;
+            font-size: 22px;
             color: #374151;
         }
 
@@ -539,8 +676,115 @@
             text-decoration: none;
         }
 
-        .kaniz-action-auth strong {
+        .kaniz-action-icon-wrap {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border: 1px solid #e5e7eb;
+            border-radius: 999px;
+            background: #fff;
+            transition: all 0.2s ease;
+        }
+
+        .kaniz-action-link:hover .kaniz-action-icon-wrap,
+        .kaniz-cart-box > a:hover .kaniz-action-icon-wrap {
+            border-color: #ff6a00;
+            background: #fff7ed;
+        }
+
+        .kaniz-action-badge {
+            position: absolute;
+            top: -4px;
+            right: -6px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 4px;
+            border-radius: 999px;
+            background: #ff5a00;
+            color: #fff;
+            font-size: 10px;
             font-weight: 700;
+            line-height: 18px;
+            text-align: center;
+        }
+
+        .kaniz-profile-menu {
+            min-width: 180px;
+            margin-top: 10px;
+            padding: 8px 0;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+        }
+
+        .kaniz-profile-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            color: #1f2937;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .kaniz-profile-item i {
+            font-size: 18px;
+            color: #6b7280;
+        }
+
+        .kaniz-profile-item:hover,
+        .kaniz-profile-item:focus {
+            background: #fff7ed;
+            color: #ea580c;
+        }
+
+        .kaniz-profile-item:hover i,
+        .kaniz-profile-item:focus i {
+            color: #ea580c;
+        }
+
+        .kaniz-notification-menu {
+            min-width: 320px;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        .kaniz-notification-menu-title {
+            padding: 14px 16px 12px;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 13px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .kaniz-notification-list {
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .kaniz-notification-item {
+            align-items: flex-start;
+            white-space: normal;
+        }
+
+        .kaniz-notification-item span {
+            line-height: 1.4;
+            color: inherit;
+        }
+
+        .kaniz-notification-empty {
+            padding: 18px 16px;
+            color: #6b7280;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .kaniz-notification-footer {
+            border-top: 1px solid #f3f4f6;
+            border-radius: 0 0 14px 14px;
         }
 
         .kaniz-cart-box {
@@ -548,7 +792,47 @@
         }
 
         .kaniz-cart-box > a {
-            padding-right: 0;
+            padding-right: 6px;
+        }
+
+        .kaniz-cart-box > a > span:first-child {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border: 1px solid #e5e7eb;
+            border-radius: 999px;
+            background: #fff;
+            margin-right: 0 !important;
+        }
+
+        .kaniz-cart-box > a .cart-count {
+            position: absolute;
+            top: -4px;
+            right: -6px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 4px;
+            border-radius: 999px;
+            background: #ff5a00;
+            color: #fff !important;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 18px;
+            text-align: center;
+        }
+
+        .kaniz-cart-box > a .nav-box-text {
+            display: none !important;
+        }
+
+        .kaniz-cart-box > a > .d-none.d-xl-block {
+            display: block !important;
+            margin-left: 0 !important;
+            font-size: 11px !important;
+            font-weight: 600 !important;
         }
 
         .kaniz-cart-box .dropdown-menu {
@@ -626,6 +910,11 @@
             color: #ff6a00;
         }
 
+        .kaniz-header-search .typed-search-box {
+            z-index: 1080;
+            margin-top: 10px;
+        }
+
         @media (max-width: 1199.98px) {
             .kaniz-header-top {
                 display: none;
@@ -645,10 +934,15 @@
                 margin-left: auto;
             }
 
-            .kaniz-action-link span,
+            .kaniz-action-link > span:last-child,
             .kaniz-cart-box .nav-box-text,
             .kaniz-cart-box .d-xl-block {
                 display: none !important;
+            }
+
+            .kaniz-action-link,
+            .kaniz-cart-box > a {
+                min-width: 44px;
             }
         }
 
@@ -701,15 +995,49 @@
                 var form = document.getElementById('header-global-search-form');
                 var searchInput = document.getElementById('search');
                 var scopeInput = document.getElementById('header-global-search-scope');
+                var scopeLabel = document.getElementById('header-search-scope-label');
                 var countryInput = document.getElementById('header-global-search-country');
                 var imageForm = document.getElementById('global-search-image-form');
                 var imageFeedback = document.getElementById('global-search-image-feedback');
                 var dropdownFilters = document.querySelectorAll('.kaniz-dropdown-filter');
                 var csrfToken = document.querySelector('meta[name="csrf-token"]');
+                var typedSearchBox = document.querySelector('.typed-search-box');
+                var searchContent = document.getElementById('search-content');
+                var searchNothing = document.querySelector('.search-nothing');
+                var scopeItems = document.querySelectorAll('.kaniz-search-scope-item');
+                var searchTimer = null;
 
                 if (!form || !searchInput || !scopeInput) {
                     return;
                 }
+
+                var hideSuggestions = function () {
+                    if (typedSearchBox) {
+                        typedSearchBox.classList.add('d-none');
+                    }
+                    if (searchContent) {
+                        searchContent.innerHTML = '';
+                    }
+                    if (searchNothing) {
+                        searchNothing.classList.add('d-none');
+                    }
+                };
+
+                var showSuggestions = function () {
+                    if (typedSearchBox) {
+                        typedSearchBox.classList.remove('d-none');
+                    }
+                };
+
+                var setActiveScope = function (scope, label) {
+                    scopeInput.value = scope || 'products';
+                    if (scopeLabel && label) {
+                        scopeLabel.textContent = label;
+                    }
+                    scopeItems.forEach(function (item) {
+                        item.classList.toggle('active', item.getAttribute('data-scope') === scopeInput.value);
+                    });
+                };
 
                 dropdownFilters.forEach(function (filterInput) {
                     filterInput.addEventListener('input', function () {
@@ -791,7 +1119,63 @@
                     });
                 });
 
-                scopeInput.value = scopeInput.value || 'ai_mode';
+                setActiveScope(scopeInput.value || 'ai_mode', scopeLabel ? scopeLabel.textContent : '');
+
+                scopeItems.forEach(function (item) {
+                    item.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        setActiveScope(item.getAttribute('data-scope'), item.getAttribute('data-label'));
+                        hideSuggestions();
+                    });
+                });
+
+                searchInput.addEventListener('input', function () {
+                    window.clearTimeout(searchTimer);
+                    var query = searchInput.value.trim();
+
+                    if (query.length < 2) {
+                        hideSuggestions();
+                        return;
+                    }
+
+                    searchTimer = window.setTimeout(function () {
+                        fetch('{{ route('global.search.autocomplete') }}?q=' + encodeURIComponent(query) + '&scope=' + encodeURIComponent(scopeInput.value || 'ai_mode'))
+                            .then(function (response) { return response.json(); })
+                            .then(function (data) {
+                                var items = (data && data.suggestions) ? data.suggestions : [];
+
+                                if (!items.length) {
+                                    if (searchNothing) {
+                                        searchNothing.textContent = '{{ translate('Nothing found') }}';
+                                        searchNothing.classList.remove('d-none');
+                                    }
+                                    if (searchContent) {
+                                        searchContent.innerHTML = '';
+                                    }
+                                    showSuggestions();
+                                    return;
+                                }
+
+                                if (searchNothing) {
+                                    searchNothing.classList.add('d-none');
+                                }
+
+                                if (searchContent) {
+                                    searchContent.innerHTML = items.map(function (item) {
+                                        var title = item.title || '';
+                                        var subtitle = item.subtitle ? '<div class="text-muted fs-11 mt-1">' + item.subtitle + '</div>' : '';
+                                        var href = item.url || ('{{ route('global.search') }}?q=' + encodeURIComponent(title) + '&scope=' + encodeURIComponent(scopeInput.value || 'ai_mode'));
+                                        return '<a class="d-block px-3 py-2 text-reset hov-bg-soft-light" href="' + href + '"><strong>' + title + '</strong>' + subtitle + '</a>';
+                                    }).join('');
+                                }
+
+                                showSuggestions();
+                            })
+                            .catch(function () {
+                                hideSuggestions();
+                            });
+                    }, 220);
+                });
 
                 form.addEventListener('submit', function (event) {
                     event.preventDefault();
@@ -845,6 +1229,12 @@
                         });
                     });
                 }
+
+                document.addEventListener('click', function (event) {
+                    if (typedSearchBox && !typedSearchBox.contains(event.target) && event.target !== searchInput) {
+                        hideSuggestions();
+                    }
+                });
             });
         })();
     </script>
