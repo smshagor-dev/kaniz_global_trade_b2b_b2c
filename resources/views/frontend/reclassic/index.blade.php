@@ -17,12 +17,8 @@
             bottom: -50px;
         }
         @media (min-width: 992px){
-            .todays_deal{
+            .home-side-panel{
                 width: 230px;
-            }
-            .todays_deal .c-scrollbar-light{
-               scrollbar-width: auto !important;
-               padding-right: 5px !important;
             }
         }
         @media (max-width: 991px){
@@ -36,6 +32,57 @@
             #flash_deal .flash-deals-baner{
                 height: 203px !important;
             }
+        }
+        .home-side-panel{
+            background: #fff;
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+        }
+        .home-side-card{
+            border-radius: 14px;
+            background: linear-gradient(180deg, #ffffff 0%, #fff8f1 100%);
+            border: 1px solid #f5e7d8;
+            padding: 16px;
+        }
+        .home-side-card + .home-side-card{
+            margin-top: 14px;
+        }
+        .home-side-btn{
+            display: block;
+            width: 100%;
+            border-radius: 999px;
+            text-align: center;
+            font-weight: 700;
+            padding: 10px 16px;
+            text-decoration: none !important;
+        }
+        .home-side-btn-primary{
+            background: linear-gradient(180deg, #ff7a14 0%, #ff5a00 100%);
+            color: #fff !important;
+            box-shadow: 0 8px 18px rgba(255, 106, 0, 0.24);
+        }
+        .home-side-btn-outline{
+            margin-top: 10px;
+            border: 2px solid #ff8a3d;
+            color: #ff6a00 !important;
+            background: #fff;
+        }
+        .home-side-assurance-icon{
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: #fff1cc;
+            color: #f59e0b;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        .home-side-link{
+            color: #60a5fa !important;
+            font-weight: 700;
+            text-decoration: none !important;
         }
     </style>
 
@@ -110,55 +157,27 @@
                     @endif
                 </div>
 
-                <!-- Today's deal -->
-                @php
-                    $todays_deal_products = filter_products(App\Models\Product::where('todays_deal', '1'))->orderBy('id', 'desc')->get();
-                @endphp
-                @if(count($todays_deal_products) > 0)
-                    <div class="col-12 col-lg-auto mt-4">
-                        <div class="todays_deal bg-white rounded-2 overflow-hidden">
-                            <div class="bg-soft-primary p-3 d-flex align-items-center justify-content-center">
-                                <span class="fw-700 fs-18 mr-2 text-truncate">
-                                    {{ translate('Todays Deal') }}
-                                </span>
-                                <span class="badge badge-primary badge-inline rounded-1 fs-11">{{ translate('Hot') }}</span>
+                <div class="col-12 col-lg-auto mt-4">
+                    <div class="home-side-panel">
+                        <div class="home-side-card">
+                            <div class="fs-20 text-dark mb-1">{{ translate('Welcome to') }}</div>
+                            <div class="fs-26 fw-800 text-dark mb-3">{{ config('app.name') }}</div>
+                            <a href="{{ route('user.login') }}" class="home-side-btn home-side-btn-primary">{{ translate('Sign in') }}</a>
+                            <a href="{{ route('user.registration') }}" class="home-side-btn home-side-btn-outline">{{ translate('Join free') }}</a>
+                        </div>
+
+                        <div class="home-side-card">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="home-side-assurance-icon"><i class="las la-shield-alt"></i></span>
+                                <span class="ml-2 fs-21 fw-700 text-dark">{{ translate('Trade Assurance') }}</span>
                             </div>
-                            <div class="c-scrollbar-light overflow-auto h-lg-470px p-2 bg-primary">
-                                <div class="gutters-5 lg-no-gutters row row-cols-2 row-cols-md-3 row-cols-lg-1">
-                                    @foreach ($todays_deal_products as $key => $product)
-                                        @if ($product != null)
-                                        <div class="col mb-2">
-                                            <a href="{{ route('product', $product->slug) }}" class="d-block p-2 text-reset bg-white h-100 rounded">
-                                                <div class="row gutters-5 align-items-center" style="margin-bottom: 1.5px;">
-                                                    <div class="col-md">
-                                                        <div class="img">
-                                                            <img
-                                                                class="lazyload img-fit h-140px h-lg-90px"
-                                                                src="{{ static_asset('assets/img/placeholder.jpg') }}"
-                                                                data-src="{{ uploaded_asset($product->thumbnail_img) }}"
-                                                                alt="{{ $product->getTranslation('name') }}"
-                                                                onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';"
-                                                            >
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md mt-2 mt-md-0 text-center">
-                                                        <div class="fs-14">
-                                                            <span class="d-block text-primary fw-700">{{ home_discounted_base_price($product) }}</span>
-                                                            @if(home_base_price($product) != home_discounted_base_price($product))
-                                                                <del class="d-block opacity-70">{{ home_base_price($product) }}</del>
-                                                            @endif
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </a>
-                                        </div>
-                                        @endif
-                                    @endforeach
-                                </div>
-                            </div>
+                            <p class="mb-3 fs-16 text-secondary" style="line-height: 1.55;">
+                                {{ translate('Protects your orders on quality, on-time shipment and payment.') }}
+                            </p>
+                            <a href="{{ route('home') }}" class="home-side-link">{{ translate('Learn more') }} <i class="las la-arrow-right"></i></a>
                         </div>
                     </div>
-                @endif
+                </div>
 
             </div>
         </div>

@@ -31,10 +31,12 @@ class EnterpriseSearchController extends Controller
 
         if ($query !== '') {
             $this->assertAiModeRateLimit($request, $scope);
+            $country = (string) $request->input('country', '');
+            $country = $country !== '' ? $country : (string) (selected_delivery_country_name() ?? '');
             $searchPayload = $this->globalSearchService->search($query, [
                 'scope' => $scope,
                 'include_private' => $request->boolean('include_private'),
-                'country' => (string) $request->input('country', ''),
+                'country' => $country,
                 'category_id' => (int) $request->input('category_id', 0),
                 'limit' => 50,
             ], $request->user());
@@ -59,11 +61,13 @@ class EnterpriseSearchController extends Controller
         $query = (string) $request->get('q', '');
         $scope = $this->resolvedScope((string) $request->get('scope', 'ai_mode'));
         $this->assertAiModeRateLimit($request, $scope);
+        $country = (string) $request->input('country', '');
+        $country = $country !== '' ? $country : (string) (selected_delivery_country_name() ?? '');
 
         $payload = $this->globalSearchService->search($query, [
             'scope' => $scope,
             'include_private' => $request->boolean('include_private'),
-            'country' => (string) $request->input('country', ''),
+            'country' => $country,
             'category_id' => (int) $request->input('category_id', 0),
             'limit' => (int) $request->input('limit', 20),
         ], $request->user());

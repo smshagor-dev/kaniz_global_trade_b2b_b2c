@@ -12,6 +12,7 @@ use App\Http\Middleware\IsUnbanned;
 use App\Http\Middleware\AppLanguage;
 use App\Http\Middleware\IsAppUserUnbanned;
 use App\Http\Middleware\EnsureApprovedB2BCompany;
+use App\Http\Middleware\AutoSelectDeliveryCountry;
 use App\Http\Middleware\PreventDatabaseAction;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
@@ -46,6 +47,7 @@ class Kernel extends HttpKernel
             // \Illuminate\Session\Middleware\StartSession::class,
             // \Illuminate\Session\Middleware\AuthenticateSession::class,
             // \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+            AutoSelectDeliveryCountry::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\Language::class,

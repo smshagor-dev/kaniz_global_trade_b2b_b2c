@@ -662,7 +662,9 @@ class SearchController extends Controller
 
         $categories = Category::where('name', 'like', '%' . $query . '%')->get()->take(3);
 
-        $shops = Shop::whereIn('user_id', verified_sellers_id())->where('name', 'like', '%' . $query . '%')->get()->take(3);
+        $shops = apply_selected_delivery_country_to_shops(
+            Shop::whereIn('user_id', verified_sellers_id())->where('name', 'like', '%' . $query . '%')
+        )->get()->take(3);
 
         if (addon_is_activated('preorder')) {
             $preorder_products =  PreorderProduct::where('is_published', 1)

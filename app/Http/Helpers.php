@@ -139,6 +139,197 @@ if (!function_exists('get_active_countries')) {
     }
 }
 
+if (!function_exists('selected_delivery_country')) {
+    function selected_delivery_country(): ?Country
+    {
+        if (!Schema::hasTable('countries')) {
+            return null;
+        }
+
+        $countryId = session('delivery_country_id');
+        if ($countryId) {
+            $country = Country::find($countryId);
+            if ($country) {
+                return $country;
+            }
+        }
+
+        $countryCode = session('delivery_country_code');
+        if ($countryCode) {
+            $country = Country::where('code', strtoupper((string) $countryCode))->first();
+            if ($country) {
+                return $country;
+            }
+        }
+
+        return Country::where('code', 'US')->first() ?: Country::orderBy('name')->first();
+    }
+}
+
+if (!function_exists('selected_delivery_country_code')) {
+    function selected_delivery_country_code(): ?string
+    {
+        return strtoupper((string) optional(selected_delivery_country())->code) ?: null;
+    }
+}
+
+if (!function_exists('selected_delivery_country_name')) {
+    function selected_delivery_country_name(): ?string
+    {
+        return optional(selected_delivery_country())->name;
+    }
+}
+
+if (!function_exists('selected_delivery_country_values')) {
+    function selected_delivery_country_values(): array
+    {
+        return array_values(array_unique(array_filter([
+            selected_delivery_country_code(),
+            selected_delivery_country_name(),
+        ])));
+    }
+}
+
+if (!function_exists('apply_selected_delivery_country_to_users')) {
+    function apply_selected_delivery_country_to_users($query, string $column = 'country')
+    {
+        $countryValues = selected_delivery_country_values();
+        if (empty($countryValues)) {
+            return $query;
+        }
+
+        return $query->where(function ($countryQuery) use ($countryValues, $column) {
+            $countryQuery->where(function ($valueQuery) use ($countryValues, $column) {
+                foreach ($countryValues as $value) {
+                    $valueQuery->orWhere($column, $value);
+                }
+            });
+        });
+    }
+}
+
+if (!function_exists('apply_selected_delivery_country_to_suppliers')) {
+    function apply_selected_delivery_country_to_suppliers($query, string $column = 'country')
+    {
+        $countryValues = selected_delivery_country_values();
+        if (empty($countryValues)) {
+            return $query;
+        }
+
+        return $query->where(function ($countryQuery) use ($countryValues, $column) {
+            foreach ($countryValues as $value) {
+                $countryQuery->orWhere($column, $value);
+            }
+        });
+    }
+}
+
+if (!function_exists('apply_selected_delivery_country_to_shops')) {
+    function apply_selected_delivery_country_to_shops($query)
+    {
+        $countryValues = selected_delivery_country_values();
+        if (empty($countryValues)) {
+            return $query;
+        }
+
+        return $query->whereHas('user', function ($userQuery) use ($countryValues) {
+            $userQuery->where(function ($countryQuery) use ($countryValues) {
+                foreach ($countryValues as $value) {
+                    $countryQuery->orWhere('country', $value);
+                }
+            });
+        });
+    }
+}
+
+if (!function_exists('apply_selected_delivery_country_to_products')) {
+    function apply_selected_delivery_country_to_products($query)
+    {
+        $countryValues = selected_delivery_country_values();
+        if (empty($countryValues)) {
+            return $query;
+        }
+
+        return $query->where(function ($productQuery) use ($countryValues) {
+            $productQuery->where('added_by', 'admin')
+                ->orWhereHas('user', function ($userQuery) use ($countryValues) {
+                    $userQuery->where(function ($countryQuery) use ($countryValues) {
+                        foreach ($countryValues as $value) {
+                            $countryQuery->orWhere('country', $value);
+                        }
+                    });
+                })
+                ->orWhereHas('publicSupplierCompany', function ($supplierQuery) use ($countryValues) {
+                    $supplierQuery->where(function ($countryQuery) use ($countryValues) {
+                        foreach ($countryValues as $value) {
+                            $countryQuery->orWhere('country', $value);
+                        }
+                    });
+                });
+        });
+    }
+}
+
+if (!function_exists('matches_selected_delivery_country')) {
+    function matches_selected_delivery_country(?string $value): bool
+    {
+        if ($value === null || $value === '') {
+            return false;
+        }
+
+        return in_array($value, selected_delivery_country_values(), true);
+    }
+}
+
+if (!function_exists('shop_matches_selected_delivery_country')) {
+    function shop_matches_selected_delivery_country(?Shop $shop): bool
+    {
+        if (!$shop || !$shop->user) {
+            return false;
+        }
+
+        return matches_selected_delivery_country($shop->user->country);
+    }
+}
+
+if (!function_exists('supplier_matches_selected_delivery_country')) {
+    function supplier_matches_selected_delivery_country($supplier): bool
+    {
+        if (!$supplier) {
+            return false;
+        }
+
+        return matches_selected_delivery_country($supplier->country);
+    }
+}
+
+if (!function_exists('product_matches_selected_delivery_country')) {
+    function product_matches_selected_delivery_country(?Product $product): bool
+    {
+        if (!$product) {
+            return false;
+        }
+
+        if ($product->added_by === 'admin') {
+            return true;
+        }
+
+        $supplierCompany = $product->relationLoaded('publicSupplierCompany')
+            ? $product->publicSupplierCompany
+            : $product->publicSupplierCompany()->first();
+
+        if ($supplierCompany) {
+            return supplier_matches_selected_delivery_country($supplierCompany);
+        }
+
+        if ($product->user) {
+            return matches_selected_delivery_country($product->user->country);
+        }
+
+        return false;
+    }
+}
+
 //filter products based on vendor activation system
 if (!function_exists('filter_products')) {
     function filter_products($products)
@@ -151,14 +342,18 @@ if (!function_exists('filter_products')) {
         }
         $verified_sellers = verified_sellers_id();
         if (get_setting('vendor_system_activation') == 1) {
-            return $products->where(function ($p) use ($verified_sellers) {
+            $products = $products->where(function ($p) use ($verified_sellers) {
                 $p->where('added_by', 'admin')->orWhere(function ($q) use ($verified_sellers) {
                     $q->whereIn('user_id', $verified_sellers);
                 });
             });
-        } else {
-            return $products->where('added_by', 'admin');
         }
+
+        if (get_setting('vendor_system_activation') != 1) {
+            $products = $products->where('added_by', 'admin');
+        }
+
+        return apply_selected_delivery_country_to_products($products);
     }
 }
 

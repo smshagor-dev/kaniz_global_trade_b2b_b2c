@@ -32,7 +32,7 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('b2b:shipments:sync')->everyFifteenMinutes();
         $schedule->command('b2b:freight:sync')->everyThirtyMinutes();
-        $schedule->command('currency:sync')->hourly()->withoutOverlapping();
+        $schedule->command('currency:sync')->everySixHours()->withoutOverlapping();
         $schedule->command('b2b:trade-finance:process')->everyThirtyMinutes()->withoutOverlapping();
         $schedule->command('b2b:insurance:process')->hourly()->withoutOverlapping();
     }

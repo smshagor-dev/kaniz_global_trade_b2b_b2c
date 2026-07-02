@@ -136,7 +136,8 @@
                         <label class="col-lg-3 col-form-label">{{ translate('Sync Frequency') }}</label>
                         <div class="col-lg-9">
                             <select class="form-control aiz-selectpicker" name="sync_frequency">
-                                <option value="hourly" @selected(($currencySettings->sync_frequency ?? 'hourly') === 'hourly')>{{ translate('Hourly') }}</option>
+                                <option value="hourly" @selected(($currencySettings->sync_frequency ?? null) === 'hourly')>{{ translate('Hourly') }}</option>
+                                <option value="six_hours" @selected(($currencySettings->sync_frequency ?? 'six_hours') === 'six_hours')>{{ translate('Every 6 Hours') }}</option>
                                 <option value="daily" @selected(($currencySettings->sync_frequency ?? null) === 'daily')>{{ translate('Daily') }}</option>
                                 <option value="weekly" @selected(($currencySettings->sync_frequency ?? null) === 'weekly')>{{ translate('Weekly') }}</option>
                             </select>
@@ -147,6 +148,8 @@
                         <div class="col-lg-9">
                             <input type="password" class="form-control" name="api_key" placeholder="{{ translate('ExchangeRate-API key') }}">
                             <small class="text-muted">{{ translate('Stored encrypted in the database. If blank, the existing DB value or EXCHANGE_RATE_API_KEY fallback is used.') }}</small>
+                            <br>
+                            <small class="text-muted">{{ translate('Current environment fallback key is detected from .env and will be used automatically if no DB key is saved.') }}</small>
                         </div>
                     </div>
                     <div class="form-group row">
@@ -174,6 +177,7 @@
             <div class="card-body">
                 <p><strong>{{ translate('Last Sync') }}:</strong> {{ optional($currencySettings?->last_sync_at)->diffForHumans() ?? translate('Never') }}</p>
                 <p><strong>{{ translate('Status') }}:</strong> {{ $currencySettings?->last_sync_status ?? translate('Not started') }}</p>
+                <p><strong>{{ translate('Cron Cadence') }}:</strong> {{ translate('Every 6 Hours') }}</p>
                 <p><strong>{{ translate('Last Error') }}:</strong> {{ $currencySettings?->last_error ?? translate('None') }}</p>
                 <div class="d-flex flex-wrap" style="gap: 8px;">
                     <form action="{{ route('currency.test_connection') }}" method="POST">

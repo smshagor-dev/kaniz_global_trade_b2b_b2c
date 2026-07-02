@@ -16,6 +16,8 @@ class B2BSupplierDirectoryController extends Controller
 
     public function index(Request $request)
     {
+        $requestCountry = $request->country ?: selected_delivery_country_name();
+
         $suppliers = B2BCompany::with(['categories', 'certifications', 'wholesaleProducts.thumbnail', 'b2bPackage'])
             ->publicSuppliers()
             ->when($request->keyword, function ($query, $keyword) {
@@ -26,7 +28,7 @@ class B2BSupplierDirectoryController extends Controller
                         ->orWhere('business_scope', 'like', '%' . $keyword . '%');
                 });
             })
-            ->when($request->country, fn ($query, $country) => $query->where('country', $country))
+            ->when($requestCountry, fn ($query, $country) => $query->where('country', $country))
             ->when($request->company_type, fn ($query, $companyType) => $query->where('company_type', $companyType))
             ->when($request->category, function ($query, $categoryId) {
                 $query->whereHas('categories', fn ($categoryQuery) => $categoryQuery->where('categories.id', $categoryId));
@@ -63,6 +65,10 @@ class B2BSupplierDirectoryController extends Controller
             ->publicSuppliers()
             ->where('public_slug', $slug)
             ->firstOrFail();
+
+        if (!supplier_matches_selected_delivery_country($supplier)) {
+            abort(404);
+        }
 
         $trustStatus = $this->fraudRestrictionService->userFacingStatus($supplier->user?->latestFraudCheck);
 

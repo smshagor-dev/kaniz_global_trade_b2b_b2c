@@ -196,6 +196,9 @@ Route::post('/language', [LanguageController::class, 'changeLanguage'])->name('l
 // Currency Switch
 Route::post('/currency', [CurrencyController::class, 'changeCurrency'])->name('currency.change');
 
+// Delivery Country Switch
+Route::post('/delivery-country', [HomeController::class, 'changeDeliveryCountry'])->name('delivery.country.change');
+
 // Size Chart Show
 Route::get('/size-charts-show/{id}', [SizeChartController::class, 'show'])->name('size-charts-show');
 

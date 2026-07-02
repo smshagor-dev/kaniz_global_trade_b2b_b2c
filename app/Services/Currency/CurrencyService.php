@@ -167,10 +167,16 @@ class CurrencyService
             return null;
         }
 
-        return CurrencyApiSetting::query()
+        $settings = CurrencyApiSetting::query()
             ->where('is_active', true)
             ->latest('id')
             ->first();
+
+        if ($settings) {
+            $this->persistEnvironmentApiKey($settings);
+        }
+
+        return $settings;
     }
 
     public function testConnection(): array
@@ -196,6 +202,7 @@ class CurrencyService
         }
 
         return match ($settings->sync_frequency) {
+            'six_hours' => $settings->last_sync_at->lte(now()->subHours(6)),
             'weekly' => $settings->last_sync_at->lte(now()->subWeek()),
             'daily' => $settings->last_sync_at->lte(now()->subDay()),
             default => $settings->last_sync_at->lte(now()->subHour()),
@@ -217,11 +224,10 @@ class CurrencyService
         }
 
         $baseCurrency = strtoupper($settings->base_currency_code ?: $this->baseCurrency()->code);
-        $supportedCurrencies = Currency::query()->pluck('code')->filter()->map(fn ($code) => strtoupper($code))->values()->all();
         $driver = $this->resolveDriver($settings->driver ?: $settings->provider);
 
         try {
-            $payload = $driver->fetchRates($settings, $baseCurrency, $supportedCurrencies);
+            $payload = $driver->fetchRates($settings, $baseCurrency, []);
             $syncBatch = (string) now()->timestamp;
 
             DB::transaction(function () use ($payload, $settings, $syncBatch, $baseCurrency) {
@@ -231,6 +237,13 @@ class CurrencyService
                 $rates[$baseCurrency] = 1.0;
 
                 foreach ($rates as $currencyCode => $rate) {
+                    $currency = Currency::query()->firstOrNew(['code' => $currencyCode]);
+                    $currency->name = $currency->name ?: $currencyCode;
+                    $currency->symbol = $currency->symbol ?: $currencyCode;
+                    $currency->exchange_rate = $rate;
+                    $currency->status = $currency->exists ? $currency->status : true;
+                    $currency->save();
+
                     CurrencyExchangeRate::updateOrCreate(
                         [
                             'base_currency_code' => $baseCurrency,
@@ -256,12 +269,6 @@ class CurrencyService
                         'meta' => ['driver' => $settings->driver ?: $settings->provider],
                     ]);
 
-                    Currency::query()
-                        ->where('code', $currencyCode)
-                        ->update([
-                            'exchange_rate' => $rate,
-                            'updated_at' => now(),
-                        ]);
                 }
 
                 $settings->update([
@@ -299,6 +306,7 @@ class CurrencyService
     public function upsertSettings(array $data): CurrencyApiSetting
     {
         $settings = $this->settings() ?: new CurrencyApiSetting();
+        $apiKey = $this->resolveApiKeyForStorage($settings, $data['api_key'] ?? null);
 
         $settings->fill([
             'provider' => $data['provider'],
@@ -309,7 +317,7 @@ class CurrencyService
             'auto_sync_enabled' => (bool) ($data['auto_sync_enabled'] ?? false),
             'is_active' => true,
             'credentials' => array_filter([
-                'api_key' => $data['api_key'] ?? $settings->getApiKey(),
+                'api_key' => $apiKey,
             ], fn ($value) => $value !== null && $value !== ''),
             'custom_rates' => $data['custom_rates'] ?? $settings->custom_rates,
         ]);
@@ -338,6 +346,35 @@ class CurrencyService
             'custom', 'custom_rate', 'customratedriver' => new CustomRateDriver(),
             default => new ManualRateDriver(),
         };
+    }
+
+    protected function resolveApiKeyForStorage(CurrencyApiSetting $settings, ?string $submittedApiKey): ?string
+    {
+        $submittedApiKey = is_string($submittedApiKey) ? trim($submittedApiKey) : null;
+
+        if (!empty($submittedApiKey)) {
+            return $submittedApiKey;
+        }
+
+        return $settings->getApiKey() ?: env('EXCHANGE_RATE_API_KEY');
+    }
+
+    protected function persistEnvironmentApiKey(CurrencyApiSetting $settings): void
+    {
+        if ($settings->getApiKey()) {
+            return;
+        }
+
+        $envApiKey = env('EXCHANGE_RATE_API_KEY');
+        if (!$envApiKey) {
+            return;
+        }
+
+        $settings->forceFill([
+            'credentials' => array_filter([
+                'api_key' => trim((string) $envApiKey),
+            ]),
+        ])->save();
     }
 
     protected function legacySymbolPosition(): string

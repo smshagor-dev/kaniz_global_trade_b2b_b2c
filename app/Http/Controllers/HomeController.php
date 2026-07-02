@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\Brand;
 use App\Models\Order;
 use App\Models\Coupon;
+use App\Models\Country;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\FlashDeal;
@@ -93,6 +94,31 @@ class HomeController extends Controller
         return view('frontend.' . get_setting('homepage_select') . '.index', compact('featured_categories','hot_categories', 'lang', 'tradeServicesData'));
     }
 
+    public function changeDeliveryCountry(Request $request)
+    {
+        $validated = $request->validate([
+            'country_id' => 'required|exists:countries,id',
+        ]);
+
+        $country = Country::findOrFail($validated['country_id']);
+
+        session([
+            'delivery_country_id' => $country->id,
+            'delivery_country_code' => strtoupper((string) $country->code),
+            'delivery_country_name' => $country->name,
+            'delivery_country_source' => 'manual',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'country' => [
+                'id' => $country->id,
+                'code' => strtoupper((string) $country->code),
+                'name' => $country->name,
+            ],
+        ]);
+    }
+
     protected function buildTradeServicesData(): array
     {
         $tradeServicesData = [
@@ -126,21 +152,31 @@ class HomeController extends Controller
         }
 
         if (Schema::hasTable('b2b_companies')) {
-            $tradeServicesData['public_suppliers'] = B2BCompany::query()
+            $publicSuppliersQuery = apply_selected_delivery_country_to_suppliers(
+                B2BCompany::query(),
+            );
+
+            $tradeServicesData['public_suppliers'] = (clone $publicSuppliersQuery)
                 ->where('verification_status', 'approved')
                 ->where('public_profile_enabled', true)
                 ->whereIn('company_type', B2BCompany::SUPPLIER_TYPES)
                 ->count();
 
-            $tradeServicesData['featured_suppliers'] = B2BCompany::homepageFeaturedSuppliers()->count();
-            $tradeServicesData['featured_suppliers_list'] = B2BCompany::homepageFeaturedSuppliers()
+            $tradeServicesData['featured_suppliers'] = apply_selected_delivery_country_to_suppliers(
+                B2BCompany::homepageFeaturedSuppliers()
+            )->count();
+            $tradeServicesData['featured_suppliers_list'] = apply_selected_delivery_country_to_suppliers(
+                B2BCompany::homepageFeaturedSuppliers()
+            )
                 ->with(['categories'])
                 ->orderByDesc('profile_score')
                 ->latest()
                 ->limit(6)
                 ->get();
 
-            $tradeServicesData['verified_manufacturers_list'] = B2BCompany::query()
+            $tradeServicesData['verified_manufacturers_list'] = apply_selected_delivery_country_to_suppliers(
+                B2BCompany::query()
+            )
                 ->publicSuppliers()
                 ->where('company_type', 'manufacturer')
                 ->with(['categories', 'certifications' => fn ($query) => $query->where('verification_status', 'approved')])
@@ -150,7 +186,9 @@ class HomeController extends Controller
                 ->limit(6)
                 ->get();
 
-            $countryCounts = B2BCompany::query()
+            $countryCounts = apply_selected_delivery_country_to_suppliers(
+                B2BCompany::query()
+            )
                 ->publicSuppliers()
                 ->whereNotNull('country')
                 ->select('country', DB::raw('COUNT(*) as total'))
@@ -207,7 +245,9 @@ class HomeController extends Controller
         }
 
         if (Schema::hasTable('products')) {
-            $tradeServicesData['wholesale_deals_list'] = Product::query()
+            $tradeServicesData['wholesale_deals_list'] = apply_selected_delivery_country_to_products(
+                Product::query()
+            )
                 ->with(['thumbnail', 'publicSupplierCompany.categories'])
                 ->where('wholesale_product', 1)
                 ->where('approved', 1)
@@ -638,9 +678,13 @@ class HomeController extends Controller
             session(['link' => url()->current()]);
         }
 
-        $detailedProduct  = Product::with('reviews', 'brand', 'stocks', 'user', 'user.shop')->where('auction_product', 0)->where('slug', $slug)->where('approved', 1)->first();
+        $detailedProduct  = Product::with('reviews', 'brand', 'stocks', 'user', 'user.shop', 'publicSupplierCompany')->where('auction_product', 0)->where('slug', $slug)->where('approved', 1)->first();
 
         if ($detailedProduct != null && $detailedProduct->published) {
+            if (!product_matches_selected_delivery_country($detailedProduct)) {
+                abort(404);
+            }
+
             if ((get_setting('vendor_system_activation') != 1) && $detailedProduct->added_by == 'seller') {
                 abort(404);
             }
@@ -712,6 +756,10 @@ class HomeController extends Controller
         }
         $shop  = Shop::where('slug', $slug)->first();
         if ($shop != null) {
+            if (!shop_matches_selected_delivery_country($shop)) {
+                abort(404);
+            }
+
             if ($shop->user->banned == 1) {
                 abort(404);
             }
@@ -731,6 +779,10 @@ class HomeController extends Controller
         }
         $shop  = Shop::where('slug', $slug)->first();
         if ($shop != null && $type != null) {
+            if (!shop_matches_selected_delivery_country($shop)) {
+                abort(404);
+            }
+
             if ($shop->user->banned == 1) {
                 abort(404);
             }
@@ -1214,6 +1266,9 @@ class HomeController extends Controller
             ));
         }
         $shop = Shop::where('slug', $slug)->firstOrFail();
+        if (!shop_matches_selected_delivery_country($shop)) {
+            abort(404);
+        }
         $best_selling_products = filter_products(
         Product::where('user_id', $shop->user_id))->paginate(18);
         $title = $shop->name;
@@ -1235,8 +1290,9 @@ class HomeController extends Controller
         if (get_setting('vendor_system_activation') != 1) {
             return redirect()->route('home');
         }
-        $shops = Shop::whereIn('user_id', verified_sellers_id())
-            ->paginate(15);
+        $shops = apply_selected_delivery_country_to_shops(
+            Shop::whereIn('user_id', verified_sellers_id())
+        )->paginate(15);
 
         return view('frontend.shop_listing', compact('shops'));
     }

@@ -2851,9 +2851,9 @@
                             @endcan
                             @can('currency_setup')
                                 <li class="aiz-side-nav-item">
-                                    <a href="{{route('currency.index')}}" class="aiz-side-nav-link">
+                                    <a href="{{route('currency.index')}}" class="aiz-side-nav-link {{ areActiveRoutes(['currency.index'])}}">
                                         <span class="aiz-side-nav-text"
-                                            style="color: {{ get_setting('navbar_text_color') }}">{{translate('Currency')}}</span>
+                                            style="color: {{ get_setting('navbar_text_color') }}">{{translate('Currency & Rates')}}</span>
                                     </a>
                                 </li>
                             @endcan

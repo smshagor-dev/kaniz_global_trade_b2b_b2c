@@ -115,7 +115,7 @@ class CurrencyController extends Controller
             'driver' => 'nullable|string|max:50',
             'base_currency_code' => 'required|exists:currencies,code',
             'default_display_currency_code' => 'required|exists:currencies,code',
-            'sync_frequency' => 'required|in:hourly,daily,weekly',
+            'sync_frequency' => 'required|in:hourly,six_hours,daily,weekly',
             'api_key' => 'nullable|string|max:255',
             'auto_sync_enabled' => 'nullable|boolean',
         ]);
