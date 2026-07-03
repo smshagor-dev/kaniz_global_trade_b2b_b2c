@@ -144,6 +144,7 @@ Route::controller(HomeController::class)->group(function () {
     Route::post('/home/section/todays-deal', 'load_todays_deal_section')->name('home.section.todays_deal');
     Route::post('/home/section/best-selling', 'load_best_selling_section')->name('home.section.best_selling');
     Route::post('/home/section/newest-products', 'load_newest_product_section')->name('home.section.newest_products');
+    Route::post('/home/section/infinite-products', 'load_infinite_product_section')->name('home.section.infinite_products');
     Route::post('/home/section/home-categories', 'load_home_categories_section')->name('home.section.home_categories');
     Route::post('/home/section/best-sellers', 'load_best_sellers_section')->name('home.section.best_sellers');
     Route::post('/home/section/preorder-products', 'load_preorder_featured_products_section')->name('home.section.preorder_products');

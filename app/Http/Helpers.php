@@ -1050,6 +1050,246 @@ if (!function_exists('home_discounted_base_price')) {
     }
 }
 
+if (!function_exists('product_card_price_label')) {
+    function product_card_price_label($product): string
+    {
+        if ((int) ($product->auction_product ?? 0) === 1) {
+            return single_price($product->starting_bid ?? 0);
+        }
+
+        $cacheKey = 'product_card_price_label_' . $product->id;
+
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 1800, function () use ($product) {
+            if ((int) ($product->wholesale_product ?? 0) === 1) {
+                $priceQuery = \App\Models\WholesalePrice::query()
+                    ->join('product_stocks', 'wholesale_prices.product_stock_id', '=', 'product_stocks.id')
+                    ->where('product_stocks.product_id', $product->id);
+
+                $minPrice = (float) (clone $priceQuery)->min('wholesale_prices.price');
+                $maxPrice = (float) (clone $priceQuery)->max('wholesale_prices.price');
+
+                if ($minPrice > 0 && $maxPrice > 0) {
+                    $formattedMin = format_price(convert_price($minPrice));
+                    $formattedMax = format_price(convert_price($maxPrice));
+
+                    return $minPrice === $maxPrice
+                        ? $formattedMin
+                        : $formattedMin . ' - ' . $formattedMax;
+                }
+            }
+
+            return home_discounted_base_price($product);
+        });
+    }
+}
+
+if (!function_exists('product_card_review_summary')) {
+    function product_card_review_summary($product): array
+    {
+        $cacheKey = 'product_card_review_summary_' . $product->id;
+
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 1800, function () use ($product) {
+            $query = \App\Models\Review::query()
+                ->where('product_id', $product->id)
+                ->where('status', 1);
+
+            $count = (int) $query->count();
+            $average = $count > 0 ? round((float) $query->avg('rating'), 1) : 0;
+
+            return [
+                'average' => $average,
+                'count' => $count,
+            ];
+        });
+    }
+}
+
+if (!function_exists('product_card_country')) {
+    function product_card_country($product): string
+    {
+        if (!empty($product->country_name)) {
+            return (string) $product->country_name;
+        }
+
+        if (!empty($product->publicSupplierCompany?->country)) {
+            return (string) $product->publicSupplierCompany->country;
+        }
+
+        return translate('Global');
+    }
+}
+
+if (!function_exists('product_card_country_flag_iso')) {
+    function product_card_country_flag_iso(?string $country): ?string
+    {
+        $country = trim((string) $country);
+        if ($country === '' || !Schema::hasTable('countries')) {
+            return null;
+        }
+
+        $cacheKey = 'product_card_country_flag_iso_' . md5(Str::lower($country));
+
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 86400, function () use ($country) {
+            $countryRecord = Country::query()
+                ->where('name', $country)
+                ->orWhere('code', strtoupper($country))
+                ->first(['code']);
+
+            if (!$countryRecord || empty($countryRecord->code)) {
+                return null;
+            }
+
+            $iso = Str::lower((string) $countryRecord->code);
+
+            return preg_match('/^[a-z]{2}$/', $iso) ? $iso : null;
+        });
+    }
+}
+
+if (!function_exists('getProductSupplierSummary')) {
+    function getProductSupplierSummary($product): array
+    {
+        $fallback = [
+            'name' => null,
+            'url' => null,
+            'shop_name' => null,
+            'shop_slug' => null,
+            'company_name' => null,
+            'company_id' => null,
+            'company_slug' => null,
+            'country' => null,
+            'country_flag_iso' => null,
+            'verified_supplier' => false,
+            'gold_supplier' => false,
+        ];
+
+        if (!$product || empty($product->id)) {
+            return $fallback;
+        }
+
+        $cacheKey = 'product_card_supplier_summary_' . $product->id;
+
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 1800, function () use ($product, $fallback) {
+            $resolvedProduct = $product;
+
+            if (
+                !$product->relationLoaded('publicSupplierCompany') ||
+                !$product->relationLoaded('supplierB2bCompany') ||
+                !$product->relationLoaded('user')
+            ) {
+                $resolvedProduct = Product::with([
+                    'publicSupplierCompany',
+                    'supplierB2bCompany',
+                    'user.shop',
+                ])->find($product->id) ?: $product;
+            }
+
+            $supplierCompany = $resolvedProduct->publicSupplierCompany ?: $resolvedProduct->supplierB2bCompany;
+            $shop = $resolvedProduct->user?->shop;
+
+            $companyName = trim((string) ($supplierCompany?->company_name ?: '')) ?: null;
+            $shopName = trim((string) ($shop?->name ?: $resolvedProduct->user?->name ?: '')) ?: null;
+            $supplierName = $companyName ?: $shopName;
+
+            $supplierUrl = null;
+            if ($supplierCompany && !empty($supplierCompany->public_slug) && \Illuminate\Support\Facades\Route::has('b2b.suppliers.show')) {
+                $supplierUrl = route('b2b.suppliers.show', $supplierCompany->public_slug);
+            } elseif ($shop && !empty($shop->slug) && \Illuminate\Support\Facades\Route::has('shop.visit')) {
+                $supplierUrl = route('shop.visit', $shop->slug);
+            }
+
+            $country = trim((string) (
+                $resolvedProduct->country_name
+                ?: $supplierCompany?->country
+                ?: $resolvedProduct->user?->country
+                ?: ''
+            )) ?: null;
+
+            return [
+                'name' => $supplierName,
+                'url' => $supplierUrl,
+                'shop_name' => $shopName,
+                'shop_slug' => $shop?->slug,
+                'company_name' => $companyName,
+                'company_id' => $supplierCompany?->id,
+                'company_slug' => $supplierCompany?->public_slug,
+                'country' => $country,
+                'country_flag_iso' => product_card_country_flag_iso($country),
+                'verified_supplier' => (bool) ($supplierCompany?->verified_supplier_badge),
+                'gold_supplier' => (bool) ($supplierCompany?->premium_verified),
+            ];
+        });
+    }
+}
+
+if (!function_exists('getProductSupplierBadge')) {
+    function getProductSupplierBadge($product): array
+    {
+        $supplierSummary = getProductSupplierSummary($product);
+        $badges = [];
+
+        if (!empty($supplierSummary['verified_supplier'])) {
+            $badges[] = [
+                'label' => translate('Verified Supplier'),
+                'variant' => 'verified',
+            ];
+        }
+
+        if (!empty($supplierSummary['gold_supplier'])) {
+            $badges[] = [
+                'label' => translate('Gold Supplier'),
+                'variant' => 'gold',
+            ];
+        }
+
+        if ((int) ($product->wholesale_product ?? 0) === 1) {
+            $badges[] = [
+                'label' => translate('B2B Supplier'),
+                'variant' => 'b2b',
+            ];
+        }
+
+        return $badges;
+    }
+}
+
+if (!function_exists('getProductRfqUrl')) {
+    function getProductRfqUrl($product): ?string
+    {
+        if (
+            !$product ||
+            empty($product->id) ||
+            (int) ($product->wholesale_product ?? 0) !== 1 ||
+            !\Illuminate\Support\Facades\Route::has('b2b.rfqs.create')
+        ) {
+            return null;
+        }
+
+        $supplierSummary = getProductSupplierSummary($product);
+
+        return route('b2b.rfqs.create', array_filter([
+            'product_id' => $product->id,
+            'supplier_company_id' => $supplierSummary['company_id'] ?? null,
+        ], fn ($value) => !empty($value)));
+    }
+}
+
+if (!function_exists('getProductContactSupplierUrl')) {
+    function getProductContactSupplierUrl($product): ?string
+    {
+        if (
+            !$product ||
+            empty($product->id) ||
+            (int) get_setting('conversation_system') !== 1 ||
+            !\Illuminate\Support\Facades\Route::has('conversations.store')
+        ) {
+            return null;
+        }
+
+        return null;
+    }
+}
+
 if (!function_exists('renderStarRating')) {
     function renderStarRating($rating, $maxRating = 5)
     {

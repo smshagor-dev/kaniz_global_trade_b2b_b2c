@@ -256,12 +256,14 @@
         @include('frontend.inc.nav')
 
         @yield('content')
-        @if (Route::currentRouteNamed('home') && !empty($tradeServicesData))
-            @include('frontend.partials.trade_services_home', ['tradeServicesData' => $tradeServicesData])
-        @endif
+        @if (!Route::currentRouteNamed('home'))
+            @if (!empty($tradeServicesData))
+                @include('frontend.partials.trade_services_home', ['tradeServicesData' => $tradeServicesData])
+            @endif
 
-        <!-- footer -->
-        @include('frontend.inc.footer')
+            <!-- footer -->
+            @include('frontend.inc.footer')
+        @endif
 
     </div>
 
@@ -717,12 +719,14 @@
                 });
             }
 
-            $.post('{{ route('home.section.home_categories') }}', {
-                _token: '{{ csrf_token() }}'
-            }, function(data) {
-                $('#section_home_categories').html(data);
-                AIZ.plugins.slickCarousel();
-            });
+            if ($('#section_home_categories').length) {
+                $.post('{{ route('home.section.home_categories') }}', {
+                    _token: '{{ csrf_token() }}'
+                }, function(data) {
+                    $('#section_home_categories').html(data);
+                    AIZ.plugins.slickCarousel();
+                });
+            }
 
         @endif
 

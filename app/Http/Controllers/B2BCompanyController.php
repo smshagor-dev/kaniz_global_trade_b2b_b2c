@@ -135,6 +135,7 @@ class B2BCompanyController extends Controller
         $canInviteMembers = $this->b2bPermissionService->canInviteMembers(Auth::id(), $company->id);
         $availableCompanies = $this->b2bCompanyService->getAvailableCompaniesByUser(Auth::id());
         $canManageSupplierProfile = $company->isSupplierSide() && $this->b2bPermissionService->canManageSupplierProfile(Auth::id(), $company->id);
+        $company->load(['reviewsReceived.reviewerCompany']);
 
         return view('b2b.company.show', compact('company', 'canManageCompany', 'canInviteMembers', 'availableCompanies', 'canManageSupplierProfile'));
     }

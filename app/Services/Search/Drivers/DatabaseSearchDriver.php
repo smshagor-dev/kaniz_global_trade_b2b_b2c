@@ -45,6 +45,7 @@ class DatabaseSearchDriver implements SearchEngineInterface
     {
         $query = $this->normalizeOriginal((string) ($payload['query'] ?? ''));
         $limit = (int) ($payload['limit'] ?? config('search.autocomplete_limit', 8));
+        $filters = (array) ($payload['filters'] ?? []);
 
         $documents = SearchDocument::query()
             ->when(!empty($payload['types']), fn ($builder) => $builder->whereIn('type', (array) $payload['types']))
@@ -53,11 +54,31 @@ class DatabaseSearchDriver implements SearchEngineInterface
             ->get();
 
         $hits = $documents
-            ->filter(function (SearchDocument $document) use ($query) {
+            ->filter(function (SearchDocument $document) use ($query, $filters) {
                 $title = Str::lower((string) $document->title);
                 $keywords = Str::lower((string) $document->keywords);
 
-                return Str::startsWith($title, $query) || Str::contains($keywords, $query);
+                if (!(Str::startsWith($title, $query) || Str::contains($keywords, $query))) {
+                    return false;
+                }
+
+                foreach ($filters as $key => $value) {
+                    $documentValue = data_get($document->filters ?? [], $key);
+
+                    if (is_array($value)) {
+                        if (!in_array($documentValue, $value, true)) {
+                            return false;
+                        }
+
+                        continue;
+                    }
+
+                    if ((string) $documentValue !== (string) $value) {
+                        return false;
+                    }
+                }
+
+                return true;
             })
             ->sortByDesc(fn (SearchDocument $document) => $document->rank_popularity + $document->rank_sales + $document->rank_verified)
             ->take($limit)

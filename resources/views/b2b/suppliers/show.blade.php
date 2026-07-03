@@ -181,8 +181,31 @@
                             <div class="d-flex justify-content-between mb-2"><span>{{ translate('Export Percentage') }}</span><strong>{{ $supplier->export_percentage ? $supplier->export_percentage . '%' : '-' }}</strong></div>
                             <div class="d-flex justify-content-between mb-2"><span>{{ translate('Response Rate') }}</span><strong>{{ $supplier->response_rate ? $supplier->response_rate . '%' : '-' }}</strong></div>
                             <div class="d-flex justify-content-between mb-2"><span>{{ translate('Completed Orders') }}</span><strong>{{ $supplier->supplierPurchaseOrders()->count() }}</strong></div>
-                            <div class="d-flex justify-content-between mb-2"><span>{{ translate('Reviews') }}</span><strong>{{ $supplier->wholesaleProducts()->withCount('reviews')->get()->sum('reviews_count') }}</strong></div>
+                            <div class="d-flex justify-content-between mb-2"><span>{{ translate('Company Rating') }}</span><strong>{{ number_format($supplier->averageReviewRating(), 1) }}/5</strong></div>
+                            <div class="d-flex justify-content-between mb-2"><span>{{ translate('Reviews') }}</span><strong>{{ $supplier->reviewCount() }}</strong></div>
                             <div class="d-flex justify-content-between"><span>{{ translate('Response Time') }}</span><strong>{{ $supplier->response_time_hours ? $supplier->response_time_hours . 'h' : '-' }}</strong></div>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">{{ translate('Buyer Reviews') }}</h5>
+                            <span class="badge badge-inline badge-info">{{ $supplier->reviewCount() }}</span>
+                        </div>
+                        <div class="card-body">
+                            @forelse ($supplier->reviewsReceived->take(5) as $review)
+                                <div class="@if(!$loop->last) border-bottom pb-3 mb-3 @endif">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong>{{ $review->reviewerCompany?->company_name ?: translate('Buyer') }}</strong>
+                                        <span>{{ $review->rating }}/5</span>
+                                    </div>
+                                    <div class="rating rating-sm mb-2">@php renderStarRating($review->rating); @endphp</div>
+                                    <p class="mb-1 text-muted">{{ $review->comment ?: translate('No comment added.') }}</p>
+                                    <small class="text-secondary">{{ optional($review->created_at)->format('d M, Y') }}</small>
+                                </div>
+                            @empty
+                                <p class="mb-0 text-muted">{{ translate('No buyer reviews yet.') }}</p>
+                            @endforelse
                         </div>
                     </div>
                 </div>

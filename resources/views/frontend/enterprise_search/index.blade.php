@@ -15,6 +15,7 @@
             </div>
 
             <form method="GET" action="{{ route('global.search') }}">
+                <input type="hidden" name="scope" value="{{ $scope ?? 'ai_mode' }}">
                 <div class="input-group input-group-lg">
                     <input type="text" class="form-control" name="q" id="enterprise-search-input" value="{{ $query }}" placeholder="{{ translate('Search product, supplier, company, RFQ, tracking number, HS code, port...') }}" autocomplete="off">
                     <div class="input-group-append"><button type="submit" class="btn btn-primary px-4">{{ translate('Search') }}</button></div>
@@ -84,20 +85,21 @@
         input.addEventListener('input', function () {
             clearTimeout(timeout);
             var value = input.value.trim();
+            var scope = @json($scope ?? 'ai_mode');
             if (value.length < 2) {
                 container.innerHTML = '';
                 return;
             }
 
             timeout = setTimeout(function () {
-                fetch('{{ route('global.search.autocomplete') }}?q=' + encodeURIComponent(value))
+                fetch('{{ route('global.search.autocomplete') }}?q=' + encodeURIComponent(value) + '&scope=' + encodeURIComponent(scope))
                     .then(function (response) { return response.json(); })
                     .then(function (data) {
                         container.innerHTML = '';
                         (data.suggestions || []).forEach(function (suggestion) {
                             var link = document.createElement('a');
                             link.className = 'list-group-item list-group-item-action';
-                            link.href = suggestion.url || ('{{ route('global.search') }}?q=' + encodeURIComponent(suggestion.title));
+                            link.href = suggestion.url || ('{{ route('global.search') }}?q=' + encodeURIComponent(suggestion.title) + '&scope=' + encodeURIComponent(scope));
                             link.innerHTML = '<strong>' + suggestion.title + '</strong>' + (suggestion.subtitle ? '<div class="text-muted fs-12">' + suggestion.subtitle + '</div>' : '');
                             container.appendChild(link);
                         });

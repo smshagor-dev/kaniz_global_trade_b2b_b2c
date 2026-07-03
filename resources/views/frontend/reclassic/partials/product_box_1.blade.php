@@ -1,8 +1,138 @@
 @php
     $cart_added = [];
+    $productCardPrice = product_card_price_label($product);
+    $productCardReview = product_card_review_summary($product);
+    $productCardCountry = product_card_country($product);
+    $productCardMoq = max(1, (int) ($product->min_qty ?: 1));
+    $productSupplierSummary = getProductSupplierSummary($product);
+    $productSupplierBadges = getProductSupplierBadge($product);
+    $productRfqUrl = getProductRfqUrl($product);
+    $productContactSupplierUrl = getProductContactSupplierUrl($product);
 @endphp
-<div class="aiz-card-box h-auto py-3 hov-scale-img">
-    <div class="position-relative h-140px h-md-190px img-fit overflow-hidden">
+@once
+    <style>
+        .kgt-product-card {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+            background: #fff;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+            transition: box-shadow .2s ease, transform .2s ease, border-color .2s ease;
+        }
+        .kgt-product-card:hover {
+            border-color: #d7dce3;
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.10);
+            transform: translateY(-2px);
+        }
+        .kgt-product-media {
+            background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+            aspect-ratio: 1 / 1;
+        }
+        .kgt-product-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .kgt-badge-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .kgt-badge {
+            display: inline-flex;
+            align-items: center;
+            max-width: 100%;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+        .kgt-badge-verified {
+            background: #ecfdf3;
+            color: #047857;
+        }
+        .kgt-badge-gold {
+            background: #fff7e6;
+            color: #b45309;
+        }
+        .kgt-badge-b2b {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+        .kgt-supplier-meta,
+        .kgt-meta-line {
+            min-width: 0;
+        }
+        .kgt-supplier-name {
+            min-width: 0;
+        }
+        .kgt-supplier-name a,
+        .kgt-supplier-name span {
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: bottom;
+        }
+        .kgt-country-flag {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 6px;
+        }
+        .kgt-country-flag .iti__flag {
+            transform: scale(.9);
+            transform-origin: left center;
+            box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.08);
+        }
+        .kgt-action-row {
+            display: flex;
+            gap: 8px;
+        }
+        .kgt-rfq-btn,
+        .kgt-contact-btn {
+            flex: 1 1 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 34px;
+            padding: 0 10px;
+            border-radius: 10px;
+            border: 1px solid #dbe3ef;
+            font-size: 11px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .kgt-rfq-btn {
+            background: #fff7ed;
+            color: #c2410c;
+            border-color: #fed7aa;
+        }
+        .kgt-contact-btn {
+            background: #f8fafc;
+            color: #334155;
+        }
+        .kgt-contact-btn.disabled,
+        .kgt-contact-btn[aria-disabled="true"],
+        .kgt-rfq-btn.disabled,
+        .kgt-rfq-btn[aria-disabled="true"] {
+            opacity: .55;
+            pointer-events: none;
+        }
+        @media (max-width: 575.98px) {
+            .kgt-action-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+@endonce
+<div class="aiz-card-box kgt-product-card h-auto py-3 hov-scale-img">
+    <div class="position-relative h-140px h-md-190px img-fit overflow-hidden kgt-product-media">
         @php
             $product_url = route('product', $product->slug);
             if ($product->auction_product == 1) {
@@ -129,30 +259,69 @@
     </div>
 
     <div class="p-2 p-md-3 text-left">
-        <!-- Product name -->
-        <h3 class="fw-400 fs-13 text-truncate-2 lh-1-4 mb-0 h-35px text-center">
+        <h3 class="fw-600 fs-13 text-truncate-2 lh-1-4 mb-2 h-35px">
             <a href="{{ $product_url }}" class="d-block text-reset hov-text-primary"
                 title="{{ $product->getTranslation('name') }}">{{ $product->getTranslation('name') }}</a>
         </h3>
-        <div class="fs-14 d-flex justify-content-center mt-3">
-            @if ($product->auction_product == 0)
-                <!-- Previous price -->
-                @if (home_base_price($product) != home_discounted_base_price($product))
-                    <div class="disc-amount has-transition">
-                        <del class="fw-400 text-secondary mr-1">{{ home_base_price($product) }}</del>
-                    </div>
-                @endif
-                <!-- price -->
-                <div class="">
-                    <span class="fw-700 text-primary">{{ home_discounted_base_price($product) }}</span>
-                </div>
-            @endif
-            @if ($product->auction_product == 1)
-                <!-- Bid Amount -->
-                <div class="">
-                    <span class="fw-700 text-primary">{{ single_price($product->starting_bid) }}</span>
-                </div>
-            @endif
+        @if (count($productSupplierBadges) > 0)
+            <div class="kgt-badge-list mb-2">
+                @foreach ($productSupplierBadges as $supplierBadge)
+                    <span class="kgt-badge kgt-badge-{{ $supplierBadge['variant'] }}">
+                        {{ $supplierBadge['label'] }}
+                    </span>
+                @endforeach
+            </div>
+        @endif
+        @if ($product->auction_product == 0 && home_base_price($product) != home_discounted_base_price($product))
+            <div class="disc-amount has-transition mb-1">
+                <del class="fw-400 fs-11 text-secondary">{{ home_base_price($product) }}</del>
+            </div>
+        @endif
+        <div class="fw-700 text-primary fs-15 mb-1">{{ $productCardPrice }}</div>
+        <div class="fs-11 text-secondary mb-1 kgt-meta-line">
+            {{ translate('MOQ') }}: {{ $productCardMoq }} {{ translate('pcs') }}
         </div>
+        @if (!empty($productSupplierSummary['name']))
+            <div class="fs-11 text-secondary mb-1 kgt-supplier-meta">
+                <span class="fw-700 text-dark">{{ translate('Sold by') }}:</span>
+                <span class="kgt-supplier-name">
+                    @if (!empty($productSupplierSummary['url']))
+                        <a href="{{ $productSupplierSummary['url'] }}" class="text-reset hov-text-primary">
+                            {{ $productSupplierSummary['name'] }}
+                        </a>
+                    @else
+                        <span>{{ $productSupplierSummary['name'] }}</span>
+                    @endif
+                </span>
+            </div>
+        @endif
+        <div class="d-flex align-items-center flex-wrap justify-content-between mb-1">
+            <div class="d-flex align-items-center text-secondary fs-11 mr-2">
+                @if (!empty($productSupplierSummary['country_flag_iso']))
+                    <span class="kgt-country-flag"><span class="iti__flag iti__{{ $productSupplierSummary['country_flag_iso'] }}"></span></span>
+                @endif
+                <span>{{ $productCardCountry }}</span>
+            </div>
+            <div class="d-flex align-items-center flex-nowrap">
+                <span class="rating rating-sm mr-1">@php renderStarRating($productCardReview['average']); @endphp</span>
+                <span class="fs-11 text-secondary">{{ $productCardReview['average'] }} ({{ $productCardReview['count'] }})</span>
+            </div>
+        </div>
+        @if ($product->auction_product == 0 && ((int) $product->wholesale_product === 1 || !empty($productSupplierSummary['name'])))
+            <div class="kgt-action-row mt-2">
+                @if ((int) $product->wholesale_product === 1)
+                    <a href="{{ $productRfqUrl ?: 'javascript:void(0)' }}"
+                        class="kgt-rfq-btn {{ $productRfqUrl ? '' : 'disabled' }}"
+                        @if (!$productRfqUrl) aria-disabled="true" @endif>
+                        {{ translate('Request Quote') }}
+                    </a>
+                @endif
+                <a href="{{ $productContactSupplierUrl ?: 'javascript:void(0)' }}"
+                    class="kgt-contact-btn {{ $productContactSupplierUrl ? '' : 'disabled' }}"
+                    @if (!$productContactSupplierUrl) aria-disabled="true" @endif>
+                    {{ translate('Contact Supplier') }}
+                </a>
+            </div>
+        @endif
     </div>
 </div>

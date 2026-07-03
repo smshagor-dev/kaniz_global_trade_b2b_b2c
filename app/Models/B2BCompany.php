@@ -131,6 +131,16 @@ class B2BCompany extends Model
         return $this->hasMany(B2BPurchaseOrder::class, 'supplier_company_id');
     }
 
+    public function reviewsGiven()
+    {
+        return $this->hasMany(B2BCompanyReview::class, 'reviewer_company_id');
+    }
+
+    public function reviewsReceived()
+    {
+        return $this->hasMany(B2BCompanyReview::class, 'reviewed_company_id');
+    }
+
     public function buyerInvoices()
     {
         return $this->hasMany(B2BProformaInvoice::class, 'buyer_company_id');
@@ -368,6 +378,16 @@ class B2BCompany extends Model
             && $this->public_profile_enabled
             && $this->verification_status === 'approved'
             && ($hasDedicatedFeaturedPackage || $hasFeaturedMembershipPackage);
+    }
+
+    public function averageReviewRating(): float
+    {
+        return round((float) ($this->reviewsReceived()->avg('rating') ?? 0), 1);
+    }
+
+    public function reviewCount(): int
+    {
+        return (int) $this->reviewsReceived()->count();
     }
 
     public function fraudBadgeState(): string

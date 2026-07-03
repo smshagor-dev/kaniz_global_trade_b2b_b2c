@@ -90,6 +90,42 @@
                     @endif
                 </div>
             </div>
+
+            @if ($purchaseOrder->status === 'completed')
+                <div class="card rounded-0 shadow-none border mt-3">
+                    <div class="card-header">{{ translate('Review Supplier') }}</div>
+                    <div class="card-body">
+                        @if ($buyerReview)
+                            <p class="mb-2"><strong>{{ translate('Your Rating') }}:</strong> {{ $buyerReview->rating }}/5</p>
+                            <p class="mb-0 text-muted">{{ $buyerReview->comment ?: translate('No comment added.') }}</p>
+                        @else
+                            <form action="{{ route('b2b.purchase-orders.reviews.store', $purchaseOrder->id) }}" method="POST">
+                                @csrf
+                                <div class="form-group">
+                                    <label>{{ translate('Rating') }}</label>
+                                    <select name="rating" class="form-control rounded-0" required>
+                                        <option value="">{{ translate('Select rating') }}</option>
+                                        @for ($rating = 5; $rating >= 1; $rating--)
+                                            <option value="{{ $rating }}">{{ $rating }}</option>
+                                        @endfor
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>{{ translate('Comment') }}</label>
+                                    <textarea name="comment" class="form-control rounded-0" rows="4" placeholder="{{ translate('Share your experience with this supplier') }}"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block rounded-0">{{ translate('Submit Review') }}</button>
+                            </form>
+                        @endif
+
+                        @if ($supplierReview)
+                            <hr>
+                            <p class="mb-2"><strong>{{ translate('Supplier Review For You') }}:</strong> {{ $supplierReview->rating }}/5</p>
+                            <p class="mb-0 text-muted">{{ $supplierReview->comment ?: translate('No comment added.') }}</p>
+                        @endif
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 @endsection

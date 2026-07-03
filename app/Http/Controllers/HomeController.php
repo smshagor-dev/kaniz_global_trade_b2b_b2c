@@ -121,6 +121,12 @@ class HomeController extends Controller
 
     protected function buildTradeServicesData(): array
     {
+        $countryKey = session('delivery_country_code')
+            ?: session('delivery_country_name')
+            ?: 'global';
+        $cacheKey = 'home_trade_services_data_' . \Illuminate\Support\Str::slug((string) $countryKey, '_');
+
+        return Cache::remember($cacheKey, 600, function () {
         $tradeServicesData = [
             'verified_logistics_partners' => 0,
             'public_suppliers' => 0,
@@ -307,6 +313,7 @@ class HomeController extends Controller
         }
 
         return $tradeServicesData;
+        });
     }
 
     public function load_todays_deal_section()
@@ -348,6 +355,23 @@ class HomeController extends Controller
         return view(
             'frontend.' . get_setting('homepage_select') . '.partials.newest_products_section',
             compact('newest_products')
+        );
+    }
+
+    public function load_infinite_product_section(Request $request)
+    {
+        $limit = max(1, (int) ($request->limit ?? 30));
+        $page = max(1, (int) ($request->page ?? 1));
+        $offset = ($page - 1) * $limit;
+
+        $products = filter_products(Product::latest())
+            ->skip($offset)
+            ->take($limit)
+            ->get();
+
+        return view(
+            'frontend.' . get_setting('homepage_select') . '.partials.infinite_products_section',
+            compact('products')
         );
     }
 

@@ -135,6 +135,29 @@
                 @endif
             </div></div>
             <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Verified At') }}</div><div class="col-md-9">{{ $company->verified_at ?: '-' }}</div></div>
+            <div class="row mb-2"><div class="col-md-3 text-secondary">{{ translate('Company Rating') }}</div><div class="col-md-9">{{ number_format($company->averageReviewRating(), 1) }}/5 ({{ $company->reviewCount() }} {{ translate('reviews') }})</div></div>
+        </div>
+    </div>
+
+    <div class="card rounded-0 shadow-none border mt-4">
+        <div class="card-header pt-4 border-bottom-0 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fs-18 fw-700 text-dark">{{ translate('Received Reviews') }}</h5>
+            <span class="badge badge-inline badge-info">{{ $company->reviewCount() }}</span>
+        </div>
+        <div class="card-body">
+            @forelse ($company->reviewsReceived->take(10) as $review)
+                <div class="@if(!$loop->last) border-bottom pb-3 mb-3 @endif">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <strong>{{ $review->reviewerCompany?->company_name ?: translate('Counterparty') }}</strong>
+                        <span>{{ $review->rating }}/5</span>
+                    </div>
+                    <div class="rating rating-sm mb-2">@php renderStarRating($review->rating); @endphp</div>
+                    <p class="mb-1 text-muted">{{ $review->comment ?: translate('No comment added.') }}</p>
+                    <small class="text-secondary">{{ optional($review->created_at)->format('d M, Y') }}</small>
+                </div>
+            @empty
+                <p class="mb-0 text-muted">{{ translate('No reviews received yet.') }}</p>
+            @endforelse
         </div>
     </div>
 @endsection

@@ -15,6 +15,7 @@ use App\Http\Controllers\B2BFreightQuoteController;
 use App\Http\Controllers\B2BHsCodeController;
 use App\Http\Controllers\B2BPortController;
 use App\Http\Controllers\B2BProformaInvoiceController;
+use App\Http\Controllers\B2BCompanyReviewController;
 use App\Http\Controllers\B2BPurchaseOrderController;
 use App\Http\Controllers\B2BVerificationRequirementController;
 use App\Http\Controllers\B2BPackageController;
@@ -31,6 +32,7 @@ use App\Http\Controllers\B2BShippingProviderController;
 use App\Http\Controllers\B2BShippingQuoteController;
 use App\Http\Controllers\B2BSupplierDirectoryController;
 use App\Http\Controllers\B2BSupplierDashboardController;
+use App\Http\Controllers\B2BSupplierFinanceAccountController;
 use App\Http\Controllers\B2BSupplierProfileController;
 use App\Http\Controllers\B2BTradeDocumentController;
 use App\Http\Controllers\B2BTradeFinanceController;
@@ -115,6 +117,10 @@ Route::group(['middleware' => ['auth', 'verified', 'unbanned']], function () {
         Route::get('/b2b/premium-verification', 'companyIndex')->name('b2b.premium-verifications.index');
         Route::post('/b2b/premium-verification/packages/{id}/activate-free', 'activateFree')->name('b2b.premium-verifications.activate-free');
         Route::post('/b2b/premium-verification/packages/{id}/request', 'requestPaid')->name('b2b.premium-verifications.request');
+    });
+
+    Route::controller(B2BCompanyReviewController::class)->middleware('approved_b2b_company:any')->group(function () {
+        Route::post('/b2b/purchase-orders/{purchaseOrderId}/reviews', 'store')->name('b2b.purchase-orders.reviews.store');
     });
 
     Route::controller(B2BCompanyMemberController::class)->group(function () {

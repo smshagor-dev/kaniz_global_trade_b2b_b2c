@@ -196,3 +196,4 @@
 #18 E:\\project\\kaniz_global_trade_b2b_b2c\\artisan(35): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
 #19 {main}
 "} 
+[2026-07-02 19:33:02] local.INFO: Filter Category Request:  {"page":"1","category_type":"all_categories","search":null} 

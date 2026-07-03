@@ -97,6 +97,31 @@ class MeiliSearchDriver extends AbstractHttpSearchDriver
             $filters[] = 'type IN [' . collect((array) $payload['types'])->map(fn ($type) => '"' . $type . '"')->implode(', ') . ']';
         }
 
+        if (!empty($payload['visibility'])) {
+            $filters[] = 'visibility IN [' . collect((array) $payload['visibility'])->map(fn ($visibility) => '"' . $visibility . '"')->implode(', ') . ']';
+        }
+
+        if (array_key_exists('is_active', $payload)) {
+            $filters[] = 'is_active = ' . ((bool) $payload['is_active'] ? 'true' : 'false');
+        }
+
+        foreach ((array) ($payload['filters'] ?? []) as $key => $value) {
+            if ($value === null || $value === '' || $value === []) {
+                continue;
+            }
+
+            $field = 'filters.' . $key;
+
+            if (is_array($value)) {
+                $filters[] = $field . ' IN [' . collect($value)->map(function ($item) {
+                    return is_numeric($item) ? $item : '"' . $item . '"';
+                })->implode(', ') . ']';
+                continue;
+            }
+
+            $filters[] = $field . ' = ' . (is_numeric($value) ? $value : '"' . $value . '"');
+        }
+
         return $filters;
     }
 }

@@ -105,9 +105,14 @@ class EnterpriseSearchController extends Controller
 
     public function autocomplete(Request $request): JsonResponse
     {
+        $scopeOptions = $this->globalSearchService->scopeOptions(
+            $this->resolvedScope((string) $request->get('scope', 'ai_mode'))
+        );
+
         return response()->json(
             $this->searchService->autocomplete((string) $request->get('q', ''), [
-                'types' => $this->globalSearchService->scopeOptions($this->resolvedScope((string) $request->get('scope', 'ai_mode')))['types'],
+                'types' => $scopeOptions['types'],
+                'filters' => $scopeOptions['filters'] ?? [],
                 'include_private' => $request->boolean('include_private'),
                 'limit' => (int) $request->input('limit', 8),
             ], $request->user())
@@ -173,7 +178,7 @@ class EnterpriseSearchController extends Controller
 
     protected function resolvedScope(string $scope): string
     {
-        return in_array($scope, GlobalSearchService::SCOPES, true) ? $scope : 'ai_mode';
+        return $this->globalSearchService->resolveScope($scope);
     }
 
     protected function assertAiModeRateLimit(Request $request, string $scope): void

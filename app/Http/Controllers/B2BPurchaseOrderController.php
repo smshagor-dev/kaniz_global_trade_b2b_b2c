@@ -42,8 +42,10 @@ class B2BPurchaseOrderController extends Controller
         $timeline = $this->b2bTradeService->buildTradeTimelineForPurchaseOrder($purchaseOrder);
         $canManagePurchaseOrder = $this->b2bPermissionService->canManagePurchaseOrder(Auth::id(), $purchaseOrder->buyer_company_id);
         $canParticipateInNegotiation = $this->b2bPermissionService->canParticipateInNegotiation(Auth::id(), $purchaseOrder->buyer_company_id);
+        $buyerReview = $purchaseOrder->companyReviews->firstWhere('reviewer_company_id', $purchaseOrder->buyer_company_id);
+        $supplierReview = $purchaseOrder->companyReviews->firstWhere('reviewer_company_id', $purchaseOrder->supplier_company_id);
 
-        return view('b2b.purchase_orders.show', compact('purchaseOrder', 'timeline', 'canManagePurchaseOrder', 'canParticipateInNegotiation'));
+        return view('b2b.purchase_orders.show', compact('purchaseOrder', 'timeline', 'canManagePurchaseOrder', 'canParticipateInNegotiation', 'buyerReview', 'supplierReview'));
     }
 
     public function buyerCancel($id)
@@ -111,8 +113,10 @@ class B2BPurchaseOrderController extends Controller
     {
         $purchaseOrder = $this->supplierQuery()->findOrFail($id);
         $timeline = $this->b2bTradeService->buildTradeTimelineForPurchaseOrder($purchaseOrder);
+        $buyerReview = $purchaseOrder->companyReviews->firstWhere('reviewer_company_id', $purchaseOrder->buyer_company_id);
+        $supplierReview = $purchaseOrder->companyReviews->firstWhere('reviewer_company_id', $purchaseOrder->supplier_company_id);
 
-        return view('seller.b2b.purchase_orders.show', compact('purchaseOrder', 'timeline'));
+        return view('seller.b2b.purchase_orders.show', compact('purchaseOrder', 'timeline', 'buyerReview', 'supplierReview'));
     }
 
     public function supplierAccept($id)
@@ -186,7 +190,7 @@ class B2BPurchaseOrderController extends Controller
         $company = $this->getBuyerCompany();
 
         return B2BPurchaseOrder::with(['buyerCompany', 'supplierCompany', 'rfq', 'quotation', 'items', 'proformaInvoices', 'shippingQuotes.shippingProvider', 'shipments.events', 'documents', 'negotiation.messages.sender'])
-            ->with(['milestones.escrow', 'lettersOfCredit', 'financeDisputes.messages'])
+            ->with(['milestones.escrow', 'lettersOfCredit', 'financeDisputes.messages', 'companyReviews.reviewerCompany'])
             ->where('buyer_company_id', $company->id);
     }
 
@@ -195,7 +199,7 @@ class B2BPurchaseOrderController extends Controller
         $company = $this->getSupplierCompany();
 
         return B2BPurchaseOrder::with(['buyerCompany', 'supplierCompany', 'rfq', 'quotation', 'items', 'proformaInvoices', 'shippingQuotes.shippingProvider', 'shipments.events', 'documents', 'negotiation.messages.sender'])
-            ->with(['milestones.escrow', 'lettersOfCredit', 'financeDisputes.messages'])
+            ->with(['milestones.escrow', 'lettersOfCredit', 'financeDisputes.messages', 'companyReviews.reviewerCompany'])
             ->where('supplier_company_id', $company->id);
     }
 

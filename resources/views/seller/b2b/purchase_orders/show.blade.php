@@ -95,6 +95,42 @@
                     @endif
                 </div>
             </div>
+
+            @if ($purchaseOrder->status === 'completed')
+                <div class="card mt-3">
+                    <div class="card-header">{{ translate('Review Buyer') }}</div>
+                    <div class="card-body">
+                        @if ($supplierReview)
+                            <p class="mb-2"><strong>{{ translate('Your Rating') }}:</strong> {{ $supplierReview->rating }}/5</p>
+                            <p class="mb-0 text-muted">{{ $supplierReview->comment ?: translate('No comment added.') }}</p>
+                        @else
+                            <form action="{{ route('b2b.purchase-orders.reviews.store', $purchaseOrder->id) }}" method="POST">
+                                @csrf
+                                <div class="form-group">
+                                    <label>{{ translate('Rating') }}</label>
+                                    <select name="rating" class="form-control" required>
+                                        <option value="">{{ translate('Select rating') }}</option>
+                                        @for ($rating = 5; $rating >= 1; $rating--)
+                                            <option value="{{ $rating }}">{{ $rating }}</option>
+                                        @endfor
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>{{ translate('Comment') }}</label>
+                                    <textarea name="comment" class="form-control" rows="4" placeholder="{{ translate('Share your experience with this buyer') }}"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">{{ translate('Submit Review') }}</button>
+                            </form>
+                        @endif
+
+                        @if ($buyerReview)
+                            <hr>
+                            <p class="mb-2"><strong>{{ translate('Buyer Review For You') }}:</strong> {{ $buyerReview->rating }}/5</p>
+                            <p class="mb-0 text-muted">{{ $buyerReview->comment ?: translate('No comment added.') }}</p>
+                        @endif
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 @endsection

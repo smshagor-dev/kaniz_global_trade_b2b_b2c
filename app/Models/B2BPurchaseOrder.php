@@ -171,4 +171,9 @@ class B2BPurchaseOrder extends Model
     {
         return $this->hasMany(B2BInsuranceClaim::class, 'purchase_order_id');
     }
+
+    public function companyReviews()
+    {
+        return $this->hasMany(B2BCompanyReview::class, 'purchase_order_id');
+    }
 }

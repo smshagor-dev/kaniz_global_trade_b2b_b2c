@@ -61,6 +61,7 @@ class B2BSupplierDirectoryController extends Controller
             'wholesaleProducts.thumbnail',
             'user.shop',
             'b2bPackage',
+            'reviewsReceived.reviewerCompany',
         ])
             ->publicSuppliers()
             ->where('public_slug', $slug)

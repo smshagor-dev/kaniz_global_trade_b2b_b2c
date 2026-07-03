@@ -1,5 +1,4 @@
 @extends('frontend.layouts.app')
-
 @section('content')
     <style>
         .home-slider {
@@ -159,16 +158,1373 @@
         .home-feature-icon .base{
             stroke: #23262b;
         }
+        .home-showcase-panel{
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.65fr);
+            gap: 0;
+            background: #fff;
+            border: 1px solid #edf0f3;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+            overflow: hidden;
+        }
+        .home-showcase-block{
+            padding: 18px 20px 16px;
+            min-width: 0;
+        }
+        .home-showcase-block + .home-showcase-block{
+            border-left: 1px solid #f0f2f5;
+        }
+        .home-showcase-head{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .home-showcase-title{
+            font-size: 20px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 0;
+        }
+        .home-showcase-link{
+            color: #6b7280 !important;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none !important;
+            white-space: nowrap;
+        }
+        .home-showcase-link:hover{
+            color: #ff6a00 !important;
+        }
+        .home-category-grid{
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px 10px;
+        }
+        .home-category-tile{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            text-align: center;
+            text-decoration: none !important;
+            color: #1f2937 !important;
+            padding: 6px 4px;
+            border: 1px solid transparent;
+            border-radius: 16px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+        .home-category-tile:hover{
+            border-color: #ff6a00;
+            box-shadow: 0 10px 24px rgba(255, 106, 0, 0.12);
+            transform: translateY(-1px);
+        }
+        .home-category-thumb{
+            width: 58px;
+            height: 58px;
+            border-radius: 16px;
+            background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
+            border: 1px solid #edf0f3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .home-category-thumb img{
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .home-category-icon{
+            font-size: 24px;
+            color: #9ca3af;
+        }
+        .home-category-name{
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.35;
+            color: #374151;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .home-category-view-all{
+            border: 1px dashed #d6dbe1;
+            border-radius: 16px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            justify-content: center;
+            min-height: 100%;
+        }
+        .home-category-view-all .home-category-thumb{
+            background: #fff7ed;
+            border-color: #fed7aa;
+        }
+        .home-category-view-all .home-category-icon{
+            color: #ff6a00;
+        }
+        .home-category-view-all .home-category-name{
+            font-weight: 700;
+            color: #111827;
+        }
+        .home-product-strip{
+            display: flex;
+            gap: 14px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-behavior: smooth;
+            padding-bottom: 6px;
+            scrollbar-width: thin;
+            scrollbar-color: #d1d5db #f3f4f6;
+        }
+        .home-product-strip::-webkit-scrollbar{
+            height: 8px;
+        }
+        .home-product-strip::-webkit-scrollbar-track{
+            background: #f3f4f6;
+            border-radius: 999px;
+        }
+        .home-product-strip::-webkit-scrollbar-thumb{
+            background: #d1d5db;
+            border-radius: 999px;
+        }
+        .home-scroll-target-locked{
+            overflow-x: hidden;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            touch-action: none;
+        }
+        .home-scroll-target-locked::-webkit-scrollbar{
+            display: none;
+        }
+        .home-industry-panel{
+            background: #fff;
+            border: 1px solid #edf0f3;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+            padding: 20px 18px;
+            overflow: hidden;
+        }
+        .home-industry-head{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .home-industry-title{
+            font-size: 22px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 0;
+        }
+        .home-industry-link{
+            color: #6b7280 !important;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none !important;
+            white-space: nowrap;
+        }
+        .home-industry-link:hover{
+            color: #ff6a00 !important;
+        }
+        .home-industry-body{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .home-scroll-row{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .home-industry-arrow,
+        .home-scroll-arrow{
+            width: 36px;
+            height: 36px;
+            border-radius: 999px;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            color: #374151;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 36px;
+            transition: all 0.2s ease;
+        }
+        .home-industry-arrow:hover,
+        .home-scroll-arrow:hover{
+            border-color: #ff6a00;
+            color: #ff6a00;
+            box-shadow: 0 8px 18px rgba(255, 106, 0, 0.14);
+        }
+        .home-industry-strip{
+            display: flex;
+            gap: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-behavior: smooth;
+            flex: 1 1 auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .home-industry-strip::-webkit-scrollbar{
+            display: none;
+        }
+        .home-industry-card{
+            min-width: 120px;
+            flex: 0 0 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 10px;
+            padding: 12px 14px;
+            text-decoration: none !important;
+            color: #111827 !important;
+            border-right: 1px solid #f1f3f5;
+            scroll-snap-align: start;
+        }
+        .home-industry-card:first-child{
+            border-left: 1px solid #f1f3f5;
+        }
+        .home-industry-card:hover{
+            background: linear-gradient(180deg, #fffaf5 0%, #ffffff 100%);
+        }
+        .home-industry-icon{
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            background: linear-gradient(180deg, #fff8f1 0%, #fff1e8 100%);
+            border: 1px solid #ffe0cc;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            color: #ff6a00;
+            font-size: 22px;
+        }
+        .home-industry-icon img{
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .home-industry-name{
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.35;
+            color: #1f2937;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .home-browse-panel{
+            background: #fff;
+            border: 1px solid #edf0f3;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+            padding: 20px 18px;
+            overflow: hidden;
+        }
+        .home-browse-head{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .home-browse-title{
+            font-size: 22px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 0;
+        }
+        .home-browse-link{
+            color: #ff6a00 !important;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none !important;
+            white-space: nowrap;
+        }
+        .home-browse-link:hover{
+            color: #e85d04 !important;
+        }
+        .home-browse-card{
+            min-width: 188px;
+            flex: 0 0 188px;
+            border: 1px solid #eef2f6;
+            border-radius: 18px;
+            background: #fff;
+            padding: 12px;
+            color: #111827 !important;
+            text-decoration: none !important;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+            scroll-snap-align: start;
+        }
+        .home-browse-card:hover{
+            border-color: #ffcfad;
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+            transform: translateY(-1px);
+        }
+        .home-browse-media{
+            position: relative;
+            aspect-ratio: 1 / 1;
+            border-radius: 16px;
+            background: #fafafa;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        .home-browse-media img{
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .home-browse-wishlist{
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            border: 1px solid #e5e7eb;
+            background: rgba(255, 255, 255, 0.96);
+            color: #6b7280;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            cursor: pointer;
+            padding: 0;
+            appearance: none;
+        }
+        .home-browse-name{
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.4;
+            color: #1f2937;
+            min-height: 36px;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .home-browse-price{
+            font-size: 15px;
+            font-weight: 800;
+            color: #111827;
+            line-height: 1.3;
+            margin-bottom: 4px;
+        }
+        .home-browse-meta{
+            font-size: 11px;
+            color: #6b7280;
+            line-height: 1.45;
+            margin-bottom: 4px;
+        }
+        .home-browse-origin{
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #6b7280;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+        .home-browse-origin-dot{
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #22c55e;
+            display: inline-block;
+        }
+        .home-browse-action{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 34px;
+            width: 100%;
+            border-radius: 999px;
+            border: 1px solid #ffd6bf;
+            background: #fffaf6;
+            color: #ff6a00 !important;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none !important;
+        }
+        .home-browse-action:hover{
+            background: #fff1e8;
+        }
+        .home-assurance-strip{
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 0;
+            background: #fffdf9;
+            border: 1px solid #f5e5d8;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
+            overflow: hidden;
+            min-height: 126px;
+        }
+        .home-assurance-item{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 18px 12px;
+            min-width: 0;
+            position: relative;
+            text-align: center;
+        }
+        .home-assurance-item:not(:last-child)::after{
+            content: "";
+            position: absolute;
+            top: 14px;
+            right: 0;
+            width: 1px;
+            height: calc(100% - 28px);
+            background: #f2e8e0;
+        }
+        .home-assurance-icon{
+            width: 38px;
+            height: 38px;
+            flex: 0 0 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #f59e0b;
+        }
+        .home-assurance-icon svg{
+            width: 30px;
+            height: 30px;
+            display: block;
+        }
+        .home-assurance-copy{
+            min-width: 0;
+            width: 100%;
+        }
+        .home-assurance-title{
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #111827;
+            margin-bottom: 1px;
+        }
+        .home-assurance-text{
+            font-size: 10px;
+            line-height: 1.25;
+            color: #6b7280;
+        }
+        .home-rfq-banner{
+            position: relative;
+            display: block;
+        }
+        .home-rfq-banner-btn{
+            position: absolute;
+            left: 54%;
+            bottom: 28%;
+            transform: translateX(-50%);
+            min-height: 40px;
+            padding: 0 24px;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #ff8a1f 0%, #ff6a00 100%);
+            color: #fff !important;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 40px;
+            text-decoration: none !important;
+            white-space: nowrap;
+            box-shadow: 0 12px 26px rgba(255, 106, 0, 0.28);
+        }
+        .home-rfq-banner-btn:hover{
+            color: #fff !important;
+            filter: brightness(0.98);
+        }
+        .home-product-card{
+            display: block;
+            color: #111827 !important;
+            text-decoration: none !important;
+            min-width: 180px;
+            flex: 0 0 180px;
+            border: 1px solid transparent;
+            border-radius: 16px;
+            padding: 8px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+        .home-product-card:hover{
+            border-color: #ff6a00;
+            box-shadow: 0 10px 24px rgba(255, 106, 0, 0.12);
+            transform: translateY(-1px);
+        }
+        .home-product-media{
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 12px;
+            background: #f8fafc;
+            overflow: hidden;
+            border: 1px solid #eef2f6;
+            margin-bottom: 12px;
+        }
+        .home-product-media img{
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .home-product-name{
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.35;
+            color: #1f2937;
+            min-height: 38px;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .home-product-price{
+            font-size: 18px;
+            font-weight: 800;
+            color: #111827;
+            line-height: 1.2;
+            margin-bottom: 6px;
+        }
+        .home-product-moq{
+            font-size: 12px;
+            color: #6b7280;
+            line-height: 1.35;
+        }
+        .home-product-view-all{
+            min-width: 180px;
+            flex: 0 0 180px;
+            border: 1px dashed #d6dbe1;
+            border-radius: 16px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px 16px;
+            color: #111827 !important;
+            text-decoration: none !important;
+        }
+        .home-product-view-all-icon{
+            width: 54px;
+            height: 54px;
+            border-radius: 999px;
+            background: #fff7ed;
+            color: #ff6a00;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+        .home-product-view-all-title{
+            font-size: 16px;
+            font-weight: 800;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+        .home-product-view-all-text{
+            font-size: 12px;
+            line-height: 1.4;
+            color: #6b7280;
+        }
+        .home-trade-preview{
+            display: grid;
+            grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+            gap: 14px;
+        }
+        .home-trade-panel{
+            background: linear-gradient(180deg, #fffdfb 0%, #ffffff 100%);
+            border: 1px solid #f4e6db;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+            padding: 18px 18px 16px;
+            min-width: 0;
+        }
+        .home-trade-panel-head{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .home-trade-panel-title{
+            font-size: 22px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 0;
+        }
+        .home-trade-panel-meta{
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #ef4444;
+            font-weight: 700;
+            flex-wrap: wrap;
+        }
+        .home-trade-countdown{
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 800;
+            color: #7f1d1d;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+            border: 1px solid #fecdd3;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        }
+        .home-trade-countdown-value{
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: 0.02em;
+            font-size: 18px;
+            line-height: 1;
+        }
+        .home-trade-countdown-box{
+            min-width: 42px;
+            height: 42px;
+            padding: 0 8px;
+            border-radius: 12px;
+            background: linear-gradient(180deg, #ffffff 0%, #ffe7ea 100%);
+            border: 1px solid #fda4af;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 20px rgba(244, 63, 94, 0.12);
+        }
+        .home-trade-countdown-separator{
+            font-size: 18px;
+            font-weight: 900;
+            color: #e11d48;
+        }
+        .home-trade-panel-link{
+            color: #6b7280 !important;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none !important;
+            white-space: nowrap;
+        }
+        .home-trade-panel-link:hover{
+            color: #ff6a00 !important;
+        }
+        .home-trade-empty{
+            min-height: 220px;
+            border: 1px dashed #e5e7eb;
+            border-radius: 16px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 24px 18px;
+        }
+        .home-trade-empty-icon{
+            width: 52px;
+            height: 52px;
+            border-radius: 999px;
+            background: #fff7ed;
+            color: #ff6a00;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+        .home-trade-empty-title{
+            font-size: 16px;
+            font-weight: 800;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+        .home-trade-empty-text{
+            font-size: 12px;
+            line-height: 1.5;
+            color: #6b7280;
+            max-width: 240px;
+        }
+        .home-trade-products{
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 6px;
+            scroll-snap-type: x proximity;
+            scrollbar-width: thin;
+            scrollbar-color: #ffb27d #fff1e8;
+        }
+        .home-trade-products::-webkit-scrollbar{
+            height: 8px;
+        }
+        .home-trade-products::-webkit-scrollbar-track{
+            background: #fff1e8;
+            border-radius: 999px;
+        }
+        .home-trade-products::-webkit-scrollbar-thumb{
+            background: linear-gradient(90deg, #ffb27d 0%, #ff7a14 100%);
+            border-radius: 999px;
+        }
+        .home-trade-product-card{
+            display: block;
+            color: #111827 !important;
+            text-decoration: none !important;
+            min-width: 220px;
+            flex: 0 0 220px;
+            border: 1px solid transparent;
+            border-radius: 16px;
+            padding: 8px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+            scroll-snap-align: start;
+        }
+        .home-trade-product-card:hover{
+            border-color: #ff6a00;
+            box-shadow: 0 10px 24px rgba(255, 106, 0, 0.12);
+            transform: translateY(-1px);
+        }
+        .home-trade-product-image{
+            position: relative;
+            border-radius: 14px;
+            background: #fff;
+            border: 1px solid #f1f3f5;
+            overflow: hidden;
+            aspect-ratio: 1 / 1;
+            margin-bottom: 12px;
+        }
+        .home-trade-product-image img{
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .home-trade-product-discount{
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            min-width: 38px;
+            height: 20px;
+            padding: 0 6px;
+            border-radius: 999px;
+            background: #ff5a5f;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 800;
+            line-height: 20px;
+            text-align: center;
+        }
+        .home-trade-product-name{
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.35;
+            color: #1f2937;
+            min-height: 35px;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .home-trade-product-price{
+            font-size: 14px;
+            font-weight: 800;
+            color: #ff6a00;
+            margin-bottom: 2px;
+        }
+        .home-trade-product-old{
+            font-size: 11px;
+            color: #9ca3af;
+            text-decoration: line-through;
+            margin-bottom: 4px;
+        }
+        .home-trade-product-moq{
+            font-size: 11px;
+            color: #6b7280;
+        }
+        .home-trade-suppliers{
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .home-trade-supplier-card{
+            border: 1px solid #f1f3f5;
+            border-radius: 16px;
+            background: #fff;
+            padding: 14px 12px;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+        .home-trade-supplier-card:hover{
+            border-color: #ff6a00;
+            box-shadow: 0 10px 24px rgba(255, 106, 0, 0.12);
+            transform: translateY(-1px);
+        }
+        .home-trade-supplier-top{
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .home-trade-supplier-logo{
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            overflow: hidden;
+            flex: 0 0 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #ff6a00;
+        }
+        .home-trade-supplier-logo img{
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .home-trade-supplier-name{
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.35;
+            color: #1f2937;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .home-trade-supplier-badge{
+            font-size: 11px;
+            font-weight: 700;
+            color: #2563eb;
+            margin-bottom: 8px;
+        }
+        .home-trade-supplier-metrics{
+            font-size: 11px;
+            color: #6b7280;
+            line-height: 1.55;
+            margin-top: auto;
+            margin-bottom: 12px;
+        }
+        .home-trade-supplier-btn{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 38px;
+            border-radius: 999px;
+            border: 1px solid #e5e7eb;
+            color: #111827 !important;
+            text-decoration: none !important;
+            font-size: 12px;
+            font-weight: 700;
+            background: #fff;
+        }
+        .home-trade-supplier-btn:hover{
+            border-color: #ff6a00;
+            color: #ff6a00 !important;
+        }
+        .home-leaderboard{
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+        .home-leaderboard-row{
+            background: #fff;
+            border: 1px solid #edf0f3;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+            padding: 18px;
+            min-width: 0;
+        }
+        .home-leaderboard-head{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .home-leaderboard-title{
+            font-size: 20px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 0;
+        }
+        .home-leaderboard-link{
+            color: #6b7280 !important;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none !important;
+            white-space: nowrap;
+        }
+        .home-leaderboard-link:hover{
+            color: #ff6a00 !important;
+        }
+        .home-leaderboard-list{
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .home-leaderboard-card{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid #eef2f6;
+            border-radius: 16px;
+            background: #fff;
+            min-width: 0;
+        }
+        .home-leaderboard-logo{
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #f8fafc;
+            border: 1px solid #eef2f6;
+            flex: 0 0 54px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #ff6a00;
+            font-size: 22px;
+        }
+        .home-leaderboard-logo img{
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .home-leaderboard-body{
+            min-width: 0;
+            width: 100%;
+        }
+        .home-leaderboard-name{
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.35;
+            color: #111827;
+            margin-bottom: 5px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .home-leaderboard-meta{
+            font-size: 11px;
+            line-height: 1.45;
+            color: #6b7280;
+        }
+        .home-leaderboard-rating{
+            font-size: 11px;
+            line-height: 1.4;
+            color: #374151;
+            margin-bottom: 4px;
+        }
+        .home-leaderboard-action{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 34px;
+            padding: 0 14px;
+            border-radius: 999px;
+            border: 1px solid #e5e7eb;
+            color: #111827 !important;
+            background: #fff;
+            text-decoration: none !important;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .home-leaderboard-action:hover{
+            border-color: #ff6a00;
+            color: #ff6a00 !important;
+        }
+        .home-leaderboard-empty{
+            padding: 18px;
+            border: 1px dashed #d6dbe1;
+            border-radius: 16px;
+            background: #f8fafc;
+            text-align: center;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .home-infinite-products{
+            background: #fff;
+            border: 1px solid #edf0f3;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+            padding: 18px;
+        }
+        .home-infinite-products-head{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .home-brand-row{
+            background: #fff;
+            border: 1px solid #edf0f3;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+            padding: 18px;
+            overflow: hidden;
+        }
+        .home-brand-row-head{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .home-brand-row-title{
+            font-size: 22px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 0;
+        }
+        .home-brand-row-link{
+            color: #ff6a00 !important;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none !important;
+            white-space: nowrap;
+        }
+        .home-brand-row-link:hover{
+            color: #e85d04 !important;
+        }
+        .home-brand-row-grid{
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .home-brand-row-card{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-width: 0;
+            padding: 14px 10px;
+            text-align: center;
+            color: #111827 !important;
+            text-decoration: none !important;
+            background: #fff;
+            border: 1px solid #eef2f6;
+            border-radius: 16px;
+        }
+        .home-brand-row-logo{
+            width: 68px;
+            height: 68px;
+            border-radius: 16px;
+            border: 1px solid #eef2f6;
+            background: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 10px;
+        }
+        .home-brand-row-logo img{
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        .home-brand-row-name{
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.35;
+            color: #374151;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .home-infinite-products-title{
+            font-size: 22px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 0;
+        }
+        .home-infinite-products-link{
+            color: #ff6a00 !important;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none !important;
+            white-space: nowrap;
+        }
+        .home-infinite-products-link:hover{
+            color: #e85d04 !important;
+        }
+        .home-infinite-products-grid{
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 16px;
+        }
+        .home-infinite-product-item{
+            min-width: 0;
+        }
+        .home-infinite-products-status{
+            padding: 16px 0 4px;
+            text-align: center;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .home-infinite-products-loader{
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .home-infinite-products-loader::before{
+            content: "";
+            width: 16px;
+            height: 16px;
+            border-radius: 999px;
+            border: 2px solid #fed7aa;
+            border-top-color: #ff6a00;
+            animation: homeInfiniteSpin 0.8s linear infinite;
+        }
+        .home-infinite-products-sentinel{
+            width: 100%;
+            height: 1px;
+        }
+        @keyframes homeInfiniteSpin{
+            to{
+                transform: rotate(360deg);
+            }
+        }
         @media (max-width: 1199px){
+            .home-trade-preview{
+                grid-template-columns: 1fr;
+            }
+            .home-leaderboard{
+                grid-template-columns: 1fr;
+            }
+            .home-leaderboard-list{
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .home-infinite-products-grid{
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+            .home-brand-row-grid{
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+            .home-showcase-panel{
+                grid-template-columns: 1fr;
+            }
+            .home-showcase-block + .home-showcase-block{
+                border-left: 0;
+                border-top: 1px solid #f0f2f5;
+            }
+            .home-category-grid{
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+            }
             .home-feature-strip{
                 grid-template-columns: repeat(3, minmax(0, 1fr));
                 padding: 12px 8px;
+            }
+            .home-assurance-strip{
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                min-height: 116px;
+            }
+            .home-assurance-item{
+                padding: 16px 10px;
+            }
+            .home-assurance-item:nth-child(3)::after{
+                display: none;
+            }
+            .home-rfq-banner-btn{
+                left: 50%;
+                bottom: 20%;
             }
             .home-feature-item:nth-child(3)::after{
                 display: none;
             }
         }
         @media (max-width: 767px){
+            .home-leaderboard-row{
+                padding: 14px;
+            }
+            .home-leaderboard-title{
+                font-size: 18px;
+            }
+            .home-leaderboard-list{
+                grid-template-columns: 1fr;
+            }
+            .home-leaderboard-card{
+                gap: 10px;
+                padding: 10px;
+            }
+            .home-leaderboard-logo{
+                width: 48px;
+                height: 48px;
+                flex-basis: 48px;
+                border-radius: 12px;
+            }
+            .home-leaderboard-name{
+                font-size: 13px;
+            }
+            .home-infinite-products{
+                padding: 14px;
+            }
+            .home-brand-row{
+                padding: 14px;
+            }
+            .home-brand-row-title{
+                font-size: 18px;
+            }
+            .home-brand-row-grid{
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+            }
+            .home-brand-row-logo{
+                width: 58px;
+                height: 58px;
+                border-radius: 14px;
+            }
+            .home-infinite-products-title{
+                font-size: 18px;
+            }
+            .home-infinite-products-grid{
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 12px;
+            }
+            .home-industry-panel{
+                padding: 16px 14px;
+            }
+            .home-industry-title{
+                font-size: 18px;
+            }
+            .home-industry-body{
+                gap: 8px;
+            }
+            .home-industry-arrow,
+            .home-scroll-arrow{
+                width: 32px;
+                height: 32px;
+                flex-basis: 32px;
+            }
+            .home-industry-card{
+                min-width: 102px;
+                flex-basis: 102px;
+                padding: 10px 10px;
+            }
+            .home-industry-icon{
+                width: 40px;
+                height: 40px;
+                border-radius: 12px;
+                font-size: 20px;
+            }
+            .home-industry-name{
+                font-size: 12px;
+            }
+            .home-browse-panel{
+                padding: 16px 14px;
+            }
+            .home-browse-title{
+                font-size: 18px;
+            }
+            .home-browse-card{
+                min-width: 158px;
+                flex-basis: 158px;
+                border-radius: 16px;
+                padding: 10px;
+            }
+            .home-assurance-strip{
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                min-height: 0;
+            }
+            .home-assurance-item{
+                padding: 14px 10px;
+            }
+            .home-assurance-item:nth-child(even)::after{
+                display: none;
+            }
+            .home-assurance-title{
+                font-size: 11px;
+            }
+            .home-assurance-text{
+                font-size: 9px;
+            }
+            .home-assurance-icon{
+                width: 32px;
+                height: 32px;
+                flex-basis: 32px;
+            }
+            .home-assurance-icon svg{
+                width: 26px;
+                height: 26px;
+            }
+            .home-rfq-banner-btn{
+                left: 50%;
+                bottom: 10%;
+                min-height: 34px;
+                padding: 0 18px;
+                border-radius: 8px;
+                font-size: 12px;
+                line-height: 34px;
+            }
+            .home-trade-panel{
+                padding: 14px;
+            }
+            .home-trade-panel-head{
+                align-items: flex-start;
+            }
+            .home-trade-panel-title{
+                font-size: 18px;
+            }
+            .home-trade-products{
+                gap: 10px;
+            }
+            .home-trade-product-card{
+                min-width: 176px;
+                flex-basis: 176px;
+            }
+            .home-trade-countdown{
+                padding: 6px 10px;
+            }
+            .home-trade-countdown-value,
+            .home-trade-countdown-separator{
+                font-size: 16px;
+            }
+            .home-trade-countdown-box{
+                min-width: 36px;
+                height: 36px;
+                border-radius: 10px;
+            }
+            .home-trade-suppliers{
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+            }
+            .home-showcase-block{
+                padding: 14px 14px 12px;
+            }
+            .home-showcase-title{
+                font-size: 18px;
+            }
+            .home-category-grid{
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 10px 8px;
+            }
+            .home-product-card,
+            .home-product-view-all{
+                min-width: 150px;
+                flex-basis: 150px;
+            }
             .home-feature-strip{
                 grid-template-columns: repeat(1, minmax(0, 1fr));
                 padding: 10px 0;
@@ -181,9 +1537,112 @@
             }
         }
     </style>
-
     @php $lang = get_system_language()->code;  @endphp
-
+    @php
+        $deliveryCountryKey = session('delivery_country_code') ?: session('delivery_country_name') ?: 'global';
+        $homeCacheKeySuffix = \Illuminate\Support\Str::slug((string) $deliveryCountryKey, '_');
+        $showcaseCategories = \Illuminate\Support\Facades\Cache::remember('home_showcase_categories', 3600, function () {
+            return \App\Models\Category::query()
+                ->where('level', 0)
+                ->where('digital', 0)
+                ->where('featured', 1)
+                ->take(9)
+                ->get();
+        });
+        $industryCategories = \Illuminate\Support\Facades\Cache::remember('home_industry_categories', 3600, function () {
+            return \App\Models\Category::query()
+                ->where('level', 0)
+                ->where('digital', 0)
+                ->orderByDesc('featured')
+                ->orderBy('order_level')
+                ->take(10)
+                ->get();
+        });
+        $browseProducts = \Illuminate\Support\Facades\Cache::remember('home_browse_products_' . $homeCacheKeySuffix, 1800, function () {
+            return filter_products(\App\Models\Product::query())
+                ->latest()
+                ->limit(8)
+                ->get();
+        });
+        $showcaseFeaturedProducts = \Illuminate\Support\Facades\Cache::remember('home_showcase_featured_products_' . $homeCacheKeySuffix, 1800, function () {
+            return collect(get_featured_products())->take(5);
+        });
+        $showcaseProductsViewAllUrl = $showcaseFeaturedProducts->isNotEmpty()
+            ? route('featured-products')
+            : route('search');
+        $showcaseProductsViewAllText = $showcaseFeaturedProducts->isNotEmpty()
+            ? translate('See all featured products')
+            : translate('Browse all products');
+        $bannerFlashDeal = \Illuminate\Support\Facades\Cache::remember('home_banner_flash_deal', 600, function () {
+            return get_featured_flash_deal();
+        });
+        if (
+            !$bannerFlashDeal
+            && \Illuminate\Support\Facades\Schema::hasTable('flash_deals')
+        ) {
+            $bannerFlashDeal = \Illuminate\Support\Facades\Cache::remember('home_banner_flash_deal_fallback', 600, function () {
+                return \App\Models\FlashDeal::query()
+                    ->where('status', 1)
+                    ->latest()
+                    ->first();
+            });
+        }
+        $bannerFlashProducts = $bannerFlashDeal
+            ? \Illuminate\Support\Facades\Cache::remember('home_banner_flash_products_' . $bannerFlashDeal->id, 600, function () use ($bannerFlashDeal) {
+                return collect(get_flash_deal_products($bannerFlashDeal->id))->take(4);
+            })
+            : collect();
+        $bannerVerifiedSuppliers = collect($tradeServicesData['featured_suppliers_list'] ?? collect())->take(4);
+        if (
+            $bannerVerifiedSuppliers->isEmpty()
+            && \Illuminate\Support\Facades\Schema::hasTable('b2b_companies')
+        ) {
+            $bannerVerifiedSuppliers = \Illuminate\Support\Facades\Cache::remember('home_banner_verified_suppliers_' . $homeCacheKeySuffix, 1800, function () {
+                return apply_selected_delivery_country_to_suppliers(
+                    \App\Models\B2BCompany::query()
+                )
+                    ->publicSuppliers()
+                    ->where('verified_supplier_badge', true)
+                    ->orderByDesc('profile_score')
+                    ->latest()
+                    ->limit(4)
+                    ->get();
+            });
+        }
+        $topRatedSellers = collect();
+        if (\Illuminate\Support\Facades\Schema::hasTable('shops')) {
+            $topRatedSellers = \Illuminate\Support\Facades\Cache::remember('home_top_rated_sellers', 1800, function () {
+                return \App\Models\Shop::query()
+                    ->where('verification_status', 1)
+                    ->orderByDesc('rating')
+                    ->orderByDesc('num_of_reviews')
+                    ->limit(6)
+                    ->get();
+            });
+        }
+        $topSuppliers = collect($tradeServicesData['featured_suppliers_list'] ?? collect())
+            ->sortByDesc(function ($supplier) {
+                return (float) ($supplier->profile_score ?? 0);
+            })
+            ->take(6)
+            ->values();
+        if (
+            $topSuppliers->isEmpty()
+            && \Illuminate\Support\Facades\Schema::hasTable('b2b_companies')
+        ) {
+            $topSuppliers = \Illuminate\Support\Facades\Cache::remember('home_top_suppliers_' . $homeCacheKeySuffix, 1800, function () {
+                return apply_selected_delivery_country_to_suppliers(
+                    \App\Models\B2BCompany::query()
+                )
+                    ->publicSuppliers()
+                    ->orderByDesc('profile_score')
+                    ->orderByDesc('response_rate')
+                    ->latest()
+                    ->limit(6)
+                    ->get();
+            });
+        }
+    @endphp
     <!-- home banner area -->
     <div class="home-banner-area mb-3" style="">
         <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
@@ -192,7 +1651,6 @@
                 <div class="position-static d-none d-xl-block col-auto">
                     @include('frontend.'.get_setting("homepage_select").'.partials.category_menu')
                 </div>
-
                 <div class="col-lg mt-4">
                     <!-- Sliders -->
                     @if (get_setting('home_slider_images', null, $lang) != null)
@@ -207,7 +1665,7 @@
                                     <div class="carousel-box">
                                         <a class="d-block" href="{{ isset(json_decode($home_slider_links, true)[$key]) ? json_decode($home_slider_links, true)[$key] : '' }}">
                                             <img
-                                                class="d-block mw-100 img-fit h-180px h-md-320px @if(count($featured_categories) == 0) h-lg-530px @else h-lg-370px @endif"
+                                                class="d-block mw-100 img-fit h-180px h-md-320px @if(count($featured_categories) == 0) h-lg-530px @else h-lg-350px @endif"
                                                 src="{{ $slider ? my_asset($slider->file_name) : static_asset('assets/img/placeholder.jpg') }}"
                                                 alt="{{ env('APP_NAME')}} promo"
                                                 onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder-rect.jpg') }}';"
@@ -218,7 +1676,6 @@
                             </div>
                         </div>
                     @endif
-
                     <div class="home-feature-strip">
                         <div class="home-feature-item">
                             <span class="home-feature-icon" aria-hidden="true">
@@ -285,7 +1742,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="col-12 col-lg-auto mt-4">
                     <div class="home-side-panel">
                         <div class="home-side-card">
@@ -294,7 +1750,6 @@
                             <a href="{{ route('user.login') }}" class="home-side-btn home-side-btn-primary">{{ translate('Sign in') }}</a>
                             <a href="{{ route('user.registration') }}" class="home-side-btn home-side-btn-outline">{{ translate('Join free') }}</a>
                         </div>
-
                         <div class="home-side-card">
                             <div class="d-flex align-items-center mb-2">
                                 <span class="home-side-assurance-icon"><i class="las la-shield-alt"></i></span>
@@ -307,11 +1762,82 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
-
+    <section class="mb-2 mb-md-3 mt-2 mt-md-3">
+        <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
+            <div class="home-showcase-panel">
+                <div class="home-showcase-block">
+                    <div class="home-showcase-head">
+                        <h3 class="home-showcase-title">{{ translate('Popular categories') }}</h3>
+                        <a href="{{ route('categories.all') }}" class="home-showcase-link">{{ translate('View all') }}</a>
+                    </div>
+                    <div class="home-category-grid">
+                        @foreach ($showcaseCategories as $category)
+                            @php
+                                $categoryImage = $category->banner ? uploaded_asset($category->banner) : ($category->icon ? uploaded_asset($category->icon) : null);
+                            @endphp
+                            <a href="{{ route('products.category', $category->slug) }}" class="home-category-tile position-relative hov-animate-outline">
+                                <span class="home-category-thumb">
+                                    @if ($categoryImage)
+                                        <img src="{{ $categoryImage }}" alt="{{ $category->name }}">
+                                    @else
+                                        <i class="las la-th-large home-category-icon"></i>
+                                    @endif
+                                </span>
+                                <span class="home-category-name">{{ $category->getTranslation('name') }}</span>
+                            </a>
+                        @endforeach
+                        <a href="{{ route('categories.all') }}" class="home-category-tile home-category-view-all position-relative hov-animate-outline">
+                            <span class="home-category-thumb">
+                                <i class="las la-arrow-right home-category-icon"></i>
+                            </span>
+                            <span class="home-category-name">{{ translate('View all') }}</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="home-showcase-block">
+                    <div class="home-showcase-head">
+                        <h3 class="home-showcase-title">{{ translate('Featured products') }}</h3>
+                    </div>
+                    <div class="home-scroll-row">
+                        <button type="button" class="home-scroll-arrow" data-scroll-target="featured-products-strip" data-scroll-direction="left" aria-label="{{ translate('Scroll left') }}">
+                            <i class="las la-angle-left"></i>
+                        </button>
+                        <div class="home-product-strip home-scroll-target-locked" id="featured-products-strip">
+                            @foreach ($showcaseFeaturedProducts as $product)
+                                <a href="{{ route('product', $product->slug) }}" class="home-product-card position-relative hov-animate-outline">
+                                    <div class="home-product-media">
+                                        <img src="{{ $product->thumbnail_img ? uploaded_asset($product->thumbnail_img) : static_asset('assets/img/placeholder.jpg') }}"
+                                            alt="{{ $product->getTranslation('name') }}"
+                                            onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                    </div>
+                                    <div class="home-product-name">{{ $product->getTranslation('name') }}</div>
+                                    <div class="home-product-price">{{ home_discounted_base_price($product) }}</div>
+                                    <div class="home-product-moq">
+                                        {{ translate('Min. order') }}:
+                                        {{ $product->min_qty ? $product->min_qty : 1 }}
+                                        {{ translate('pieces') }}
+                                    </div>
+                                </a>
+                            @endforeach
+                            <a href="{{ $showcaseProductsViewAllUrl }}" class="home-product-view-all position-relative hov-animate-outline">
+                                <span class="home-product-view-all-icon">
+                                    <i class="las la-arrow-right"></i>
+                                </span>
+                                <span class="home-product-view-all-title">{{ translate('View all') }}</span>
+                                <span class="home-product-view-all-text">{{ $showcaseProductsViewAllText }}</span>
+                            </a>
+                        </div>
+                        <button type="button" class="home-scroll-arrow" data-scroll-target="featured-products-strip" data-scroll-direction="right" aria-label="{{ translate('Scroll right') }}">
+                            <i class="las la-angle-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
     <!-- Banner section 1 -->
     @php $homeBanner1Images = get_setting('home_banner1_images', null, $lang);   @endphp
     @if ($homeBanner1Images != null)
@@ -344,10 +1870,11 @@
             </div>
         </div>
     @endif
-
     <!-- Flash Deal -->
     @php
-        $flash_deal = get_featured_flash_deal();
+        $flash_deal = \Illuminate\Support\Facades\Cache::remember('home_flash_deal_section_deal', 600, function () {
+            return get_featured_flash_deal();
+        });
         $flash_deal_bg = get_setting('flash_deal_bg_color');
     @endphp
     @if ($flash_deal != null)
@@ -370,7 +1897,6 @@
                             <!-- Countdown -->
                             <div class="aiz-count-down align-items-center ml-2 mb-2 mb-lg-0" data-date="{{ date('Y/m/d H:i:s', $flash_deal->end_date) }}"></div>
                         </div>
-
                         <!-- Links -->
                         <div>
                             <div class="text-dark d-flex align-items-center mb-0">
@@ -383,7 +1909,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="row gutters-16 align-items-center">
                         <!-- Flash Deals Baner -->
                         <div class="col-auto">
@@ -393,11 +1918,12 @@
                                 </div>
                             </a>
                         </div>
-
                         <div class="col">
                             <!-- Flash Deals Products -->
                             @php
-                                $flash_deal_products = get_flash_deal_products($flash_deal->id);
+                                $flash_deal_products = \Illuminate\Support\Facades\Cache::remember('home_flash_deal_section_products_' . $flash_deal->id, 600, function () use ($flash_deal) {
+                                    return get_flash_deal_products($flash_deal->id);
+                                });
                             @endphp
                             <div class="pr-md-3">
                                 <div class="aiz-carousel gutters-16 arrow-inactive-none arrow-x-0"
@@ -453,13 +1979,9 @@
             </div>
         </section>
     @endif
-
     <!-- Featured Products -->
     <div id="section_featured">
-
     </div>
-
-
     @if (addon_is_activated('preorder'))
         <!-- Banner Section 2 -->
         @php $homepreorder_banner_1Images = get_setting('home_preorder_banner_1_images', null, $lang);   @endphp
@@ -494,14 +2016,122 @@
             </div>
         @endif
     
-
-
         <!-- Featured Preorder Products -->
         <div id="section_featured_preorder_products">
-
         </div>
     @endif
-
+    <section class="mb-2 mb-md-3 mt-2 mt-md-3">
+        <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
+            <div class="home-trade-preview">
+                <div class="home-trade-panel">
+                    <div class="home-trade-panel-head">
+                        <div class="d-flex align-items-center flex-wrap">
+                            <h3 class="home-trade-panel-title mr-3">{{ translate('Flash Deals') }}</h3>
+                            @if ($bannerFlashDeal)
+                                <div class="home-trade-panel-meta">
+                                    <span>{{ translate('Ends in') }}</span>
+                                    <div class="home-trade-countdown" data-simple-countdown="{{ date('Y/m/d H:i:s', $bannerFlashDeal->end_date) }}">
+                                        <span class="home-trade-countdown-value">
+                                            <span class="home-trade-countdown-box">00</span>
+                                            <span class="home-trade-countdown-separator">:</span>
+                                            <span class="home-trade-countdown-box">00</span>
+                                            <span class="home-trade-countdown-separator">:</span>
+                                            <span class="home-trade-countdown-box">00</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                        <a href="{{ route('flash-deals') }}" class="home-trade-panel-link">{{ translate('View all') }}</a>
+                    </div>
+                    @if ($bannerFlashProducts->isNotEmpty())
+                        <div class="home-scroll-row">
+                            <button type="button" class="home-scroll-arrow" data-scroll-target="flash-deals-strip" data-scroll-direction="left" aria-label="{{ translate('Scroll left') }}">
+                                <i class="las la-angle-left"></i>
+                            </button>
+                            <div class="home-trade-products home-scroll-target-locked" id="flash-deals-strip">
+                                @foreach ($bannerFlashProducts as $flashDealProduct)
+                                    @if ($flashDealProduct->product)
+                                        @php
+                                            $product = $flashDealProduct->product;
+                                            $discountValue = discount_in_percentage($product);
+                                        @endphp
+                                        <a href="{{ route('product', $product->slug) }}" class="home-trade-product-card position-relative hov-animate-outline">
+                                            <div class="home-trade-product-image">
+                                                @if ($discountValue > 0)
+                                                    <span class="home-trade-product-discount">-{{ $discountValue }}%</span>
+                                                @endif
+                                                <img src="{{ $product->thumbnail_img ? uploaded_asset($product->thumbnail_img) : static_asset('assets/img/placeholder.jpg') }}"
+                                                    alt="{{ $product->getTranslation('name') }}"
+                                                    onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                            </div>
+                                            <div class="home-trade-product-name">{{ $product->getTranslation('name') }}</div>
+                                            <div class="home-trade-product-price">{{ home_discounted_base_price($product) }}</div>
+                                            <div class="home-trade-product-old">{{ home_base_price($product) }}</div>
+                                            <div class="home-trade-product-moq">
+                                                {{ translate('Min. order') }}: {{ $product->min_qty ? $product->min_qty : 1 }}
+                                            </div>
+                                        </a>
+                                    @endif
+                                @endforeach
+                            </div>
+                            <button type="button" class="home-scroll-arrow" data-scroll-target="flash-deals-strip" data-scroll-direction="right" aria-label="{{ translate('Scroll right') }}">
+                                <i class="las la-angle-right"></i>
+                            </button>
+                        </div>
+                    @else
+                        <div class="home-trade-empty">
+                            <span class="home-trade-empty-icon"><i class="las la-bolt"></i></span>
+                            <div class="home-trade-empty-title">{{ translate('Coming soon') }}</div>
+                            <div class="home-trade-empty-text">{{ translate('Flash deal items will appear here when a deal becomes available.') }}</div>
+                        </div>
+                    @endif
+                </div>
+                <div class="home-trade-panel">
+                    <div class="home-trade-panel-head">
+                        <h3 class="home-trade-panel-title">{{ translate('Verified Suppliers') }}</h3>
+                        <a href="{{ route('b2b.suppliers.index', ['verified_supplier_badge' => 1]) }}" class="home-trade-panel-link">{{ translate('View all') }}</a>
+                    </div>
+                    @if ($bannerVerifiedSuppliers->isNotEmpty())
+                        <div class="home-trade-suppliers">
+                            @foreach ($bannerVerifiedSuppliers as $supplier)
+                                <div class="home-trade-supplier-card position-relative hov-animate-outline">
+                                    <div class="home-trade-supplier-top">
+                                        <span class="home-trade-supplier-logo">
+                                            @if ($supplier->logo)
+                                                <img src="{{ uploaded_asset($supplier->logo) }}" alt="{{ $supplier->company_name }}"
+                                                    onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                            @else
+                                                <i class="las la-industry"></i>
+                                            @endif
+                                        </span>
+                                        <div class="minw-0">
+                                            <div class="home-trade-supplier-name">{{ $supplier->company_name }}</div>
+                                            <div class="home-trade-supplier-badge">{{ translate('Verified') }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="home-trade-supplier-metrics">
+                                        <div>{{ number_format((float) ($supplier->response_rate ?? 0), 1) }}% {{ translate('response') }}</div>
+                                        <div>{{ (int) ($supplier->profile_score ?? 0) }} {{ translate('profile score') }}</div>
+                                        <div>{{ $supplier->country ?: translate('Global') }}</div>
+                                    </div>
+                                    <a href="{{ $supplier->public_slug ? route('b2b.suppliers.show', $supplier->public_slug) : route('b2b.suppliers.index') }}" class="home-trade-supplier-btn">
+                                        {{ translate('Chat Now') }}
+                                    </a>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="home-trade-empty">
+                            <span class="home-trade-empty-icon"><i class="las la-store-alt"></i></span>
+                            <div class="home-trade-empty-title">{{ translate('Coming soon') }}</div>
+                            <div class="home-trade-empty-text">{{ translate('Verified supplier cards will appear here once approved suppliers are available.') }}</div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </section>
     <!-- Banner Section 2 -->
     @php $homeBanner2Images = get_setting('home_banner2_images', null, $lang);   @endphp
     @if ($homeBanner2Images != null)
@@ -534,17 +2164,187 @@
             </div>
         </div>
     @endif
-
     <!-- Best Selling  -->
     <div id="section_best_selling">
-
     </div>
-
     <!-- New Products -->
     <div id="section_newest">
-
     </div>
-
+    @if ($industryCategories->isNotEmpty())
+        <section class="mb-2 mb-md-3 mt-2 mt-md-3">
+            <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
+                <div class="home-industry-panel">
+                    <div class="home-industry-head">
+                        <h3 class="home-industry-title">{{ translate('Shop by industry') }}</h3>
+                        <a href="{{ route('categories.all') }}" class="home-industry-link">{{ translate('View all') }} <i class="las la-arrow-right"></i></a>
+                    </div>
+                    <div class="home-industry-body">
+                        <button type="button" class="home-industry-arrow" data-scroll-target="shop-industry-strip" data-scroll-direction="left" aria-label="{{ translate('Scroll left') }}">
+                            <i class="las la-angle-left"></i>
+                        </button>
+                        <div class="home-industry-strip" id="shop-industry-strip">
+                            @foreach ($industryCategories as $industryCategory)
+                                @php
+                                    $industryImage = $industryCategory->icon ? uploaded_asset($industryCategory->icon) : ($industryCategory->banner ? uploaded_asset($industryCategory->banner) : null);
+                                @endphp
+                                <a href="{{ route('products.category', $industryCategory->slug) }}" class="home-industry-card position-relative hov-animate-outline">
+                                    <span class="home-industry-icon">
+                                        @if ($industryImage)
+                                            <img src="{{ $industryImage }}" alt="{{ $industryCategory->getTranslation('name') }}"
+                                                onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                        @else
+                                            <i class="las la-th-large"></i>
+                                        @endif
+                                    </span>
+                                    <span class="home-industry-name">{{ $industryCategory->getTranslation('name') }}</span>
+                                </a>
+                            @endforeach
+                        </div>
+                        <button type="button" class="home-industry-arrow" data-scroll-target="shop-industry-strip" data-scroll-direction="right" aria-label="{{ translate('Scroll right') }}">
+                            <i class="las la-angle-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    @endif
+    <section class="mb-2 mb-md-3 mt-2 mt-md-3">
+        <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
+            <div class="home-browse-panel">
+                <div class="home-browse-head">
+                    <h3 class="home-browse-title">{{ translate('Recommended products for you') }}</h3>
+                    <a href="{{ route('search', ['sort_by' => 'newest']) }}" class="home-browse-link">{{ translate('View all') }} <i class="las la-arrow-right"></i></a>
+                </div>
+                @if ($browseProducts->isNotEmpty())
+                    <div class="home-scroll-row">
+                        <button type="button" class="home-scroll-arrow" data-scroll-target="browse-products-strip" data-scroll-direction="left" aria-label="{{ translate('Scroll left') }}">
+                            <i class="las la-angle-left"></i>
+                        </button>
+                        <div class="home-product-strip home-scroll-target-locked" id="browse-products-strip">
+                            @foreach ($browseProducts as $product)
+                                @php
+                                    $productCountry = $product->country_name ?: translate('Global');
+                                @endphp
+                                <div class="home-browse-card position-relative hov-animate-outline">
+                                    <a href="{{ route('product', $product->slug) }}" class="d-block text-reset text-decoration-none">
+                                        <div class="home-browse-media">
+                                            <img src="{{ $product->thumbnail_img ? uploaded_asset($product->thumbnail_img) : static_asset('assets/img/placeholder.jpg') }}"
+                                                alt="{{ $product->getTranslation('name') }}"
+                                                onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                            <button type="button" class="home-browse-wishlist" onclick="addToWishList({{ $product->id }})" aria-label="{{ translate('Add to wishlist') }}">
+                                                <i class="lar la-heart"></i>
+                                            </button>
+                                        </div>
+                                        <div class="home-browse-name">{{ $product->getTranslation('name') }}</div>
+                                        <div class="home-browse-price">{{ home_discounted_base_price($product) }}</div>
+                                        <div class="home-browse-meta">
+                                            {{ translate('MOQ') }}: {{ $product->min_qty ? $product->min_qty : 1 }}
+                                            {{ translate('pieces') }}
+                                        </div>
+                                        <div class="home-browse-origin">
+                                            <span class="home-browse-origin-dot"></span>
+                                            <span>{{ $productCountry }}</span>
+                                        </div>
+                                    </a>
+                                    <a href="javascript:void(0)" class="home-browse-action" @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCartSingleProduct({{ $product->id }})" @else onclick="showLoginModal()" @endif>
+                                        {{ translate('Add to cart') }}
+                                    </a>
+                                </div>
+                            @endforeach
+                        </div>
+                        <button type="button" class="home-scroll-arrow" data-scroll-target="browse-products-strip" data-scroll-direction="right" aria-label="{{ translate('Scroll right') }}">
+                            <i class="las la-angle-right"></i>
+                        </button>
+                    </div>
+                @else
+                    <div class="home-trade-empty">
+                        <span class="home-trade-empty-icon"><i class="las la-box-open"></i></span>
+                        <div class="home-trade-empty-title">{{ translate('Products are coming soon') }}</div>
+                        <div class="home-trade-empty-text">{{ translate('Recommended items will appear here when published products are available.') }}</div>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </section>
+    <section class="mb-2 mb-md-3 mt-2 mt-md-3">
+        <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
+            <div class="home-assurance-strip">
+                <div class="home-assurance-item position-relative hov-animate-outline">
+                    <span class="home-assurance-icon" aria-hidden="true">
+                        <svg viewBox="0 0 32 32" fill="none">
+                            <path d="M16 5.5 23.8 8.7v7.2c0 4.7-3.1 7.8-7.8 9.6-4.7-1.8-7.8-4.9-7.8-9.6V8.7L16 5.5Z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+                            <path d="m13.4 15.9 2 2.1 4.1-4.3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    <div class="home-assurance-copy">
+                        <div class="home-assurance-title">{{ translate('Trade Assurance') }}</div>
+                        <div class="home-assurance-text">{{ translate('Secure your orders') }}</div>
+                    </div>
+                </div>
+                <div class="home-assurance-item position-relative hov-animate-outline">
+                    <span class="home-assurance-icon" aria-hidden="true">
+                        <svg viewBox="0 0 32 32" fill="none">
+                            <path d="M8 7.5h16v17H8z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+                            <path d="M12 12h8M12 16h5M12 20h8" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                    <div class="home-assurance-copy">
+                        <div class="home-assurance-title">{{ translate('RFQ') }}</div>
+                        <div class="home-assurance-text">{{ translate('Get multiple quotes') }}</div>
+                    </div>
+                </div>
+                <div class="home-assurance-item position-relative hov-animate-outline">
+                    <span class="home-assurance-icon" aria-hidden="true">
+                        <svg viewBox="0 0 32 32" fill="none">
+                            <path d="M16 5.5 23.8 8.7v7.2c0 4.7-3.1 7.8-7.8 9.6-4.7-1.8-7.8-4.9-7.8-9.6V8.7L16 5.5Z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+                            <path d="m13.4 15.9 2 2.1 4.1-4.3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    <div class="home-assurance-copy">
+                        <div class="home-assurance-title">{{ translate('Supplier Verification') }}</div>
+                        <div class="home-assurance-text">{{ translate('Trusted & verified') }}</div>
+                    </div>
+                </div>
+                <div class="home-assurance-item position-relative hov-animate-outline">
+                    <span class="home-assurance-icon" aria-hidden="true">
+                        <svg viewBox="0 0 32 32" fill="none">
+                            <path d="M10 8.5h12l4 4v7l-4 4H10l-4-4v-7l4-4Z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+                            <path d="m13.2 16 1.8 1.8 3.8-3.8" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    <div class="home-assurance-copy">
+                        <div class="home-assurance-title">{{ translate('Inspection Services') }}</div>
+                        <div class="home-assurance-text">{{ translate('Quality you can trust') }}</div>
+                    </div>
+                </div>
+                <div class="home-assurance-item position-relative hov-animate-outline">
+                    <span class="home-assurance-icon" aria-hidden="true">
+                        <svg viewBox="0 0 32 32" fill="none">
+                            <path d="M6.5 11.5h19v12h-19z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+                            <path d="M10.5 11.5V9.8A2.8 2.8 0 0 1 13.3 7h5.4a2.8 2.8 0 0 1 2.8 2.8v1.7" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+                            <path d="M6.5 16h19" stroke="currentColor" stroke-width="1.9"/>
+                        </svg>
+                    </span>
+                    <div class="home-assurance-copy">
+                        <div class="home-assurance-title">{{ translate('Secure Payments') }}</div>
+                        <div class="home-assurance-text">{{ translate('Safe & protected') }}</div>
+                    </div>
+                </div>
+                <div class="home-assurance-item position-relative hov-animate-outline">
+                    <span class="home-assurance-icon" aria-hidden="true">
+                        <svg viewBox="0 0 32 32" fill="none">
+                            <path d="M16 6.5 24 9.4v6.9c0 4.5-3 7.4-8 9.2-5-1.8-8-4.7-8-9.2V9.4l8-2.9Z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+                            <path d="M13.3 15.7h5.4M16 13v5.4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                    <div class="home-assurance-copy">
+                        <div class="home-assurance-title">{{ translate('Buyer Protection') }}</div>
+                        <div class="home-assurance-text">{{ translate('Money back guarantee') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
     <!-- Banner Section 3 -->
     @php $homeBanner3Images = get_setting('home_banner3_images', null, $lang);   @endphp
     @if ($homeBanner3Images != null)
@@ -575,14 +2375,181 @@
             </div>
         </div>
     @endif
-
+    @if ($topRatedSellers->isNotEmpty() || $topSuppliers->isNotEmpty())
+        <section class="mb-2 mb-md-3 mt-2 mt-md-3">
+            <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
+                <div class="home-leaderboard">
+                    <div class="home-leaderboard-row">
+                        <div class="home-leaderboard-head">
+                            <h3 class="home-leaderboard-title">{{ translate('Top Sellers') }}</h3>
+                            <a href="{{ route('sellers') }}" class="home-leaderboard-link">{{ translate('View all') }}</a>
+                        </div>
+                        @if ($topRatedSellers->isNotEmpty())
+                            <div class="home-leaderboard-list">
+                                @foreach ($topRatedSellers as $seller)
+                                    <div class="home-leaderboard-card position-relative hov-animate-outline">
+                                        <span class="home-leaderboard-logo">
+                                            @if ($seller->logo)
+                                                <img src="{{ uploaded_asset($seller->logo) }}" alt="{{ $seller->name }}"
+                                                    onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                            @else
+                                                <i class="las la-store"></i>
+                                            @endif
+                                        </span>
+                                        <div class="home-leaderboard-body">
+                                            <div class="home-leaderboard-name">{{ $seller->name }}</div>
+                                            <div class="home-leaderboard-rating">
+                                                {{ number_format((float) ($seller->rating ?? 0), 1) }}/5
+                                                ({{ (int) ($seller->num_of_reviews ?? 0) }} {{ translate('reviews') }})
+                                            </div>
+                                            <div class="home-leaderboard-meta">{{ translate('Verified seller') }}</div>
+                                        </div>
+                                        <a href="{{ route('shop.visit', $seller->slug) }}" class="home-leaderboard-action">{{ translate('Visit') }}</a>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="home-leaderboard-empty">{{ translate('Top seller cards will appear here once verified sellers are available.') }}</div>
+                        @endif
+                    </div>
+                    <div class="home-leaderboard-row">
+                        <div class="home-leaderboard-head">
+                            <h3 class="home-leaderboard-title">{{ translate('Top Suppliers') }}</h3>
+                            <a href="{{ route('b2b.suppliers.index') }}" class="home-leaderboard-link">{{ translate('View all') }}</a>
+                        </div>
+                        @if ($topSuppliers->isNotEmpty())
+                            <div class="home-leaderboard-list">
+                                @foreach ($topSuppliers as $supplier)
+                                    <div class="home-leaderboard-card position-relative hov-animate-outline">
+                                        <span class="home-leaderboard-logo">
+                                            @if ($supplier->logo)
+                                                <img src="{{ uploaded_asset($supplier->logo) }}" alt="{{ $supplier->company_name }}"
+                                                    onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                            @else
+                                                <i class="las la-industry"></i>
+                                            @endif
+                                        </span>
+                                        <div class="home-leaderboard-body">
+                                            <div class="home-leaderboard-name">{{ $supplier->company_name }}</div>
+                                            <div class="home-leaderboard-rating">
+                                                {{ (int) ($supplier->profile_score ?? 0) }} {{ translate('profile score') }}
+                                            </div>
+                                            <div class="home-leaderboard-meta">
+                                                {{ number_format((float) ($supplier->response_rate ?? 0), 1) }}% {{ translate('response rate') }}
+                                                · {{ $supplier->country ?: translate('Global') }}
+                                            </div>
+                                        </div>
+                                        <a href="{{ $supplier->public_slug ? route('b2b.suppliers.show', $supplier->public_slug) : route('b2b.suppliers.index') }}" class="home-leaderboard-action">{{ translate('View') }}</a>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="home-leaderboard-empty">{{ translate('Top supplier cards will appear here once approved suppliers are available.') }}</div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </section>
+    @endif
+    @php $homeBanner4Images = get_setting('home_banner4_images', null, $lang); @endphp
+    @if ($homeBanner4Images != null)
+        <section class="mb-2 mb-md-3 mt-2 mt-md-3">
+            <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
+                @php
+                    $banner_4_imags = json_decode($homeBanner4Images);
+                    $home_banner4_links = get_setting('home_banner4_links', null, $lang);
+                @endphp
+                <div class="aiz-carousel overflow-hidden rounded-2 arrow-inactive-none arrow-dark arrow-x-15"
+                    data-items="1" data-arrows="true" data-dots="false" data-autoplay="true">
+                    @foreach ($banner_4_imags as $key => $value)
+                        <div class="carousel-box overflow-hidden hov-scale-img">
+                            <a href="{{ isset(json_decode($home_banner4_links, true)[$key]) ? json_decode($home_banner4_links, true)[$key] : '' }}"
+                                class="home-rfq-banner d-block text-reset rounded-2 overflow-hidden">
+                                <img src="{{ static_asset('assets/img/placeholder-rect.jpg') }}"
+                                    data-src="{{ uploaded_asset($value) }}" alt="{{ env('APP_NAME') }} promo"
+                                    class="img-fluid lazyload w-100 has-transition"
+                                    onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder-rect.jpg') }}';">
+                                <span class="home-rfq-banner-btn">
+                                    {{ translate('Submit RFQ Now') }} <i class="las la-arrow-right fs-12 align-middle ml-1"></i>
+                                </span>
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
+    @php
+        $brands_section_bg = get_setting('brands_section_bg_color');
+        $top_brands = json_decode(get_setting('top_brands'));
+        $brands = \Illuminate\Support\Facades\Cache::remember('home_brands_row', 3600, function () use ($top_brands) {
+            return !empty($top_brands)
+                ? get_brands($top_brands)
+                : \App\Models\Brand::query()->latest()->take(6)->get();
+        });
+    @endphp
+    @if (count($brands) > 0)
+            <section class="mb-2 mb-md-3 mt-2 mt-md-3">
+                <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
+                    <div class="p-3 p-md-2rem rounded-2 @if(get_setting('brands_section_outline') == 1) border @endif"
+                        style="background: {{ $brands_section_bg != null ? $brands_section_bg : '#f0f2f5' }}; border-color: {{ get_setting('brands_section_outline_color') }} !important; padding-bottom: 1rem !important;">
+                        <div class="d-flex mb-2 mb-md-3 align-items-baseline justify-content-between">
+                            <h3 class="fs-16 fs-md-20 fw-700 mb-2 mb-sm-0">{{ translate('Top Brands') }}</h3>
+                            <div class="d-flex">
+                                <a class="text-blue fs-10 fs-md-12 fw-700 hov-text-primary animate-underline-primary"
+                                    href="{{ route('brands.all') }}">{{ translate('View All Brands') }}</a>
+                            </div>
+                        </div>
+                        <div class="row gutters-16">
+                            @foreach ($brands->take(6) as $brand)
+                                <div class="col-xl-2 col-lg-2 col-md-4 col-6 my-3">
+                                    <a href="{{ route('products.brand', $brand->slug) }}" class="d-block has-transition hov-shadow-out z-1 hov-scale-img rounded-2 overflow-hidden position-relative hov-animate-outline">
+                                        <span class="d-flex flex-column align-items-center justify-content-center text-center p-2">
+                                            <span class="d-flex align-items-center justify-content-center bg-white size-80px p-2 overflow-hidden rounded-circle">
+                                                <img src="{{ $brand->logo != null ? uploaded_asset($brand->logo) : static_asset('assets/img/placeholder.jpg') }}"
+                                                class="lazyload w-100 has-transition"
+                                                alt="{{ $brand->getTranslation('name') }}"
+                                                onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                            </span>
+                                            <span class="d-block text-center text-dark fs-12 fs-md-14 fw-700 mt-2">
+                                                {{ $brand->getTranslation('name') }}
+                                            </span>
+                                        </span>
+                                    </a>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </section>
+    @endif
+    <section class="mb-2 mb-md-3 mt-2 mt-md-3">
+        <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
+            <div class="home-infinite-products">
+                <div class="home-infinite-products-head">
+                    <h3 class="home-infinite-products-title">{{ translate('More Products') }}</h3>
+                    <a href="{{ route('search', ['sort_by' => 'newest']) }}" class="home-infinite-products-link">{{ translate('View all') }}</a>
+                </div>
+                <div
+                    id="home-infinite-products-grid"
+                    class="home-infinite-products-grid"
+                    data-next-page="1"
+                    data-limit="30"
+                    data-loading="false"
+                    data-complete="false">
+                </div>
+                <div id="home-infinite-products-status" class="home-infinite-products-status">
+                    <span class="home-infinite-products-loader">{{ translate('Loading products') }}</span>
+                </div>
+                <div id="home-infinite-products-sentinel" class="home-infinite-products-sentinel" aria-hidden="true"></div>
+            </div>
+        </div>
+    </section>
     <!-- Auction Product -->
     @if (addon_is_activated('auction'))
         <div id="auction_products">
-
         </div>
     @endif
-
     <!-- Cupon -->
     @if (get_setting('coupon_system') == 1)
         <div class="" style="background-color: {{ get_setting('cupon_background_color', '#fff9ed') }}">
@@ -640,23 +2607,16 @@
             </div>
         </div>
     @endif
-
-    <!-- Category wise Products -->
-    <div id="section_home_categories">
-
-    </div>
-
-
     @if (addon_is_activated('preorder'))
         <!-- Newest Preorder Products -->
         @include('preorder.frontend.home_page.newest_preorder')
     @endif
-
-
     <!-- Classified Product -->
     @if (get_setting('classified_product') == 1)
         @php
-            $classified_products = get_home_page_classified_products(6);
+            $classified_products = \Illuminate\Support\Facades\Cache::remember('home_classified_products_6', 1800, function () {
+                return get_home_page_classified_products(6);
+            });
             $classified_section_bg = get_setting('classified_section_bg_color');
         @endphp
         @if (count($classified_products) > 0)
@@ -748,158 +2708,169 @@
             </section>
         @endif
     @endif
-
-    <!-- Top Sellers -->
-    @if (get_setting('vendor_system_activation') == 1)
-        @php
-            $best_selers = get_best_sellers(6);
-            $sellers_section_bg = get_setting('sellers_section_bg_color');
-        @endphp
-        @if (count($best_selers) > 0)
-        <section class="mb-2 mb-md-3 mt-2 mt-md-3">
-            <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
-                <div class="p-3 p-md-2rem rounded-2 @if(get_setting('sellers_section_outline') == 1) border @endif"
-                    style="background: {{ $sellers_section_bg != null ? $sellers_section_bg : '#fff9ed' }}; border-color: {{ get_setting('sellers_section_outline_color') }} !important; padding-bottom: 1rem !important;">
-                    <!-- Top Section -->
-                    <div class="d-flex mb-2 mb-md-3 align-items-baseline justify-content-between">
-                        <!-- Title -->
-                        <h3 class="fs-16 fs-md-20 fw-700 mb-2 mb-sm-0">
-                            <span class="pb-3">{{ translate('Top Sellers') }}</span>
-                        </h3>
-                        <!-- Links -->
-                        <div class="d-flex">
-                            <a class="text-blue fs-10 fs-md-12 fw-700 hov-text-primary animate-underline-primary"
-                                href="{{ route('sellers') }}">{{ translate('View All Sellers') }}</a>
-                        </div>
-                    </div>
-                    <!-- Sellers Section -->
-                    <div class="row gutters-16">
-                        @foreach ($best_selers as $key => $seller)
-                        <div class="col-xl-4 col-md-6 py-3 py-md-4 has-transition hov-shadow-out z-1">
-                            <div class="d-flex align-items-center">
-                                <!-- Shop logo & Verification Status -->
-                                <div class="position-relative">
-                                    <a href="{{ route('shop.visit', $seller->slug) }}"
-                                        class="d-block mx-auto size-100px size-lg-120px border overflow-hidden hov-scale-img"
-                                        tabindex="0"
-                                        style="border: 1px solid #e5e5e5; border-radius: 50%; box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.06);">
-                                        <img src="{{ static_asset('assets/img/placeholder-rect.jpg') }}"
-                                            data-src="{{ uploaded_asset($seller->logo) }}" alt="{{ $seller->name }}"
-                                            class="img-fit h-100 lazyload has-transition"
-                                            onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder-rect.jpg') }}';">
-                                    </a>
-                                    <div class="absolute-top-left z-1 ml-2 mt-1 rounded-content bg-white">
-                                        @if ($seller->verification_status == 1)
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24.001" height="24"
-                                                viewBox="0 0 24.001 24">
-                                                <g id="Group_25929" data-name="Group 25929"
-                                                    transform="translate(-480 -345)">
-                                                    <circle id="Ellipse_637" data-name="Ellipse 637" cx="12"
-                                                        cy="12" r="12" transform="translate(480 345)"
-                                                        fill="#fff" />
-                                                    <g id="Group_25927" data-name="Group 25927"
-                                                        transform="translate(480 345)">
-                                                        <path id="Union_5" data-name="Union 5"
-                                                            d="M0,12A12,12,0,1,1,12,24,12,12,0,0,1,0,12Zm1.2,0A10.8,10.8,0,1,0,12,1.2,10.812,10.812,0,0,0,1.2,12Zm1.2,0A9.6,9.6,0,1,1,12,21.6,9.611,9.611,0,0,1,2.4,12Zm5.115-1.244a1.083,1.083,0,0,0,0,1.529l3.059,3.059a1.081,1.081,0,0,0,1.529,0l5.1-5.1a1.084,1.084,0,0,0,0-1.53,1.081,1.081,0,0,0-1.529,0L11.339,13.05,9.045,10.756a1.082,1.082,0,0,0-1.53,0Z"
-                                                            transform="translate(0 0)" fill="#85b567" />
-                                                    </g>
-                                                </g>
-                                            </svg>
-                                        @else
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24.001" height="24"
-                                                viewBox="0 0 24.001 24">
-                                                <g id="Group_25929" data-name="Group 25929"
-                                                    transform="translate(-480 -345)">
-                                                    <circle id="Ellipse_637" data-name="Ellipse 637" cx="12"
-                                                        cy="12" r="12" transform="translate(480 345)"
-                                                        fill="#fff" />
-                                                    <g id="Group_25927" data-name="Group 25927"
-                                                        transform="translate(480 345)">
-                                                        <path id="Union_5" data-name="Union 5"
-                                                            d="M0,12A12,12,0,1,1,12,24,12,12,0,0,1,0,12Zm1.2,0A10.8,10.8,0,1,0,12,1.2,10.812,10.812,0,0,0,1.2,12Zm1.2,0A9.6,9.6,0,1,1,12,21.6,9.611,9.611,0,0,1,2.4,12Zm5.115-1.244a1.083,1.083,0,0,0,0,1.529l3.059,3.059a1.081,1.081,0,0,0,1.529,0l5.1-5.1a1.084,1.084,0,0,0,0-1.53,1.081,1.081,0,0,0-1.529,0L11.339,13.05,9.045,10.756a1.082,1.082,0,0,0-1.53,0Z"
-                                                            transform="translate(0 0)" fill="red" />
-                                                    </g>
-                                                </g>
-                                            </svg>
-                                        @endif
-                                    </div>
-                                </div>
-
-                                <div class="ml-2 ml-lg-4">
-                                    <!-- Shop name -->
-                                    <h2 class="fs-14 fw-700 text-dark text-truncate-2 mb-1">
-                                        <a href="{{ route('shop.visit', $seller->slug) }}"
-                                            class="text-reset hov-text-primary" tabindex="0">{{ $seller->name }}</a>
-                                    </h2>
-                                    <!-- Shop Rating -->
-                                    <div class="rating rating-mr-1 text-dark mb-2">
-                                        {{ renderStarRating($seller->rating) }}
-                                        <span class="opacity-60 fs-14">({{ $seller->num_of_reviews }}
-                                            {{ translate('Reviews') }})</span>
-                                    </div>
-                                    <!-- Visit Button -->
-                                    <a href="{{ route('shop.visit', $seller->slug) }}" class="visite-btn">
-                                        <span class="button-text">{{ ucfirst(translate('Visit Store')) }}</span>
-                                        <span class="icon-arrow"></span>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        </section>
-        @endif
-    @endif
-
-    <!-- Top Brands -->
-    @if (get_setting('top_brands') != null)
-        @php
-            $brands_section_bg = get_setting('brands_section_bg_color');
-        @endphp
-        <section class="mb-2 mb-md-3 mt-2 mt-md-3 pb-2 pb-md-3">
-            <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
-                <div class="p-3 p-md-2rem rounded-2 @if(get_setting('brands_section_outline') == 1) border @endif"
-                    style="background: {{ $brands_section_bg != null ? $brands_section_bg : '#f0f2f5' }}; border-color: {{ get_setting('brands_section_outline_color') }} !important; padding-bottom: 1rem !important;">
-                    <!-- Top Section -->
-                    <div class="d-flex mb-2 mb-md-3 align-items-baseline justify-content-between">
-                        <!-- Title -->
-                        <h3 class="fs-16 fs-md-20 fw-700 mb-2 mb-sm-0">{{ translate('Top Brands') }}</h3>
-                        <!-- Links -->
-                        <div class="d-flex">
-                            <a class="text-blue fs-10 fs-md-12 fw-700 hov-text-primary animate-underline-primary"
-                                href="{{ route('brands.all') }}">{{ translate('View All Brands') }}</a>
-                        </div>
-                    </div>
-                    <!-- Brands Section -->
-                    <div class="row gutters-16">
-                        @php
-                            $top_brands = json_decode(get_setting('top_brands'));
-                            $brands = get_brands($top_brands);
-                        @endphp
-                        @foreach ($brands as $brand)
-                            <div class="col-xl-3 col-lg-4 col-6 my-3">
-                                <a href="{{ route('products.brand', $brand->slug) }}" class="d-block has-transition hov-shadow-out z-1 hov-scale-img rounded-2 overflow-hidden">
-                                    <span class="d-flex flex-column flex-sm-row align-items-center">
-                                        <span class="d-flex align-items-center bg-white size-80px p-2 rounded-2 overflow-hidden">
-                                            <img src="{{ $brand->logo != null ? uploaded_asset($brand->logo) : static_asset('assets/img/placeholder.jpg') }}"
-                                            class="lazyload w-100 has-transition"
-                                            alt="{{ $brand->getTranslation('name') }}"
-                                            onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
-                                        </span>
-                                        <span class="text-center text-dark fs-12 fs-md-14 fw-700 mt-2 mt-sm-0 ml-sm-4">
-                                            {{ $brand->getTranslation('name') }}
-                                        </span>
-                                    </span>
-                                </a>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        </section>
-    @endif
-
+    <script>
+        (function () {
+            function pad(value) {
+                return String(value).padStart(2, '0');
+            }
+            function renderCountdownMarkup(hours, minutes, seconds) {
+                return '<span class="home-trade-countdown-box">' + pad(hours) + '</span>' +
+                    '<span class="home-trade-countdown-separator">:</span>' +
+                    '<span class="home-trade-countdown-box">' + pad(minutes) + '</span>' +
+                    '<span class="home-trade-countdown-separator">:</span>' +
+                    '<span class="home-trade-countdown-box">' + pad(seconds) + '</span>';
+            }
+            function startCountdown(element) {
+                var endDateValue = element.getAttribute('data-simple-countdown');
+                var valueEl = element.querySelector('.home-trade-countdown-value');
+                if (!endDateValue || !valueEl) {
+                    return;
+                }
+                var normalized = endDateValue.replace(/-/g, '/');
+                var endTime = new Date(normalized).getTime();
+                if (Number.isNaN(endTime)) {
+                    valueEl.innerHTML = renderCountdownMarkup(0, 0, 0);
+                    return;
+                }
+                var render = function () {
+                    var now = Date.now();
+                    var distance = Math.max(0, endTime - now);
+                    var hours = Math.floor(distance / (1000 * 60 * 60));
+                    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    valueEl.innerHTML = renderCountdownMarkup(hours, minutes, seconds);
+                    if (distance <= 0) {
+                        window.clearInterval(timer);
+                        valueEl.innerHTML = renderCountdownMarkup(0, 0, 0);
+                    }
+                };
+                render();
+                var timer = window.setInterval(render, 1000);
+            }
+            function setupInfiniteProducts() {
+                var grid = document.getElementById('home-infinite-products-grid');
+                var status = document.getElementById('home-infinite-products-status');
+                var sentinel = document.getElementById('home-infinite-products-sentinel');
+                if (!grid || !status || !sentinel) {
+                    return;
+                }
+                var setStatus = function (message, loading) {
+                    if (!message) {
+                        status.innerHTML = '';
+                        return;
+                    }
+                    status.innerHTML = loading
+                        ? '<span class="home-infinite-products-loader">' + message + '</span>'
+                        : message;
+                };
+                var loadProducts = function () {
+                    if (grid.getAttribute('data-loading') === 'true' || grid.getAttribute('data-complete') === 'true') {
+                        return;
+                    }
+                    grid.setAttribute('data-loading', 'true');
+                    setStatus('{{ translate('Loading products') }}', true);
+                    var page = parseInt(grid.getAttribute('data-next-page') || '1', 10);
+                    var limit = parseInt(grid.getAttribute('data-limit') || '30', 10);
+                    var token = document.querySelector('meta[name="csrf-token"]');
+                    var body = '_token=' + encodeURIComponent(token ? token.getAttribute('content') : '') +
+                        '&page=' + encodeURIComponent(page) +
+                        '&limit=' + encodeURIComponent(limit);
+                    fetch('{{ route('home.section.infinite_products') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: body
+                    })
+                        .then(function (response) {
+                            if (!response.ok) {
+                                throw new Error('Request failed');
+                            }
+                            return response.text();
+                        })
+                        .then(function (html) {
+                            var trimmed = html.trim();
+                            if (!trimmed) {
+                                if (!grid.children.length) {
+                                    setStatus('{{ translate('Products will appear here once published items are available.') }}', false);
+                                } else {
+                                    setStatus('{{ translate('No more products to show.') }}', false);
+                                }
+                                grid.setAttribute('data-complete', 'true');
+                                return;
+                            }
+                            var temp = document.createElement('div');
+                            temp.innerHTML = trimmed;
+                            var items = Array.prototype.slice.call(temp.children);
+                            items.forEach(function (item) {
+                                grid.appendChild(item);
+                            });
+                            grid.setAttribute('data-next-page', String(page + 1));
+                            grid.setAttribute('data-loading', 'false');
+                            if (items.length < limit) {
+                                grid.setAttribute('data-complete', 'true');
+                                setStatus('{{ translate('No more products to show.') }}', false);
+                            } else {
+                                setStatus('', false);
+                            }
+                            if (window.lazySizes && window.lazySizes.loader) {
+                                window.lazySizes.loader.checkElems();
+                            }
+                        })
+                        .catch(function () {
+                            grid.setAttribute('data-loading', 'false');
+                            setStatus('{{ translate('Could not load products. Please refresh and try again.') }}', false);
+                        });
+                };
+                if ('IntersectionObserver' in window) {
+                    var observer = new IntersectionObserver(function (entries) {
+                        entries.forEach(function (entry) {
+                            if (entry.isIntersecting) {
+                                loadProducts();
+                            }
+                        });
+                    }, {
+                        rootMargin: '300px 0px'
+                    });
+                    observer.observe(sentinel);
+                } else {
+                    window.addEventListener('scroll', function () {
+                        var rect = sentinel.getBoundingClientRect();
+                        if (rect.top <= window.innerHeight + 300) {
+                            loadProducts();
+                        }
+                    });
+                }
+                loadProducts();
+            }
+            document.addEventListener('DOMContentLoaded', function () {
+                document.querySelectorAll('[data-simple-countdown]').forEach(startCountdown);
+                document.querySelectorAll('[data-scroll-target]').forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        var targetId = button.getAttribute('data-scroll-target');
+                        var direction = button.getAttribute('data-scroll-direction');
+                        var target = document.getElementById(targetId);
+                        if (!target) {
+                            return;
+                        }
+                        var firstItem = target.children[0];
+                        var gap = parseFloat(window.getComputedStyle(target).columnGap || window.getComputedStyle(target).gap || '0') || 0;
+                        var itemWidth = firstItem ? firstItem.getBoundingClientRect().width : 220;
+                        var itemsPerStep = target.classList.contains('home-scroll-target-locked')
+                            ? Math.max(1, Math.floor(target.clientWidth / Math.max(itemWidth + gap, 1)))
+                            : 1;
+                        var offset = target.classList.contains('home-scroll-target-locked')
+                            ? (itemWidth + gap) * itemsPerStep
+                            : Math.max(220, Math.floor(target.clientWidth * 0.7));
+                        target.scrollBy({
+                            left: direction === 'left' ? -offset : offset,
+                            behavior: 'smooth'
+                        });
+                    });
+                });
+                setupInfiniteProducts();
+            });
+        })();
+    </script>
 @endsection
-

@@ -13,6 +13,14 @@ class GlobalSearchService
     public const SCOPES = [
         'ai_mode',
         'products',
+        'buyer',
+        'importer',
+        'retailer',
+        'supplier',
+        'manufacturer',
+        'distributor',
+        'wholesaler',
+        'exporter',
         'manufacturers',
         'suppliers',
         'worldwide',
@@ -92,9 +100,11 @@ class GlobalSearchService
     public function suggestions(string $query, string $scope = 'ai_mode', ?User $user = null): array
     {
         $autocomplete = ['suggestions' => []];
+        $scopeOptions = $this->scopeOptions($scope);
         if (mb_strlen(trim($query)) >= 2) {
             $autocomplete = $this->searchService->autocomplete($query, [
-                'types' => $this->scopeOptions($scope)['types'],
+                'types' => $scopeOptions['types'],
+                'filters' => $scopeOptions['filters'] ?? [],
                 'limit' => 8,
             ], $user);
         }
@@ -160,13 +170,45 @@ class GlobalSearchService
                 'types' => ['product', 'wholesale_product'],
                 'filters' => [],
             ],
+            'buyer' => [
+                'types' => ['company'],
+                'filters' => ['company_type' => 'buyer'],
+            ],
+            'importer' => [
+                'types' => ['company'],
+                'filters' => ['company_type' => 'importer'],
+            ],
+            'retailer' => [
+                'types' => ['company'],
+                'filters' => ['company_type' => 'retailer'],
+            ],
+            'supplier' => [
+                'types' => ['company'],
+                'filters' => ['company_type' => 'supplier'],
+            ],
             'manufacturers' => [
+                'types' => ['company'],
+                'filters' => ['company_type' => 'manufacturer'],
+            ],
+            'manufacturer' => [
                 'types' => ['company'],
                 'filters' => ['company_type' => 'manufacturer'],
             ],
             'suppliers' => [
                 'types' => ['company'],
                 'filters' => ['company_type' => 'supplier'],
+            ],
+            'distributor' => [
+                'types' => ['company'],
+                'filters' => ['company_type' => 'distributor'],
+            ],
+            'wholesaler' => [
+                'types' => ['company'],
+                'filters' => ['company_type' => 'wholesaler'],
+            ],
+            'exporter' => [
+                'types' => ['company'],
+                'filters' => ['company_type' => 'exporter'],
             ],
             'worldwide' => [
                 'types' => ['company', 'country', 'city', 'port', 'freight_forwarder', 'hs_code', 'shipment', 'container_shipment'],
@@ -211,9 +253,20 @@ class GlobalSearchService
             ->all();
     }
 
+    public function resolveScope(string $scope): string
+    {
+        return $this->normalizeScope($scope);
+    }
+
     protected function normalizeScope(string $scope): string
     {
-        return in_array($scope, self::SCOPES, true) ? $scope : 'ai_mode';
+        $scope = trim($scope);
+
+        return match ($scope) {
+            'manufacturers' => 'manufacturer',
+            'suppliers' => 'supplier',
+            default => in_array($scope, self::SCOPES, true) ? $scope : 'ai_mode',
+        };
     }
 
     protected function companyIdsForUser(User $user): array

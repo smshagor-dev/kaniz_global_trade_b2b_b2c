@@ -234,6 +234,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(B2BAuditLog::class, 'actor_user_id');
     }
 
+    public function b2bCompanyReviewsWritten()
+    {
+        return $this->hasMany(B2BCompanyReview::class, 'reviewer_user_id');
+    }
+
+    public function b2bCompanyReviewsReceived()
+    {
+        return $this->hasMany(B2BCompanyReview::class, 'reviewed_user_id');
+    }
+
     public function fraudChecks()
     {
         return $this->hasMany(FraudCheck::class);

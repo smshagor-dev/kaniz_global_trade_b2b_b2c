@@ -86,7 +86,9 @@ class SearchService
             'query' => $this->expandQuery($query),
             'limit' => (int) ($options['limit'] ?? config('search.autocomplete_limit', 8)),
             'types' => $this->expandRequestedTypes((array) ($options['types'] ?? []), $user, $options),
+            'filters' => (array) ($options['filters'] ?? []),
             'visibility' => $this->allowedVisibility($options, $user),
+            'is_active' => true,
             'index_name' => $this->manager->indexName(),
         ])['hits'] ?? [])
             ->filter(fn ($hit) => $this->canViewHit($hit, $user, $options))
