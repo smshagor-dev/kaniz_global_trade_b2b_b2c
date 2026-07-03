@@ -15,16 +15,20 @@
         return [
             'id' => $country->id,
             'code' => strtoupper((string) $country->code),
+            'flag_iso' => strtolower((string) $country->code),
             'name' => $country->name,
         ];
     });
-    $selectedCountry = $selectedDeliveryCountry
+    $deliverFromCountry = $countryOptions->firstWhere('code', 'BD')
+        ?: ['id' => null, 'code' => 'BD', 'flag_iso' => 'bd', 'name' => 'Bangladesh'];
+    $shipToCountry = $selectedDeliveryCountry
         ? [
             'id' => $selectedDeliveryCountry->id,
             'code' => strtoupper((string) $selectedDeliveryCountry->code),
+            'flag_iso' => strtolower((string) $selectedDeliveryCountry->code),
             'name' => $selectedDeliveryCountry->name,
         ]
-        : ($countryOptions->firstWhere('code', 'US') ?: $countryOptions->first() ?: ['id' => null, 'code' => 'US', 'name' => 'United States']);
+        : ($countryOptions->firstWhere('code', 'US') ?: $countryOptions->first() ?: ['id' => null, 'code' => 'US', 'flag_iso' => 'us', 'name' => 'United States']);
     $headerMenus = collect(json_decode(get_setting('header_menu_labels'), true) ?? [])
         ->map(fn ($label, $index) => [
             'label' => $label,
@@ -59,29 +63,11 @@
         <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
             <div class="kaniz-header-top-inner">
                 <div class="kaniz-header-top-group">
-                    <div class="dropdown" id="country-deliver-change">
-                        <a href="javascript:void(0)" class="kaniz-top-link dropdown-toggle" data-toggle="dropdown"
-                            data-display="static" aria-expanded="false">
-                            <span>Deliver from:</span>
-                            <span class="kaniz-flag kaniz-selected-country-code">{{ $selectedCountry['code'] }}</span>
-                            <span class="kaniz-selected-country-name">{{ $selectedCountry['name'] }}</span>
-                        </a>
-                        <div class="dropdown-menu kaniz-top-dropdown">
-                            <div class="kaniz-top-dropdown-search">
-                                <i class="las la-search"></i>
-                                <input type="text" class="kaniz-dropdown-filter" placeholder="Search country">
-                            </div>
-                            <div class="kaniz-top-dropdown-list">
-                                @foreach ($countryOptions as $country)
-                                    <a href="javascript:void(0)" class="dropdown-item kaniz-dropdown-item kaniz-country-option"
-                                        data-country-id="{{ $country['id'] }}" data-country-code="{{ $country['code'] }}" data-country-name="{{ $country['name'] }}">
-                                        <span class="kaniz-flag">{{ $country['code'] }}</span>
-                                        <span>{{ $country['name'] }}</span>
-                                    </a>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
+                    <span class="kaniz-top-link">
+                        <span>{{ translate('Deliver from:') }}</span>
+                        <span class="kaniz-flag" aria-hidden="true"><span class="iti__flag iti__{{ $deliverFromCountry['flag_iso'] }}"></span></span>
+                        <span class="kaniz-selected-country-name">{{ $deliverFromCountry['name'] }}</span>
+                    </span>
                     <div class="dropdown">
                         <a href="javascript:void(0)" class="kaniz-top-link dropdown-toggle" data-toggle="dropdown"
                             data-display="static" aria-expanded="false">
@@ -143,9 +129,9 @@
                     <div class="dropdown" id="country-ship-change">
                         <a href="javascript:void(0)" class="kaniz-top-link dropdown-toggle" data-toggle="dropdown"
                             data-display="static" aria-expanded="false">
-                            <span>Ship to:</span>
-                            <span class="kaniz-flag kaniz-selected-country-code">{{ $selectedCountry['code'] }}</span>
-                            <span class="kaniz-selected-country-name">{{ $selectedCountry['name'] }}</span>
+                            <span>{{ translate('Ship to:') }}</span>
+                            <span class="kaniz-flag" aria-hidden="true"><span class="iti__flag iti__{{ $shipToCountry['flag_iso'] }}"></span></span>
+                            <span class="kaniz-selected-country-name">{{ $shipToCountry['name'] }}</span>
                         </a>
                         <div class="dropdown-menu dropdown-menu-right kaniz-top-dropdown">
                             <div class="kaniz-top-dropdown-search">
@@ -155,8 +141,8 @@
                             <div class="kaniz-top-dropdown-list">
                                 @foreach ($countryOptions as $country)
                                     <a href="javascript:void(0)" class="dropdown-item kaniz-dropdown-item kaniz-country-option"
-                                        data-country-id="{{ $country['id'] }}" data-country-code="{{ $country['code'] }}" data-country-name="{{ $country['name'] }}">
-                                        <span class="kaniz-flag">{{ $country['code'] }}</span>
+                                        data-country-id="{{ $country['id'] }}" data-country-code="{{ $country['code'] }}" data-country-name="{{ $country['name'] }}" data-country-flag="{{ $country['flag_iso'] }}">
+                                        <span class="kaniz-flag" aria-hidden="true"><span class="iti__flag iti__{{ $country['flag_iso'] }}"></span></span>
                                         <span>{{ $country['name'] }}</span>
                                     </a>
                                 @endforeach
@@ -189,7 +175,7 @@
                     <form action="{{ route('search') }}" method="GET" class="stop-propagation"
                         id="header-global-search-form">
                         <input type="hidden" name="scope" id="header-global-search-scope" value="{{ $headerSearchScope }}">
-                        <input type="hidden" name="country" id="header-global-search-country" value="{{ $selectedCountry['name'] }}">
+                        <input type="hidden" name="country" id="header-global-search-country" value="{{ $shipToCountry['name'] }}">
                         <div class="kaniz-search-shell">
                             <div class="dropdown kaniz-search-category-dropdown">
                                 <button type="button" class="kaniz-search-category" data-toggle="dropdown" aria-expanded="false">
@@ -375,7 +361,7 @@
                 <form action="{{ route('search') }}" method="GET" class="stop-propagation"
                     data-kaniz-search-form>
                     <input type="hidden" name="scope" data-kaniz-search-scope value="{{ $headerSearchScope }}">
-                    <input type="hidden" name="country" data-kaniz-search-country value="{{ $selectedCountry['name'] }}">
+                    <input type="hidden" name="country" data-kaniz-search-country value="{{ $shipToCountry['name'] }}">
                     <div class="kaniz-search-shell kaniz-search-shell-sticky">
                         <div class="dropdown kaniz-search-category-dropdown">
                             <button type="button" class="kaniz-search-category" data-toggle="dropdown" aria-expanded="false">
@@ -685,14 +671,19 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 18px;
+            flex: 0 0 auto;
+            width: 18px;
             height: 12px;
-            padding: 0 3px;
+            overflow: hidden;
             border-radius: 2px;
-            background: linear-gradient(180deg, #b22234 0 50%, #3c3b6e 50% 100%);
-            color: #fff;
-            font-size: 8px;
-            font-weight: 700;
+            box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.08);
+        }
+
+        .kaniz-flag .iti__flag {
+            width: 18px;
+            height: 12px;
+            box-shadow: none;
+            background-color: transparent;
         }
 
         .kaniz-header-main {

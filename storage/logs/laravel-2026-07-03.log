@@ -972,3 +972,5 @@
 #52 D:\\Public\\kaniz_global_trade_b2b_b2c\\server.php(54): require_once('D:\\\\Public\\\\kaniz...')
 #53 {main}
 "} 
+[2026-07-03 10:18:43] local.INFO: Filter Category Request:  {"page":"1","category_type":"all_categories","search":null} 
+[2026-07-03 10:19:19] local.INFO: Filter Category Request:  {"page":"1","category_type":"all_categories","search":null} 

@@ -4,8 +4,443 @@
         .home-slider {
             max-width: 100% !important;
         }
+        .home-hero-stage{
+            display: grid;
+            grid-template-columns: 230px minmax(0, 1fr) 300px;
+            gap: 12px;
+            align-items: stretch;
+            min-height: 408px;
+        }
+        .home-hero-menu,
+        .home-hero-side,
+        .home-hero-banner,
+        .home-feature-strip-v2{
+            background: #fff;
+            border: 1px solid #f1f2f4;
+            border-radius: 18px;
+            box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+        }
+        .home-hero-menu{
+            padding: 10px 0 8px;
+            overflow: visible;
+            position: relative;
+            z-index: 6;
+            height: 100%;
+        }
+        .home-hero-menu-head{
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            margin: 0 10px 8px;
+            border-radius: 12px;
+            background: linear-gradient(180deg, #fff4ed 0%, #fff8f4 100%);
+            color: #ff6a00;
+            font-size: 14px;
+            font-weight: 800;
+        }
+        .home-hero-menu-list{
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .home-hero-menu-item{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 9px 16px;
+            color: #2d3748 !important;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none !important;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .home-hero-menu-item:hover{
+            background: #fff7f1;
+            color: #ff6a00 !important;
+        }
+        .home-hero-menu-item.is-view-all{
+            color: #ff6a00 !important;
+            font-weight: 700;
+        }
+        .home-hero-menu-copy{
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+        .home-hero-menu-icon{
+            width: 18px;
+            text-align: center;
+            font-size: 17px;
+            color: #4a5568;
+            flex: 0 0 18px;
+        }
+        .home-hero-menu-item:hover .home-hero-menu-icon,
+        .home-hero-menu-item.is-view-all .home-hero-menu-icon{
+            color: #ff6a00;
+        }
+        .home-hero-menu-label{
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .home-hero-menu-arrow{
+            color: #9aa3af;
+            font-size: 16px;
+            flex: 0 0 auto;
+        }
+        .home-hero-category-menu{
+            background: transparent !important;
+            border-top: 0 !important;
+            width: auto !important;
+            height: calc(100% - 54px);
+            position: relative;
+        }
+        .home-hero-category-menu .categories{
+            padding: 0 10px;
+        }
+        .home-hero-category-menu .category-nav-element{
+            border: 0 !important;
+            position: static;
+        }
+        .home-hero-category-menu .category-nav-element + .category-nav-element{
+            margin-top: 2px;
+        }
+        .home-hero-category-menu .category-nav-element > a{
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 9px 12px !important;
+            color: #2d3748 !important;
+            font-size: 14px !important;
+            font-weight: 500;
+            text-decoration: none !important;
+            position: relative;
+            z-index: 10;
+        }
+        .home-hero-category-menu .category-nav-element > a > span{
+            min-width: 0;
+        }
+        .home-hero-category-menu .category-nav-element:hover > a{
+            background: var(--soft-secondary-base) !important;
+            color: #2d3748 !important;
+        }
+        .home-hero-category-menu .category-nav-element > a .cat-image{
+            width: 18px;
+            height: 18px;
+            object-fit: contain;
+            opacity: 0.78 !important;
+            margin-right: 10px !important;
+            flex: 0 0 18px;
+        }
+        .home-hero-category-menu .category-nav-element:hover > a .cat-image{
+            opacity: 1 !important;
+        }
+        .home-hero-category-menu .category-nav-element:hover > a .cat-name{
+            margin-left: 5px;
+        }
+        .home-hero-category-menu .category-nav-element > a .cat-name{
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .home-hero-category-menu .category-nav-element > a::after{
+            content: "\f105";
+            font-family: "Line Awesome Free";
+            font-weight: 900;
+            color: #9aa3af;
+            font-size: 14px;
+            flex: 0 0 auto;
+        }
+        .home-hero-category-menu .category-nav-element:hover > a::after{
+            color: #ff6a00;
+        }
+        .home-hero-category-menu .sub-cat-menu{
+            left: calc(100% - 12px) !important;
+            top: 0 !important;
+            width: min(760px, calc(100vw - 420px)) !important;
+            height: 100% !important;
+            min-height: 408px;
+            border: 1px solid #f1f2f4 !important;
+            border-radius: 18px !important;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12) !important;
+            background: #fff;
+            z-index: -1;
+            opacity: 0;
+            transition: 0.5s;
+        }
+        .home-hero-category-menu .category-nav-element:hover .sub-cat-menu{
+            z-index: 9;
+            opacity: 1;
+        }
+        .home-hero-view-all{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 12px;
+            color: #ff6a00 !important;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none !important;
+        }
+        .home-hero-view-all:hover{
+            background: var(--soft-secondary-base);
+        }
+        .home-hero-center{
+            min-width: 0;
+            height: 100%;
+        }
+        .home-hero-banner{
+            position: relative;
+            overflow: hidden;
+            min-height: 408px;
+            height: 100%;
+        }
+        .home-hero-banner .aiz-carousel,
+        .home-hero-banner .slick-list,
+        .home-hero-banner .slick-track,
+        .home-hero-banner .carousel-box,
+        .home-hero-banner .carousel-box > a{
+            height: 100%;
+        }
+        .home-hero-slide{
+            position: relative;
+            display: block;
+            width: 100%;
+            height: 100%;
+            min-height: 408px;
+        }
+        .home-hero-slide::before{
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(90deg, rgba(13, 25, 45, 0.88) 0%, rgba(13, 25, 45, 0.62) 34%, rgba(13, 25, 45, 0.18) 68%, rgba(13, 25, 45, 0.10) 100%),
+                linear-gradient(180deg, rgba(255, 119, 0, 0.08) 0%, rgba(13, 25, 45, 0.18) 100%);
+            z-index: 1;
+        }
+        .home-hero-slide img{
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .home-hero-overlay{
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            padding: 58px 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            max-width: 54%;
+            color: #fff;
+        }
+        .home-hero-title{
+            font-size: 34px;
+            line-height: 1.08;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: #fff;
+            margin-bottom: 18px;
+        }
+        .home-hero-text{
+            font-size: 16px;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.88);
+            margin-bottom: 28px;
+            max-width: 420px;
+        }
+        .home-hero-cta{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 156px;
+            min-height: 40px;
+            padding: 0 24px;
+            border-radius: 8px;
+            background: linear-gradient(180deg, #ff7d1a 0%, #ff6400 100%);
+            color: #fff !important;
+            font-size: 15px;
+            font-weight: 700;
+            text-decoration: none !important;
+            box-shadow: 0 10px 26px rgba(255, 106, 0, 0.26);
+        }
+        .home-hero-banner .slick-dots{
+            bottom: 14px;
+        }
+        .home-hero-banner .slick-dots li{
+            width: 10px;
+            height: 10px;
+            margin: 0 4px;
+        }
+        .home-hero-banner .slick-dots li button{
+            width: 10px;
+            height: 10px;
+            padding: 0;
+        }
+        .home-hero-banner .slick-dots li button:before{
+            width: 10px;
+            height: 10px;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.78);
+            opacity: 1;
+        }
+        .home-hero-banner .slick-dots li.slick-active button:before{
+            color: #ff6a00;
+            opacity: 1;
+        }
+        .home-hero-side{
+            padding: 18px 18px 14px;
+            height: 100%;
+            min-height: 408px;
+        }
+        .home-hero-side-title{
+            font-size: 14px;
+            line-height: 1.4;
+            color: #111827;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .home-hero-side-text{
+            font-size: 13px;
+            line-height: 1.55;
+            color: #6b7280;
+            margin-bottom: 14px;
+        }
+        .home-hero-side-actions{
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        .home-hero-side-btn{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 42px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            text-decoration: none !important;
+        }
+        .home-hero-side-btn.primary{
+            background: linear-gradient(180deg, #ff7d1a 0%, #ff6400 100%);
+            color: #fff !important;
+            box-shadow: 0 10px 24px rgba(255, 106, 0, 0.2);
+        }
+        .home-hero-side-btn.secondary{
+            border: 1px solid #eceef2;
+            background: #fff;
+            color: #ff6a00 !important;
+        }
+        .home-hero-benefits{
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .home-hero-benefit{
+            display: grid;
+            grid-template-columns: 36px minmax(0, 1fr);
+            gap: 12px;
+            align-items: start;
+        }
+        .home-hero-benefit-icon{
+            width: 36px;
+            height: 36px;
+            border-radius: 999px;
+            border: 1px solid #ffd6bd;
+            background: #fff7f0;
+            color: #ff7a16;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        .home-hero-benefit-title{
+            font-size: 14px;
+            line-height: 1.35;
+            color: #111827;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .home-hero-benefit-text{
+            font-size: 12px;
+            line-height: 1.5;
+            color: #6b7280;
+        }
+        .home-feature-strip-v2{
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            margin-top: 14px;
+            overflow: hidden;
+        }
+        .home-feature-v2-item{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 18px 16px;
+            min-width: 0;
+            position: relative;
+        }
+        .home-feature-v2-item:not(:last-child)::after{
+            content: "";
+            position: absolute;
+            top: 18px;
+            right: 0;
+            width: 1px;
+            height: calc(100% - 36px);
+            background: #edf0f3;
+        }
+        .home-feature-v2-icon{
+            width: 34px;
+            height: 34px;
+            flex: 0 0 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #1f2937;
+        }
+        .home-feature-v2-icon svg{
+            width: 30px;
+            height: 30px;
+            display: block;
+        }
+        .home-feature-v2-icon .accent{
+            stroke: #ff6a00;
+        }
+        .home-feature-v2-icon .base{
+            stroke: #23262b;
+        }
+        .home-feature-v2-copy{
+            min-width: 0;
+        }
+        .home-feature-v2-title{
+            font-size: 14px;
+            line-height: 1.3;
+            color: #111827;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .home-feature-v2-text{
+            font-size: 12px;
+            line-height: 1.35;
+            color: #6b7280;
+        }
         #left-side-product-alert{
             display: none !important;
+        }
+        .home-banner-area > .container > .row,
+        .home-banner-area > .layout-container > .row{
+            position: relative;
         }
         .home-banner-area .aiz-category-menu .sub-cat-menu {
             width: calc(100% - 270px);
@@ -167,6 +602,9 @@
             box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
             overflow: hidden;
         }
+        .home-showcase-panel-single{
+            grid-template-columns: minmax(0, 1fr);
+        }
         .home-showcase-block{
             padding: 18px 20px 16px;
             min-width: 0;
@@ -199,7 +637,7 @@
         }
         .home-category-grid{
             display: grid;
-            grid-template-columns: repeat(5, minmax(0, 1fr));
+            grid-template-columns: repeat(10, minmax(0, 1fr));
             gap: 12px 10px;
         }
         .home-category-tile{
@@ -736,6 +1174,234 @@
             font-size: 12px;
             line-height: 1.4;
             color: #6b7280;
+        }
+        .home-wholesale-section{
+            position: relative;
+            background: #fff;
+            border: 1px solid #edf0f3;
+            border-radius: 18px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+            padding: 18px 16px 16px;
+            overflow: hidden;
+        }
+        .home-wholesale-head{
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .home-wholesale-title{
+            font-size: 28px;
+            line-height: 1.1;
+            font-weight: 800;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+        .home-wholesale-subtitle{
+            font-size: 14px;
+            line-height: 1.45;
+            color: #6b7280;
+        }
+        .home-wholesale-link{
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #111827 !important;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none !important;
+            white-space: nowrap;
+        }
+        .home-wholesale-link:hover{
+            color: #ff6a00 !important;
+        }
+        .home-wholesale-carousel{
+            position: relative;
+        }
+        .home-wholesale-arrow{
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 999px;
+            border: 1px solid #edf0f3;
+            background: #fff;
+            color: #6b7280;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
+            z-index: 2;
+        }
+        .home-wholesale-arrow:hover{
+            color: #ff6a00;
+            border-color: #ffd4ba;
+        }
+        .home-wholesale-arrow.left{
+            left: -6px;
+        }
+        .home-wholesale-arrow.right{
+            right: -6px;
+        }
+        .home-wholesale-strip{
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 2px 28px 6px;
+            scroll-behavior: smooth;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .home-wholesale-strip::-webkit-scrollbar{
+            display: none;
+        }
+        .home-wholesale-card{
+            min-width: 206px;
+            flex: 0 0 206px;
+            border: 1px solid #edf0f3;
+            border-radius: 16px;
+            background: #fff;
+            padding: 12px;
+            text-decoration: none !important;
+            color: #111827 !important;
+            box-shadow: 0 3px 14px rgba(15, 23, 42, 0.04);
+        }
+        .home-wholesale-card:hover{
+            border-color: #ffd4ba;
+            box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+        }
+        .home-wholesale-media{
+            position: relative;
+            height: 170px;
+            border-radius: 12px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        .home-wholesale-media img{
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        .home-wholesale-fav{
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 24px;
+            height: 24px;
+            border-radius: 999px;
+            background: #fff;
+            border: 1px solid #edf0f3;
+            color: #a1a1aa;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .home-wholesale-name{
+            min-height: 44px;
+            font-size: 13px;
+            line-height: 1.4;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .home-wholesale-price{
+            font-size: 14px;
+            line-height: 1.25;
+            font-weight: 800;
+            color: #ff6a00;
+            margin-bottom: 5px;
+        }
+        .home-wholesale-moq{
+            font-size: 11px;
+            line-height: 1.4;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+        .home-wholesale-meta{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .home-wholesale-rating{
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: #ff6a00;
+            white-space: nowrap;
+        }
+        .home-wholesale-rating i{
+            font-size: 11px;
+        }
+        .home-wholesale-rating-count{
+            color: #ff6a00;
+        }
+        .home-wholesale-country{
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: #6b7280;
+            white-space: nowrap;
+        }
+        .home-wholesale-country .iti__flag{
+            width: 14px;
+            height: 10px;
+            box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.08);
+        }
+        .home-wholesale-supplier{
+            font-size: 11px;
+            line-height: 1.4;
+            color: #6b7280;
+            margin-bottom: 10px;
+        }
+        .home-wholesale-supplier strong{
+            color: #111827;
+            font-weight: 700;
+        }
+        .home-wholesale-actions{
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .home-wholesale-btn{
+            min-height: 32px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            text-decoration: none !important;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .home-wholesale-btn.primary{
+            background: linear-gradient(180deg, #ff7d1a 0%, #ff6400 100%);
+            color: #fff !important;
+        }
+        .home-wholesale-btn.secondary{
+            border: 1px solid #e7e9ee;
+            background: #fff;
+            color: #7c2d12 !important;
+        }
+        .home-wholesale-btn.disabled{
+            opacity: 0.48;
+            pointer-events: none;
         }
         .home-trade-preview{
             display: grid;
@@ -1308,6 +1974,19 @@
             }
         }
         @media (max-width: 1199px){
+            .home-hero-stage{
+                grid-template-columns: minmax(0, 1fr) 290px;
+                min-height: 408px;
+            }
+            .home-hero-menu{
+                display: none;
+            }
+            .home-feature-strip-v2{
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+            .home-feature-v2-item:nth-child(3)::after{
+                display: none;
+            }
             .home-trade-preview{
                 grid-template-columns: 1fr;
             }
@@ -1356,6 +2035,48 @@
             }
         }
         @media (max-width: 767px){
+            .home-hero-stage{
+                grid-template-columns: 1fr;
+                min-height: 0;
+            }
+            .home-hero-banner{
+                min-height: 320px;
+                height: auto;
+            }
+            .home-hero-slide{
+                height: 320px;
+                min-height: 320px;
+            }
+            .home-hero-overlay{
+                padding: 30px 24px 44px;
+                max-width: 86%;
+            }
+            .home-hero-title{
+                font-size: 28px;
+                margin-bottom: 12px;
+            }
+            .home-hero-text{
+                font-size: 14px;
+                line-height: 1.55;
+                margin-bottom: 18px;
+            }
+            .home-hero-side{
+                padding: 16px;
+                min-height: 0;
+            }
+            .home-hero-side-actions{
+                grid-template-columns: 1fr 1fr;
+            }
+            .home-feature-strip-v2{
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .home-feature-v2-item{
+                justify-content: flex-start;
+                padding: 14px 12px;
+            }
+            .home-feature-v2-item:nth-child(even)::after{
+                display: none;
+            }
             .home-leaderboard-row{
                 padding: 14px;
             }
@@ -1545,7 +2266,8 @@
             return \App\Models\Category::query()
                 ->where('level', 0)
                 ->where('digital', 0)
-                ->where('featured', 1)
+                ->orderBy('order_level')
+                ->orderBy('name')
                 ->take(9)
                 ->get();
         });
@@ -1565,13 +2287,21 @@
                 ->get();
         });
         $showcaseFeaturedProducts = \Illuminate\Support\Facades\Cache::remember('home_showcase_featured_products_' . $homeCacheKeySuffix, 1800, function () {
-            return collect(get_featured_products())->take(5);
+            return filter_products(
+                \App\Models\Product::query()
+                    ->where('auction_product', 0)
+                    ->where('wholesale_product', 1)
+                    ->with(['thumbnail', 'publicSupplierCompany', 'supplierB2bCompany', 'user.shop'])
+            )
+                ->latest()
+                ->limit(6)
+                ->get();
         });
         $showcaseProductsViewAllUrl = $showcaseFeaturedProducts->isNotEmpty()
-            ? route('featured-products')
+            ? route('search')
             : route('search');
         $showcaseProductsViewAllText = $showcaseFeaturedProducts->isNotEmpty()
-            ? translate('See all featured products')
+            ? translate('Browse wholesale catalog')
             : translate('Browse all products');
         $bannerFlashDeal = \Illuminate\Support\Facades\Cache::remember('home_banner_flash_deal', 600, function () {
             return get_featured_flash_deal();
@@ -1643,19 +2373,88 @@
             });
         }
     @endphp
+    @php
+        $heroAppName = config('app.name');
+        $heroCategories = get_level_zero_categories()->take(8);
+        $heroBenefits = [
+            [
+                'icon' => 'las la-clipboard-list',
+                'title' => translate('Post RFQ'),
+                'text' => translate('Get quotes from verified suppliers'),
+                'url' => route('b2b.rfqs.create'),
+            ],
+            [
+                'icon' => 'las la-user-check',
+                'title' => translate('Verified Suppliers'),
+                'text' => translate('Trusted & professional sellers'),
+                'url' => route('b2b.suppliers.index'),
+            ],
+            [
+                'icon' => 'las la-shield-alt',
+                'title' => translate('Trade Assurance'),
+                'text' => translate('Secure orders & payments'),
+                'url' => route('home'),
+            ],
+            [
+                'icon' => 'las la-shipping-fast',
+                'title' => translate('Global Shipping'),
+                'text' => translate('Fast & reliable delivery'),
+                'url' => route('home'),
+            ],
+            [
+                'icon' => 'las la-headset',
+                'title' => translate('24/7 Support'),
+                'text' => translate('We are here to help'),
+                'url' => route('home'),
+            ],
+        ];
+    @endphp
     <!-- home banner area -->
     <div class="home-banner-area mb-3" style="">
         <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
-            <div class="row gutters-12 position-relative">
-                <!-- category menu -->
-                <div class="position-static d-none d-xl-block col-auto">
-                    @include('frontend.'.get_setting("homepage_select").'.partials.category_menu')
+            <div class="home-hero-stage position-relative">
+                <div class="home-hero-menu d-none d-xl-block">
+                    <div class="home-hero-menu-head">
+                        <i class="las la-th-large"></i>
+                        <span>{{ translate('All Categories') }}</span>
+                    </div>
+                    <div class="aiz-category-menu home-hero-category-menu" style="width:230px;">
+                        <ul class="list-unstyled categories no-scrollbar mb-0 text-left">
+                            @foreach ($heroCategories as $category)
+                                @php
+                                    $category_name = $category->getTranslation('name');
+                                @endphp
+                                <li class="category-nav-element" data-id="{{ $category->id }}">
+                                    <a href="{{ route('products.category', $category->slug) }}">
+                                        <span class="d-inline-flex align-items-center minw-0">
+                                            <img class="cat-image lazyload" src="{{ static_asset('assets/img/placeholder.jpg') }}"
+                                                data-src="{{ isset($category->catIcon->file_name) ? my_asset($category->catIcon->file_name) : static_asset('assets/img/placeholder.jpg') }}" alt="{{ $category_name }}"
+                                                onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                            <span class="cat-name has-transition">{{ $category_name }}</span>
+                                        </span>
+                                    </a>
+                                    <div class="sub-cat-menu more c-scrollbar-light border p-4 shadow-none">
+                                        <div class="c-preloader text-center absolute-center">
+                                            <i class="las la-spinner la-spin la-3x opacity-70"></i>
+                                        </div>
+                                    </div>
+                                </li>
+                            @endforeach
+                            <li class="category-nav-element">
+                                <a href="{{ route('categories.all') }}" class="home-hero-view-all">
+                                    <span class="d-inline-flex align-items-center minw-0">
+                                        <i class="las la-th-large mr-2"></i>
+                                        <span class="cat-name has-transition">{{ translate('View all categories') }}</span>
+                                    </span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="col-lg mt-4">
-                    <!-- Sliders -->
-                    @if (get_setting('home_slider_images', null, $lang) != null)
-                        <div class="home-slider">
-                            <div class="aiz-carousel overflow-hidden rounded-2" data-autoplay="true" data-infinite="true">
+                <div class="home-hero-center">
+                    <div class="home-slider home-hero-banner">
+                        @if (get_setting('home_slider_images', null, $lang) != null)
+                            <div class="aiz-carousel overflow-hidden" data-autoplay="true" data-infinite="true" data-dots="true">
                                 @php
                                     $decoded_slider_images = json_decode(get_setting('home_slider_images', null, $lang), true);
                                     $sliders = get_slider_images($decoded_slider_images);
@@ -1663,103 +2462,130 @@
                                 @endphp
                                 @foreach ($sliders as $key => $slider)
                                     <div class="carousel-box">
-                                        <a class="d-block" href="{{ isset(json_decode($home_slider_links, true)[$key]) ? json_decode($home_slider_links, true)[$key] : '' }}">
+                                        <a class="home-hero-slide" href="{{ isset(json_decode($home_slider_links, true)[$key]) ? json_decode($home_slider_links, true)[$key] : '' }}">
                                             <img
-                                                class="d-block mw-100 img-fit h-180px h-md-320px @if(count($featured_categories) == 0) h-lg-530px @else h-lg-350px @endif"
                                                 src="{{ $slider ? my_asset($slider->file_name) : static_asset('assets/img/placeholder.jpg') }}"
                                                 alt="{{ env('APP_NAME')}} promo"
                                                 onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder-rect.jpg') }}';"
                                             >
+                                            <span class="home-hero-overlay">
+                                                <span class="home-hero-title">{{ translate('Source Globally') }}<br>{{ translate('Sell Anywhere') }}</span>
+                                                <span class="home-hero-text">{{ translate('Millions of products. Thousands of verified suppliers. One trusted global marketplace.') }}</span>
+                                                <span class="home-hero-cta">{{ translate('Explore Now') }}</span>
+                                            </span>
                                         </a>
                                     </div>
                                 @endforeach
                             </div>
-                        </div>
-                    @endif
-                    <div class="home-feature-strip">
-                        <div class="home-feature-item">
-                            <span class="home-feature-icon" aria-hidden="true">
-                                <svg viewBox="0 0 32 32" fill="none">
-                                    <path class="base" d="M16 4 25 9.2v11.1L16 25.6 7 20.3V9.2L16 4Z" stroke-width="1.8" stroke-linejoin="round"/>
-                                    <path class="accent" d="M16 4v10.5M25 9.2 16 14.5M16 14.5 7 9.2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </span>
-                            <div class="home-feature-copy">
-                                <div class="home-feature-title">{{ translate('Millions of Products') }}</div>
-                                <div class="home-feature-text">{{ translate('to choose from') }}</div>
-                            </div>
-                        </div>
-                        <div class="home-feature-item">
-                            <span class="home-feature-icon" aria-hidden="true">
-                                <svg viewBox="0 0 32 32" fill="none">
-                                    <path class="base" d="M16 5.2 24.5 8.6v7.8c0 5.1-3.4 8.5-8.5 10.4-5.1-1.9-8.5-5.3-8.5-10.4V8.6L16 5.2Z" stroke-width="1.8" stroke-linejoin="round"/>
-                                    <path class="accent" d="m12.5 16.3 2.4 2.5 4.8-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </span>
-                            <div class="home-feature-copy">
-                                <div class="home-feature-title">{{ translate('Verified Suppliers') }}</div>
-                                <div class="home-feature-text">{{ translate('around the world') }}</div>
-                            </div>
-                        </div>
-                        <div class="home-feature-item">
-                            <span class="home-feature-icon" aria-hidden="true">
-                                <svg viewBox="0 0 32 32" fill="none">
-                                    <path class="base" d="M16 5.2 24.5 8.6v7.8c0 5.1-3.4 8.5-8.5 10.4-5.1-1.9-8.5-5.3-8.5-10.4V8.6L16 5.2Z" stroke-width="1.8" stroke-linejoin="round"/>
-                                    <path class="accent" d="m12.5 16.3 2.4 2.5 4.8-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </span>
-                            <div class="home-feature-copy">
-                                <div class="home-feature-title">{{ translate('Secure Payments') }}</div>
-                                <div class="home-feature-text">{{ translate('multiple options') }}</div>
-                            </div>
-                        </div>
-                        <div class="home-feature-item">
-                            <span class="home-feature-icon" aria-hidden="true">
-                                <svg viewBox="0 0 32 32" fill="none">
-                                    <path class="base" d="M5.5 9.5h13v10h-13zM18.5 12h4.4l3.1 3.2v4.3h-7.5z" stroke-width="1.8" stroke-linejoin="round"/>
-                                    <circle class="base" cx="10.2" cy="22.3" r="1.8" stroke-width="1.8"/>
-                                    <circle class="accent" cx="22.7" cy="22.3" r="1.8" stroke-width="1.8"/>
-                                </svg>
-                            </span>
-                            <div class="home-feature-copy">
-                                <div class="home-feature-title">{{ translate('On-time delivery') }}</div>
-                                <div class="home-feature-text">{{ translate('worldwide shipping') }}</div>
-                            </div>
-                        </div>
-                        <div class="home-feature-item">
-                            <span class="home-feature-icon" aria-hidden="true">
-                                <svg viewBox="0 0 32 32" fill="none">
-                                    <path class="base" d="M9 16a7 7 0 1 1 14 0" stroke-width="1.8" stroke-linecap="round"/>
-                                    <path class="base" d="M9 16h-1.2A2.3 2.3 0 0 0 5.5 18.3v2.2a2.3 2.3 0 0 0 2.3 2.3H10V16Zm14 0h1.2a2.3 2.3 0 0 1 2.3 2.3v2.2a2.3 2.3 0 0 1-2.3 2.3H22V16Z" stroke-width="1.8" stroke-linejoin="round"/>
-                                    <path class="accent" d="M21.5 24.5c-1 .9-2.6 1.5-4.5 1.5h-2" stroke-width="1.8" stroke-linecap="round"/>
-                                    <circle class="accent" cx="21.8" cy="24.3" r="1.3" stroke-width="1.8"/>
-                                </svg>
-                            </span>
-                            <div class="home-feature-copy">
-                                <div class="home-feature-title">{{ translate('24/7 Support') }}</div>
-                                <div class="home-feature-text">{{ translate("we're here to help") }}</div>
-                            </div>
-                        </div>
+                        @else
+                            <a class="home-hero-slide" href="{{ route('categories.all') }}">
+                                <img
+                                    src="{{ static_asset('assets/img/pages/home-reclassic.webp') }}"
+                                    alt="{{ env('APP_NAME')}} promo"
+                                    onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder-rect.jpg') }}';"
+                                >
+                                <span class="home-hero-overlay">
+                                    <span class="home-hero-title">{{ translate('Source Globally') }}<br>{{ translate('Sell Anywhere') }}</span>
+                                    <span class="home-hero-text">{{ translate('Millions of products. Thousands of verified suppliers. One trusted global marketplace.') }}</span>
+                                    <span class="home-hero-cta">{{ translate('Explore Now') }}</span>
+                                </span>
+                            </a>
+                        @endif
                     </div>
                 </div>
-                <div class="col-12 col-lg-auto mt-4">
-                    <div class="home-side-panel">
-                        <div class="home-side-card">
-                            <div class="fs-20 text-dark mb-1">{{ translate('Welcome to') }}</div>
-                            <div class="fs-26 fw-800 text-dark mb-3">{{ config('app.name') }}</div>
-                            <a href="{{ route('user.login') }}" class="home-side-btn home-side-btn-primary">{{ translate('Sign in') }}</a>
-                            <a href="{{ route('user.registration') }}" class="home-side-btn home-side-btn-outline">{{ translate('Join free') }}</a>
-                        </div>
-                        <div class="home-side-card">
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="home-side-assurance-icon"><i class="las la-shield-alt"></i></span>
-                                <span class="ml-2 fs-21 fw-700 text-dark">{{ translate('Trade Assurance') }}</span>
-                            </div>
-                            <p class="mb-3 fs-16 text-secondary" style="line-height: 1.55;">
-                                {{ translate('Protects your orders on quality, on-time shipment and payment.') }}
-                            </p>
-                            <a href="{{ route('home') }}" class="home-side-link">{{ translate('Learn more') }} <i class="las la-arrow-right"></i></a>
-                        </div>
+                <div class="home-hero-side">
+                    <div class="home-hero-side-title">{{ translate('Welcome to') }} {{ $heroAppName }}</div>
+                    <div class="home-hero-side-text">{{ translate('Join millions of buyers & grow your business globally.') }}</div>
+                    <div class="home-hero-side-actions">
+                        <a href="{{ route('user.registration') }}" class="home-hero-side-btn primary">{{ translate('Join Free') }}</a>
+                        <a href="{{ route('user.login') }}" class="home-hero-side-btn secondary">{{ translate('Sign In') }}</a>
+                    </div>
+                    <div class="home-hero-benefits">
+                        @foreach ($heroBenefits as $heroBenefit)
+                            <a href="{{ $heroBenefit['url'] }}" class="home-hero-benefit text-reset text-decoration-none">
+                                <span class="home-hero-benefit-icon"><i class="{{ $heroBenefit['icon'] }}"></i></span>
+                                <span>
+                                    <span class="d-block home-hero-benefit-title">{{ $heroBenefit['title'] }}</span>
+                                    <span class="d-block home-hero-benefit-text">{{ $heroBenefit['text'] }}</span>
+                                </span>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+            <div class="home-feature-strip-v2">
+                <div class="home-feature-v2-item">
+                    <span class="home-feature-v2-icon" aria-hidden="true">
+                        <svg viewBox="0 0 32 32" fill="none">
+                            <path class="base" d="M16 5.2 24.5 8.6v7.8c0 5.1-3.4 8.5-8.5 10.4-5.1-1.9-8.5-5.3-8.5-10.4V8.6L16 5.2Z" stroke-width="1.8" stroke-linejoin="round"/>
+                            <path class="accent" d="m12.5 16.3 2.4 2.5 4.8-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    <div class="home-feature-v2-copy">
+                        <div class="home-feature-v2-title">{{ translate('Verified Suppliers') }}</div>
+                        <div class="home-feature-v2-text">{{ translate('Strict verification process') }}</div>
+                    </div>
+                </div>
+                <div class="home-feature-v2-item">
+                    <span class="home-feature-v2-icon" aria-hidden="true">
+                        <svg viewBox="0 0 32 32" fill="none">
+                            <path class="base" d="M6 9.5h20v13H6z" stroke-width="1.8" stroke-linejoin="round"/>
+                            <path class="accent" d="M10 16h6M20.5 16h1.5M18 16h.5" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                    <div class="home-feature-v2-copy">
+                        <div class="home-feature-v2-title">{{ translate('Secure Payment') }}</div>
+                        <div class="home-feature-v2-text">{{ translate('Multiple safe payment options') }}</div>
+                    </div>
+                </div>
+                <div class="home-feature-v2-item">
+                    <span class="home-feature-v2-icon" aria-hidden="true">
+                        <svg viewBox="0 0 32 32" fill="none">
+                            <path class="base" d="M16 5.2 24.5 8.6v7.8c0 5.1-3.4 8.5-8.5 10.4-5.1-1.9-8.5-5.3-8.5-10.4V8.6L16 5.2Z" stroke-width="1.8" stroke-linejoin="round"/>
+                            <path class="accent" d="M16 9.5v7m0 0 3 3m-3-3-3 3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    <div class="home-feature-v2-copy">
+                        <div class="home-feature-v2-title">{{ translate('Trade Assurance') }}</div>
+                        <div class="home-feature-v2-text">{{ translate('Refund for order issues') }}</div>
+                    </div>
+                </div>
+                <div class="home-feature-v2-item">
+                    <span class="home-feature-v2-icon" aria-hidden="true">
+                        <svg viewBox="0 0 32 32" fill="none">
+                            <path class="base" d="M5.5 10.5h12.8v8.8H5.5zM18.3 13h4.4l3.3 3.2v3.1h-7.7z" stroke-width="1.8" stroke-linejoin="round"/>
+                            <circle class="base" cx="10.2" cy="22.2" r="1.8" stroke-width="1.8"/>
+                            <circle class="accent" cx="22.6" cy="22.2" r="1.8" stroke-width="1.8"/>
+                        </svg>
+                    </span>
+                    <div class="home-feature-v2-copy">
+                        <div class="home-feature-v2-title">{{ translate('Global Shipping') }}</div>
+                        <div class="home-feature-v2-text">{{ translate('Worldwide logistics') }}</div>
+                    </div>
+                </div>
+                <div class="home-feature-v2-item">
+                    <span class="home-feature-v2-icon" aria-hidden="true">
+                        <svg viewBox="0 0 32 32" fill="none">
+                            <path class="base" d="M16 5.2 24.5 8.6v7.8c0 5.1-3.4 8.5-8.5 10.4-5.1-1.9-8.5-5.3-8.5-10.4V8.6L16 5.2Z" stroke-width="1.8" stroke-linejoin="round"/>
+                            <path class="accent" d="m12.5 16.3 2.4 2.5 4.8-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    <div class="home-feature-v2-copy">
+                        <div class="home-feature-v2-title">{{ translate('Buyer Protection') }}</div>
+                        <div class="home-feature-v2-text">{{ translate('Money back guarantee') }}</div>
+                    </div>
+                </div>
+                <div class="home-feature-v2-item">
+                    <span class="home-feature-v2-icon" aria-hidden="true">
+                        <svg viewBox="0 0 32 32" fill="none">
+                            <path class="base" d="M9 16a7 7 0 1 1 14 0" stroke-width="1.8" stroke-linecap="round"/>
+                            <path class="base" d="M9 16H7.8a2.3 2.3 0 0 0-2.3 2.3v2.2a2.3 2.3 0 0 0 2.3 2.3H10V16Zm14 0h1.2a2.3 2.3 0 0 1 2.3 2.3v2.2a2.3 2.3 0 0 1-2.3 2.3H22V16Z" stroke-width="1.8" stroke-linejoin="round"/>
+                            <path class="accent" d="M21.4 24.5c-.9.8-2.4 1.4-4.4 1.4h-2" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                    <div class="home-feature-v2-copy">
+                        <div class="home-feature-v2-title">{{ translate('24/7 Support') }}</div>
+                        <div class="home-feature-v2-text">{{ translate('Dedicated support') }}</div>
                     </div>
                 </div>
             </div>
@@ -1767,14 +2593,13 @@
     </div>
     <section class="mb-2 mb-md-3 mt-2 mt-md-3">
         <div class="@if (get_setting('show_full_width_header') == 'on') layout-container mx-auto px-3 @else container @endif">
-            <div class="home-showcase-panel">
+            <div class="home-showcase-panel home-showcase-panel-single">
                 <div class="home-showcase-block">
                     <div class="home-showcase-head">
-                        <h3 class="home-showcase-title">{{ translate('Popular categories') }}</h3>
-                        <a href="{{ route('categories.all') }}" class="home-showcase-link">{{ translate('View all') }}</a>
+                        <h3 class="home-showcase-title">{{ translate('Shop by category') }}</h3>
                     </div>
                     <div class="home-category-grid">
-                        @foreach ($showcaseCategories as $category)
+                        @foreach ($showcaseCategories->take(9) as $category)
                             @php
                                 $categoryImage = $category->banner ? uploaded_asset($category->banner) : ($category->icon ? uploaded_asset($category->icon) : null);
                             @endphp
@@ -1797,43 +2622,70 @@
                         </a>
                     </div>
                 </div>
-                <div class="home-showcase-block">
-                    <div class="home-showcase-head">
-                        <h3 class="home-showcase-title">{{ translate('Featured products') }}</h3>
+            </div>
+            <div class="home-wholesale-section mt-3">
+                <div class="home-wholesale-head">
+                    <div>
+                        <div class="home-wholesale-title">{{ translate('Featured Wholesale Products') }}</div>
+                        <div class="home-wholesale-subtitle">{{ translate('High quality products with competitive wholesale prices') }}</div>
                     </div>
-                    <div class="home-scroll-row">
-                        <button type="button" class="home-scroll-arrow" data-scroll-target="featured-products-strip" data-scroll-direction="left" aria-label="{{ translate('Scroll left') }}">
-                            <i class="las la-angle-left"></i>
-                        </button>
-                        <div class="home-product-strip home-scroll-target-locked" id="featured-products-strip">
-                            @foreach ($showcaseFeaturedProducts as $product)
-                                <a href="{{ route('product', $product->slug) }}" class="home-product-card position-relative hov-animate-outline">
-                                    <div class="home-product-media">
+                    <a href="{{ $showcaseProductsViewAllUrl }}" class="home-wholesale-link">
+                        <span>{{ translate('View all') }}</span>
+                        <i class="las la-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="home-wholesale-carousel">
+                    <button type="button" class="home-wholesale-arrow left" data-scroll-target="featured-products-strip" data-scroll-direction="left" aria-label="{{ translate('Scroll left') }}">
+                        <i class="las la-angle-left"></i>
+                    </button>
+                    <div class="home-wholesale-strip home-scroll-target-locked" id="featured-products-strip">
+                        @foreach ($showcaseFeaturedProducts as $product)
+                            @php
+                                $productSupplierSummary = getProductSupplierSummary($product);
+                                $productCardReview = product_card_review_summary($product);
+                                $productPriceLabel = product_card_price_label($product);
+                                $productRfqUrl = getProductRfqUrl($product);
+                                $productContactUrl = $productSupplierSummary['url'] ?? null;
+                                $productCountryLabel = $productSupplierSummary['country'] ?: translate('Global');
+                            @endphp
+                            <div class="home-wholesale-card">
+                                <a href="{{ route('product', $product->slug) }}" class="text-reset text-decoration-none d-block">
+                                    <div class="home-wholesale-media">
+                                        <span class="home-wholesale-fav"><i class="lar la-heart"></i></span>
                                         <img src="{{ $product->thumbnail_img ? uploaded_asset($product->thumbnail_img) : static_asset('assets/img/placeholder.jpg') }}"
                                             alt="{{ $product->getTranslation('name') }}"
                                             onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
                                     </div>
-                                    <div class="home-product-name">{{ $product->getTranslation('name') }}</div>
-                                    <div class="home-product-price">{{ home_discounted_base_price($product) }}</div>
-                                    <div class="home-product-moq">
-                                        {{ translate('Min. order') }}:
-                                        {{ $product->min_qty ? $product->min_qty : 1 }}
-                                        {{ translate('pieces') }}
+                                    <div class="home-wholesale-name">{{ $product->getTranslation('name') }}</div>
+                                    <div class="home-wholesale-price">{{ $productPriceLabel }}</div>
+                                    <div class="home-wholesale-moq">{{ translate('MOQ') }}: {{ $product->min_qty ? $product->min_qty : 1 }} {{ translate('Pieces') }}</div>
+                                    <div class="home-wholesale-meta">
+                                        <span class="home-wholesale-rating">
+                                            <i class="las la-star"></i>
+                                            <span>{{ number_format((float) ($productCardReview['average'] ?? 0), 1) }}</span>
+                                            <span class="home-wholesale-rating-count">({{ $productCardReview['count'] ?? 0 }})</span>
+                                        </span>
+                                        <span class="home-wholesale-country">
+                                            @if (!empty($productSupplierSummary['country_flag_iso']))
+                                                <span class="iti__flag iti__{{ $productSupplierSummary['country_flag_iso'] }}"></span>
+                                            @endif
+                                            <span>{{ $productCountryLabel }}</span>
+                                        </span>
+                                    </div>
+                                    <div class="home-wholesale-supplier">
+                                        <strong>{{ translate('Verified supplier') }}</strong>
                                     </div>
                                 </a>
-                            @endforeach
-                            <a href="{{ $showcaseProductsViewAllUrl }}" class="home-product-view-all position-relative hov-animate-outline">
-                                <span class="home-product-view-all-icon">
-                                    <i class="las la-arrow-right"></i>
-                                </span>
-                                <span class="home-product-view-all-title">{{ translate('View all') }}</span>
-                                <span class="home-product-view-all-text">{{ $showcaseProductsViewAllText }}</span>
-                            </a>
-                        </div>
-                        <button type="button" class="home-scroll-arrow" data-scroll-target="featured-products-strip" data-scroll-direction="right" aria-label="{{ translate('Scroll right') }}">
-                            <i class="las la-angle-right"></i>
-                        </button>
+                                <div class="home-wholesale-actions">
+                                    <a href="{{ $productRfqUrl ?: 'javascript:void(0)' }}" class="home-wholesale-btn primary {{ $productRfqUrl ? '' : 'disabled' }}">{{ translate('RFQ') }}</a>
+                                    <a href="{{ $productContactUrl ?: 'javascript:void(0)' }}" class="home-wholesale-btn secondary {{ $productContactUrl ? '' : 'disabled' }}">{{ translate('Contact') }}</a>
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
+                    <button type="button" class="home-wholesale-arrow right" data-scroll-target="featured-products-strip" data-scroll-direction="right" aria-label="{{ translate('Scroll right') }}">
+                        <i class="las la-angle-right"></i>
+                    </button>
                 </div>
             </div>
         </div>
